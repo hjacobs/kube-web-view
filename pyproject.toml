@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "kube-web"
+version = "0.1.0"
+description = "Kubernetes Web UI"
+authors = ["Henning Jacobs <henning@zalando.de>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+pykube-ng = "^0.27.0"
+Jinja2 = "^2.10"
+aiohttp-jinja2 = "^1.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.0"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
