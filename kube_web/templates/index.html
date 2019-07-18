@@ -1,9 +1,7 @@
-<html>
-    TEST
-    <table>
-        {% for resource in resources: %}
-        <tr>
-            <td>{{resource.name}}</td>
-        </tr>
-        {% endfor %}
-    </table>
+{% extends "base.html" %}
+{% block title %}{{ plural }}{% endblock %}
+{% block content %}
+
+<a href="/clusters/x/namespaces">Namespaces</a>
+
+{% endblock %}

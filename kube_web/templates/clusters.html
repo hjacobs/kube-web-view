@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Clusters{% endblock %}
+{% block content %}
+<h1 class="title">Clusters</h1>
+<table class="table is-stripped">
+{% for resource in resources: %}
+<tr>
+    <td>{{ resource.name }}</td>
+    <td>{{ resource.obj }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{% endblock %} - Kubernetes Web UI</title>
+    <link rel="stylesheet" href="/assets/bulma.min.css">
+    <script defer src="/assets/all.js"></script>
+    <script src="/assets/sortable.min.js"></script>
+    <script src="/assets/navbar.js"></script>
+    <script src="/assets/anchor.min.js"></script>
+    <link rel="stylesheet" href="/assets/sortable-theme-minimal.css" />
+    <link rel="stylesheet" href="/assets/kube-web.css" />
+    <link rel="shortcut icon" href="/assets/favicon.png">
+    <link rel="icon" type="image/png" href="/assets/favicon.png">
+  </head>
+  <body class="has-navbar-fixed-top">
+  <nav class="navbar is-fixed-top is-dark" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+        <a role="button" class="navbar-burger" data-target="nav-menu" aria-label="menu" aria-expanded="false">
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
+    </div>
+    <div class="navbar-menu" id="nav-menu">
+        <div class="navbar-start">
+            <a class="navbar-item {{ 'is-active' if page == 'index' }}" href="/">Overview</a>
+            <a class="navbar-item {{ 'is-active' if page == 'clusters' }}" href="/clusters">Clusters</a>
+        </div>
+    </div>
+  </nav>
+    <section class="section">
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+    </section>
+  <footer class="footer">
+      <div class="container">
+          <div class="has-text-centered">
+              <p><a href="https://github.com/hjacobs/kube-web">kube-web</a> {{ version }}</p>
+          </div>
+      </div>
+  </footer>
+  <!-- https://www.bryanbraun.com/anchorjs/#basic-usage -->
+  <script>anchors.add('h2.title'); </script>
+  </body>
+</html>
+
