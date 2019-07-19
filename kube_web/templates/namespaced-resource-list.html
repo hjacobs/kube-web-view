@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% block title %}{{ plural }}{% endblock %}
 {% block content %}
+<nav class="breadcrumb" aria-label="breadcrumbs">
+  <ul>
+      <li><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
+      <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}">{{ namespace }}</a></li>
+      <li class="is-active"><a href="#">{{ plural }}</a></li>
+  </ul>
+</nav>
+
 <h1 class="title">{{ plural }}</h1>
 <table class="table is-stripped">
     <tr>

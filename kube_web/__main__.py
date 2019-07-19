@@ -14,7 +14,10 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-api = pykube.HTTPClient(pykube.KubeConfig.from_file())
+try:
+    api = pykube.HTTPClient(pykube.KubeConfig.from_service_account())
+except:
+    api = pykube.HTTPClient(pykube.KubeConfig.from_file())
 
 
 def discover_api_resources(api):
@@ -95,6 +98,7 @@ async def get_index(request):
 @routes.get("/clusters/{cluster}/{plural}")
 @aiohttp_jinja2.template("cluster-resource-list.html")
 async def get_cluster_resource_list(request):
+    cluster = request.match_info["cluster"]
     plural = request.match_info["plural"]
     clazz = None
     for c in cluster_resource_types:
@@ -104,19 +108,21 @@ async def get_cluster_resource_list(request):
     if not clazz:
         return web.Response(status=404, text="Resource type not found")
     resources = list(clazz.objects(api).filter())
-    return {"plural": plural, "resources": resources}
+    return {"cluster": cluster, "plural": plural, "resources": resources}
 
 
 @routes.get("/clusters/{cluster}/namespaces/{namespace}")
 @aiohttp_jinja2.template("namespace.html")
 async def get_namespace(request):
+    cluster = request.match_info["cluster"]
     namespace = request.match_info["namespace"]
-    return {"namespace": namespace, "resource_types": namespaced_resource_types}
+    return {"cluster": cluster, "namespace": namespace, "resource_types": namespaced_resource_types}
 
 
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}")
 @aiohttp_jinja2.template("namespaced-resource-list.html")
 async def get_namespaced_resource_list(request):
+    cluster = request.match_info["cluster"]
     namespace = request.match_info["namespace"]
     plural = request.match_info["plural"]
     clazz = None
@@ -127,7 +133,7 @@ async def get_namespaced_resource_list(request):
     if not clazz:
         return web.Response(status=404, text="Resource type not found")
     resources = list(clazz.objects(api).filter(namespace=namespace))
-    return {"namespace": namespace, "plural": plural, "resources": resources}
+    return {"cluster": cluster, "namespace": namespace, "plural": plural, "resources": resources}
 
 
 app = web.Application()
