@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ cluster }}{% endblock %}
+{% block content %}
+<nav class="breadcrumb" aria-label="breadcrumbs">
+  <ul>
+      <li class="is-active"><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
+  </ul>
+</nav>
+
+<table class="table is-stripped">
+{% for resource_type in resource_types: %}
+<tr>
+    <td>{{ resource_type.kind }}</td>
+    <td><a href="/clusters/{{ cluster }}/{{ resource_type.endpoint }}">{{ resource_type.endpoint }}</a></td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}

@@ -4,7 +4,9 @@
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
       <li><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
+      {% if namespace: %}
       <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}">{{ namespace }}</a></li>
+      {% endif %}
       <li class="is-active"><a href="#">{{ plural }}</a></li>
   </ul>
 </nav>
@@ -20,7 +22,11 @@
     </tr>
 {% for resource in resources: %}
 <tr>
-    <td>{{ resource.name }}</td>
+    {% if namespace: %}
+    <td><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ resource.endpoint }}/{{ resource.name }}">{{ resource.name }}</a></td>
+      {% else: %}
+    <td><a href="/clusters/{{ cluster }}/{{ resource.endpoint }}/{{ resource.name }}">{{ resource.name }}</a></td>
+      {% endif %}
     <td>{{ resource.metadata }}</td>
     <td>{{ resource.obj.spec }}</td>
     <td>{{ resource.obj.status }}</td>

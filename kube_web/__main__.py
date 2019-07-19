@@ -92,11 +92,17 @@ async def get_index(request):
 @routes.get("/clusters")
 @aiohttp_jinja2.template("clusters.html")
 async def get_index(request):
-    return {}
+    return {"clusters": ["default"]}
+
+@routes.get("/clusters/{cluster}")
+@aiohttp_jinja2.template("cluster.html")
+async def get_index(request):
+    cluster = request.match_info["cluster"]
+    return {"cluster": cluster, "namespace": None, "resource_types": cluster_resource_types}
 
 
 @routes.get("/clusters/{cluster}/{plural}")
-@aiohttp_jinja2.template("cluster-resource-list.html")
+@aiohttp_jinja2.template("resource-list.html")
 async def get_cluster_resource_list(request):
     cluster = request.match_info["cluster"]
     plural = request.match_info["plural"]
@@ -108,19 +114,31 @@ async def get_cluster_resource_list(request):
     if not clazz:
         return web.Response(status=404, text="Resource type not found")
     resources = list(clazz.objects(api).filter())
-    return {"cluster": cluster, "plural": plural, "resources": resources}
+    return {"cluster": cluster, "namespace": None, "plural": plural, "resources": resources}
 
-
-@routes.get("/clusters/{cluster}/namespaces/{namespace}")
-@aiohttp_jinja2.template("namespace.html")
-async def get_namespace(request):
+@routes.get("/clusters/{cluster}/{plural}/{name}")
+@aiohttp_jinja2.template("resource-view.html")
+async def get_cluster_resource_view(request):
     cluster = request.match_info["cluster"]
-    namespace = request.match_info["namespace"]
-    return {"cluster": cluster, "namespace": namespace, "resource_types": namespaced_resource_types}
+    plural = request.match_info["plural"]
+    name = request.match_info["name"]
+    clazz = None
+    for c in cluster_resource_types:
+        if c.endpoint == plural:
+            clazz = c
+            break
+    if not clazz:
+        return web.Response(status=404, text="Resource type not found")
+    resource = clazz.objects(api).get(name=name)
+    if resource.kind == 'Namespace':
+        namespace = resource.name
+    else:
+        namespace = None
+    return {"cluster": cluster, "namespace": namespace, "plural": plural, "resource": resource}
 
 
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}")
-@aiohttp_jinja2.template("namespaced-resource-list.html")
+@aiohttp_jinja2.template("resource-list.html")
 async def get_namespaced_resource_list(request):
     cluster = request.match_info["cluster"]
     namespace = request.match_info["namespace"]
@@ -134,6 +152,23 @@ async def get_namespaced_resource_list(request):
         return web.Response(status=404, text="Resource type not found")
     resources = list(clazz.objects(api).filter(namespace=namespace))
     return {"cluster": cluster, "namespace": namespace, "plural": plural, "resources": resources}
+
+@routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}/{name}")
+@aiohttp_jinja2.template("resource-view.html")
+async def get_namespaced_resource_view(request):
+    cluster = request.match_info["cluster"]
+    namespace = request.match_info["namespace"]
+    plural = request.match_info["plural"]
+    name = request.match_info["name"]
+    clazz = None
+    for c in namespaced_resource_types:
+        if c.endpoint == plural:
+            clazz = c
+            break
+    if not clazz:
+        return web.Response(status=404, text="Resource type not found")
+    resource = clazz.objects(api).filter(namespace=namespace).get(name=name)
+    return {"cluster": cluster, "namespace": namespace, "plural": plural, "resource": resource}
 
 
 app = web.Application()

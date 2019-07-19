@@ -3,10 +3,9 @@
 {% block content %}
 <h1 class="title">Clusters</h1>
 <table class="table is-stripped">
-{% for resource in resources: %}
+{% for cluster in clusters: %}
 <tr>
-    <td>{{ resource.name }}</td>
-    <td>{{ resource.obj }}</td>
+    <td><a href="/clusters/{{ cluster }}">{{ cluster }}</a></td>
 </tr>
 {% endfor %}
 </table>

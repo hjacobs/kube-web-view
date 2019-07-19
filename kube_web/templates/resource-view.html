@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ resource.name }} ({{resource.kind}} in {{namespace}}){% endblock %}
+{% block content %}
+<nav class="breadcrumb" aria-label="breadcrumbs">
+  <ul>
+      <li><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
+      {% if namespace: %}
+      <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}">{{ namespace }}</a></li>
+      {% if resource.kind != 'Namespace': %}
+      <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ resource.endpoint }}">{{ resource.endpoint }}</a></li>
+      {% endif %}
+      {% else: %}
+      <li><a href="/clusters/{{ cluster }}/{{ resource.endpoint }}">{{ resource.endpoint }}</a></li>
+      {% endif %}
+      <li class="is-active"><a href="#">{{ resource.name }}</a></li>
+  </ul>
+</nav>
+
+<h1 class="title">{{ resource.name }}</h1>
+{{ resource.metadata }}
+
+{{ resource.obj.spec }}
+{{ resource.obj.status }}
+{% endblock %}
