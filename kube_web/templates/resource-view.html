@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ resource.name }} ({{resource.kind}} in {{namespace}}){% endblock %}
+{% block title %}{{ resource.name }} ({{resource.kind}}{% if namespace: %} in {{namespace}}{% endif %}){% endblock %}
 {% block content %}
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
@@ -17,6 +17,8 @@
 </nav>
 
 <h1 class="title">{{ resource.name }}</h1>
+{{ resource.labels }}
+{{ resource.annotations }}
 {{ resource.metadata }}
 
 {{ resource.obj.spec }}
