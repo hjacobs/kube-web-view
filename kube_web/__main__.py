@@ -3,7 +3,8 @@ import jinja2
 import pykube
 import logging
 
-from pykube.objects import APIObject, NamespacedAPIObject
+from pykube import ObjectDoesNotExist
+from pykube.objects import APIObject, NamespacedAPIObject, Namespace
 
 from pathlib import Path
 
@@ -26,7 +27,7 @@ def discover_api_resources(api):
     r.raise_for_status()
     for resource in r.json()["resources"]:
         # ignore subresources like pods/proxy
-        if "/" not in resource["name"]:
+        if "/" not in resource["name"] and 'get' in resource['verbs'] and 'list' in resource['verbs']:
             yield resource["namespaced"], core_version, resource
 
     r = api.get(version="/apis")
@@ -37,7 +38,7 @@ def discover_api_resources(api):
         r2 = api.get(version=pref_version)
         r2.raise_for_status()
         for resource in r2.json()["resources"]:
-            if "/" not in resource["name"]:
+            if "/" not in resource["name"] and 'get' in resource['verbs'] and 'list' in resource['verbs']:
                 yield resource["namespaced"], pref_version, resource
 
 
@@ -99,9 +100,11 @@ async def get_clusters(request):
 @aiohttp_jinja2.template("cluster.html")
 async def get_cluster(request):
     cluster = request.match_info["cluster"]
+    namespaces = list(Namespace.objects(api).filter())
     return {
         "cluster": cluster,
         "namespace": None,
+        "namespaces": namespaces,
         "resource_types": cluster_resource_types,
     }
 
@@ -140,7 +143,10 @@ async def get_cluster_resource_view(request):
             break
     if not clazz:
         return web.Response(status=404, text="Resource type not found")
-    resource = clazz.objects(api).get(name=name)
+    try:
+        resource = clazz.objects(api).get(name=name)
+    except ObjectDoesNotExist:
+        return web.Response(status=404, text="Resource does not exist")
     if resource.kind == "Namespace":
         namespace = resource.name
     else:
