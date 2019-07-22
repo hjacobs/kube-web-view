@@ -12,26 +12,30 @@
 </nav>
 
 <h1 class="title">{{ plural }}</h1>
-<table class="table is-stripped">
+
+<table class="table is-striped">
     <tr>
-        <th>Name</th>
-        <th></th>
-        <th></th>
-        <th></th>
+        {% for column in table.columnDefinitions: %}
+        <th>{{ column.name }}</th>
+        {% endfor %}
         <th>Created</th>
     </tr>
-{% for resource in resources: %}
+{% for row in table.rows: %}
 <tr>
+    {% for cell in row.cells: %}
+    {% if loop.first: %}
     {% if namespace: %}
-    <td><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ resource.endpoint }}/{{ resource.name }}">{{ resource.name }}</a></td>
+    <td><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ plural }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
       {% else: %}
-    <td><a href="/clusters/{{ cluster }}/{{ resource.endpoint }}/{{ resource.name }}">{{ resource.name }}</a></td>
+    <td><a href="/clusters/{{ cluster }}/{{ plural }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
       {% endif %}
-    <td>{{ resource.metadata }}</td>
-    <td>{{ resource.obj.spec }}</td>
-    <td>{{ resource.obj.status }}</td>
-    <td>{{ resource.metadata.creationTimestamp }}</td>
+    {% else: %}
+    <td>{{ cell }}</td>
+    {% endif %}
+    {% endfor %}
+    <td>{{ row.object.metadata.creationTimestamp }}</td>
 </tr>
 {% endfor %}
 </table>
+
 {% endblock %}

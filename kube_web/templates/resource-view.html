@@ -17,10 +17,9 @@
 </nav>
 
 <h1 class="title">{{ resource.name }}</h1>
-{{ resource.labels }}
-{{ resource.annotations }}
-{{ resource.metadata }}
 
-{{ resource.obj.spec }}
-{{ resource.obj.status }}
+
+<div>
+{{ resource.obj|yaml|highlight|safe }}
+</div>
 {% endblock %}

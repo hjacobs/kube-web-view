@@ -2,6 +2,7 @@ import aiohttp_jinja2
 import jinja2
 import pykube
 import logging
+import yaml
 
 from pykube import ObjectDoesNotExist
 from pykube.objects import APIObject, NamespacedAPIObject, Namespace
@@ -27,7 +28,11 @@ def discover_api_resources(api):
     r.raise_for_status()
     for resource in r.json()["resources"]:
         # ignore subresources like pods/proxy
-        if "/" not in resource["name"] and 'get' in resource['verbs'] and 'list' in resource['verbs']:
+        if (
+            "/" not in resource["name"]
+            and "get" in resource["verbs"]
+            and "list" in resource["verbs"]
+        ):
             yield resource["namespaced"], core_version, resource
 
     r = api.get(version="/apis")
@@ -38,7 +43,11 @@ def discover_api_resources(api):
         r2 = api.get(version=pref_version)
         r2.raise_for_status()
         for resource in r2.json()["resources"]:
-            if "/" not in resource["name"] and 'get' in resource['verbs'] and 'list' in resource['verbs']:
+            if (
+                "/" not in resource["name"]
+                and "get" in resource["verbs"]
+                and "list" in resource["verbs"]
+            ):
                 yield resource["namespaced"], pref_version, resource
 
 
@@ -121,13 +130,17 @@ async def get_cluster_resource_list(request):
             break
     if not clazz:
         return web.Response(status=404, text="Resource type not found")
-    resources = list(clazz.objects(api).filter())
-    return {
-        "cluster": cluster,
-        "namespace": None,
-        "plural": plural,
-        "resources": resources,
+    kwargs = {
+        "url": clazz.endpoint,
+        "version": clazz.version,
+        "headers": {
+            "Accept": "application/json;as=Table;v=v1beta1;g=meta.k8s.io, application/json"
+        },
     }
+    r = api.get(**kwargs)
+    r.raise_for_status()
+    table = r.json()
+    return {"cluster": cluster, "namespace": None, "plural": plural, "table": table}
 
 
 @routes.get("/clusters/{cluster}/{plural}/{name}")
@@ -172,12 +185,22 @@ async def get_namespaced_resource_list(request):
             break
     if not clazz:
         return web.Response(status=404, text="Resource type not found")
-    resources = list(clazz.objects(api).filter(namespace=namespace))
+    kwargs = {
+        "url": clazz.endpoint,
+        "version": clazz.version,
+        "namespace": namespace,
+        "headers": {
+            "Accept": "application/json;as=Table;v=v1beta1;g=meta.k8s.io, application/json"
+        },
+    }
+    r = api.get(**kwargs)
+    r.raise_for_status()
+    table = r.json()
     return {
         "cluster": cluster,
         "namespace": namespace,
         "plural": plural,
-        "resources": resources,
+        "table": table,
     }
 
 
@@ -204,10 +227,24 @@ async def get_namespaced_resource_view(request):
     }
 
 
+def filter_yaml(value):
+    return yaml.dump(value, default_flow_style=False)
+
+
+def filter_highlight(value):
+    from pygments import highlight
+    from pygments.lexers import get_lexer_by_name
+    from pygments.formatters import HtmlFormatter
+
+    return highlight(value, get_lexer_by_name("yaml"), HtmlFormatter())
+
+
 app = web.Application()
 aiohttp_jinja2.setup(
     app, loader=jinja2.FileSystemLoader(str(Path(__file__).parent / "templates"))
 )
+env = aiohttp_jinja2.get_env(app)
+env.filters.update(yaml=filter_yaml, highlight=filter_highlight)
 
 app.add_routes(routes)
 app.router.add_static("/assets", Path(__file__).parent / "templates" / "assets")
