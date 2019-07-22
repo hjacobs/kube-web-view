@@ -140,7 +140,7 @@ async def get_cluster_resource_view(request):
     cluster = request.match_info["cluster"]
     plural = request.match_info["plural"]
     name = request.match_info["name"]
-    view = request.rel_url.query.get('view')
+    view = request.rel_url.query.get("view")
     clazz = None
     for c in cluster_resource_types:
         if c.endpoint == plural:
@@ -161,7 +161,7 @@ async def get_cluster_resource_view(request):
         "namespace": namespace,
         "plural": plural,
         "resource": resource,
-        'view': view
+        "view": view,
     }
 
 
@@ -180,8 +180,8 @@ async def get_namespaced_resource_list(request):
         return web.Response(status=404, text="Resource type not found")
     query = clazz.objects(api).filter(namespace=namespace)
     params = request.rel_url.query
-    if 'selector' in params:
-        query = query.filter(selector=params['selector'])
+    if "selector" in params:
+        query = query.filter(selector=params["selector"])
 
     table = query.as_table()
     return {
@@ -199,7 +199,7 @@ async def get_namespaced_resource_view(request):
     namespace = request.match_info["namespace"]
     plural = request.match_info["plural"]
     name = request.match_info["name"]
-    view = request.rel_url.query.get('view')
+    view = request.rel_url.query.get("view")
     clazz = None
     for c in namespaced_resource_types:
         if c.endpoint == plural:
@@ -213,7 +213,7 @@ async def get_namespaced_resource_view(request):
         "namespace": namespace,
         "plural": plural,
         "resource": resource,
-        "view": view
+        "view": view,
     }
 
 
