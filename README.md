@@ -16,3 +16,24 @@ Non-goals:
 
 * application management
 * reporting/visualization
+
+## Running Locally
+
+```
+docker run -it -p 8080:8080 -u $(id -u) -v $HOME/.kube:$HOME.kube hjacobs/kube-web
+```
+
+## Running tests
+
+Requires Python 3.7 and poetry:
+
+```
+$ make test
+```
+
+## Building the Docker image
+
+```
+$ make
+```
+
