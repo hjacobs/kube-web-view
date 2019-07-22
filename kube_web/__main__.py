@@ -130,16 +130,7 @@ async def get_cluster_resource_list(request):
             break
     if not clazz:
         return web.Response(status=404, text="Resource type not found")
-    kwargs = {
-        "url": clazz.endpoint,
-        "version": clazz.version,
-        "headers": {
-            "Accept": "application/json;as=Table;v=v1beta1;g=meta.k8s.io, application/json"
-        },
-    }
-    r = api.get(**kwargs)
-    r.raise_for_status()
-    table = r.json()
+    table = clazz.objects(api).as_table()
     return {"cluster": cluster, "namespace": None, "plural": plural, "table": table}
 
 
@@ -185,17 +176,7 @@ async def get_namespaced_resource_list(request):
             break
     if not clazz:
         return web.Response(status=404, text="Resource type not found")
-    kwargs = {
-        "url": clazz.endpoint,
-        "version": clazz.version,
-        "namespace": namespace,
-        "headers": {
-            "Accept": "application/json;as=Table;v=v1beta1;g=meta.k8s.io, application/json"
-        },
-    }
-    r = api.get(**kwargs)
-    r.raise_for_status()
-    table = r.json()
+    table = clazz.objects(api).filter(namespace=namespace).as_table()
     return {
         "cluster": cluster,
         "namespace": namespace,
