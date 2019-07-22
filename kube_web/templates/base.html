@@ -15,7 +15,7 @@
     <link rel="icon" type="image/png" href="/assets/favicon.png">
   </head>
   <body class="has-navbar-fixed-top">
-  <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
+  <nav class="navbar is-fixed-top is-link" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
         <a role="button" class="navbar-burger" data-target="nav-menu" aria-label="menu" aria-expanded="false">
           <span aria-hidden="true"></span>
@@ -30,10 +30,8 @@
         </div>
     </div>
   </nav>
-    <section class="section">
-    <div class="container is-fluid">
-        <div class="columns">
-        <div class="column is-one-fifth">
+  <section class="section">
+    <div class="container is-fluid" style="display:flex">
 <aside class="menu">
   <p class="menu-label">
     General
@@ -45,17 +43,17 @@
       {% if namespace: %}
       <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/deployments">Deployments</a></li>
       <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/ingresses">Ingresses</a></li>
+      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/pods">Pods</a></li>
       {% endif %}
       {% endif %}
   </ul>
 </aside>
-        </div>
-        <div class="column">
+        <div class="main">
 
         {% block content %}{% endblock %}
         </div>
     </div>
-    </section>
+    </div>
   <footer class="footer">
       <div class="container">
           <div class="has-text-centered">
