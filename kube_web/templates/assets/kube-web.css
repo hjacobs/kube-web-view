@@ -6,6 +6,10 @@ section.section { padding: 1.5rem 0; }
 aside.menu { flex-grow: 0; flex-shrink: 0; flex-basis: 12rem; padding-left: 32px; margin-right: 32px; background: #fafafa; margin-top: -1.5rem; padding-top: 1.5rem; }
 .main { flex-grow: 1; flex-shrink: 1; }
 
+h1 .links {
+    margin-left: 1rem;
+}
+
 
 /* Pygments CSS */
 .highlight .hll { background-color: #ffffcc }

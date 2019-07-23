@@ -1,5 +1,6 @@
 import aiohttp_jinja2
 import jinja2
+import csv
 import pykube
 import logging
 import yaml
@@ -112,8 +113,10 @@ def context():
     def decorator(func):
         async def func_wrapper(request):
             ctx = await func(request)
-            namespaces = list(Namespace.objects(api).filter())
-            ctx["namespaces"] = namespaces
+            if isinstance(ctx, dict):
+                namespaces = list(Namespace.objects(api).filter())
+                ctx["namespaces"] = namespaces
+                ctx["rel_url"] = request.rel_url
             return ctx
 
         return func_wrapper
@@ -153,6 +156,7 @@ async def get_cluster(request):
 async def get_cluster_resource_list(request):
     cluster = request.match_info["cluster"]
     plural = request.match_info["plural"]
+    params = request.rel_url.query
     clazz = None
     for c in cluster_resource_types:
         if c.endpoint == plural:
@@ -161,6 +165,8 @@ async def get_cluster_resource_list(request):
     if not clazz:
         return web.Response(status=404, text="Resource type not found")
     table = clazz.objects(api).as_table()
+    if params.get("download") == "tsv":
+        return await download_tsv(request, table)
     return {"cluster": cluster, "namespace": None, "plural": plural, "tables": [table]}
 
 
@@ -196,6 +202,38 @@ async def get_cluster_resource_view(request):
     }
 
 
+class ResponseWriter:
+    def __init__(self, response):
+        self.response = response
+        self.data = ""
+
+    def write(self, data):
+        self.data += data
+
+    async def flush(self):
+        await self.response.write(self.data.encode("utf-8"))
+        self.data = ""
+
+
+async def as_tsv(table, fd) -> str:
+    writer = csv.writer(fd, delimiter="\t", lineterminator="\n")
+    writer.writerow([col["name"] for col in table.columns])
+    for row in table.rows:
+        writer.writerow(row["cells"])
+        await fd.flush()
+
+
+async def download_tsv(request, table):
+    response = web.StreamResponse()
+    response.content_type = "text/tab-separated-values"
+    path = request.rel_url.path
+    filename = path.strip("/").replace("/", "_")
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}.tsv"'
+    await response.prepare(request)
+    await as_tsv(table, ResponseWriter(response))
+    return response
+
+
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}")
 @aiohttp_jinja2.template("resource-list.html")
 @context()
@@ -203,6 +241,7 @@ async def get_namespaced_resource_list(request):
     cluster = request.match_info["cluster"]
     namespace = request.match_info["namespace"]
     plural = request.match_info["plural"]
+    params = request.rel_url.query
     tables = []
     for _type in plural.split(","):
         clazz = None
@@ -213,12 +252,13 @@ async def get_namespaced_resource_list(request):
         if not clazz:
             return web.Response(status=404, text="Resource type not found")
         query = clazz.objects(api).filter(namespace=namespace)
-        params = request.rel_url.query
         if "selector" in params:
             query = query.filter(selector=params["selector"])
 
         table = query.as_table()
         tables.append(table)
+    if params.get("download") == "tsv":
+        return await download_tsv(request, tables[0])
     return {
         "cluster": cluster,
         "namespace": namespace,
