@@ -1,6 +1,6 @@
 .PHONY: clean test appjs docker push mock
 
-IMAGE            ?= hjacobs/kube-web
+IMAGE            ?= hjacobs/kube-web-view
 VERSION          ?= $(shell git describe --tags --always --dirty)
 TAG              ?= $(VERSION)
 TTYFLAGS         = $(shell test -t 0 && echo "-it")
@@ -46,3 +46,7 @@ push: docker
 
 mock:
 	docker run $(TTYFLAGS) -p 8080:8080 "$(IMAGE):$(TAG)" --mock
+
+.PHONY: docs
+docs:
+	poetry run sphinx-build docs docs/_build

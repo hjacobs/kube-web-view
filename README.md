@@ -1,4 +1,4 @@
-# Kubernetes Web
+# Kubernetes Web View
 
 EARLY HACK
 
@@ -20,7 +20,7 @@ Non-goals:
 ## Running Locally
 
 ```
-docker run -it -p 8080:8080 -u $(id -u) -v $HOME/.kube:$HOME.kube hjacobs/kube-web
+docker run -it -p 8080:8080 -u $(id -u) -v $HOME/.kube:/.kube hjacobs/kube-web-view
 ```
 
 ## Running tests
