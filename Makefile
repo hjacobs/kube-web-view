@@ -30,8 +30,8 @@ test.unit:
 	poetry run coverage report
 
 .PHONY: test.e2e
-test.e2e: kind kubectl 
-	env TEST_KIND=./kind TEST_KUBECTL=./kubectl TEST_OPERATOR_IMAGE=$(OPERATOR_IMAGE) \
+test.e2e: kind kubectl docker
+	env TEST_KIND=./kind TEST_KUBECTL=./kubectl TEST_IMAGE=$(IMAGE):$(TAG) \
 		poetry run pytest -v -r=a \
 			--log-cli-level info \
 			--log-cli-format '%(asctime)s %(levelname)s %(message)s' \

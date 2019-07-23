@@ -4,3 +4,4 @@ dist/
 kind
 kubectl
 docs/_build/
+.kube
