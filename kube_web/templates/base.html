@@ -28,16 +28,20 @@
         <div class="navbar-start">
             <a class="navbar-item {{ 'is-active' if page == 'index' }}" href="/">Overview</a>
             <a class="navbar-item {{ 'is-active' if page == 'clusters' }}" href="/clusters">Clusters</a>
+            {% if namespaces: %}
          <div class="navbar-item has-dropdown is-hoverable">
         <a class="navbar-link">
             {{ namespace }}
         </a>
 
         <div class="navbar-dropdown">
-          <a class="navbar-item">
-            default
+        {% for ns in namespaces: %}
+        <a class="navbar-item" href="/clusters/{{ cluster}}/namespaces/{{ ns.name }}">
+              {{ ns.name }}
           </a>
+        {% endfor %}
         </div>
+        {% endif %}
         </div>
       </div>
     </div>
@@ -45,22 +49,16 @@
   <section class="section">
     <div class="container is-fluid" style="display:flex">
 <aside class="menu">
+      {% if cluster: %}
   <p class="menu-label">
-    General <span class="icon">
-  <i class="fas fa-home"></i>
-</span>
+    Cluster Resources
   </p>
   <ul class="menu-list">
-      {% if cluster: %}
       <li><a href="/clusters/{{cluster}}/namespaces">Namespaces</a></li>
       <li><a href="/clusters/{{cluster}}/nodes">Nodes</a></li>
-      {% if namespace: %}
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/deployments">Deployments</a></li>
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/ingresses">Ingresses</a></li>
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/pods">Pods</a></li>
-      {% endif %}
-      {% endif %}
+      <li><a href="/clusters/{{cluster}}/persistentvolumes">PersistentVolumes</a></li>
   </ul>
+      {% endif %}
     {% if cluster and namespace: %}
   <p class="menu-label">
     Controllers

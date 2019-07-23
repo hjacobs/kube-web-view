@@ -43,8 +43,8 @@ def discover_api_resources(api):
         pref_version = group["preferredVersion"]["groupVersion"]
         yielded = set()
         non_preferred = []
-        for version in group['versions']:
-            group_version = version['groupVersion']
+        for version in group["versions"]:
+            group_version = version["groupVersion"]
             logger.debug(f"Collecting resources for {group_version}..")
             r2 = api.get(version=group_version)
             r2.raise_for_status()
@@ -56,12 +56,15 @@ def discover_api_resources(api):
                 ):
                     if group_version == pref_version:
                         yield resource["namespaced"], group_version, resource
-                        yielded.add(resource['name'])
+                        yielded.add(resource["name"])
                     else:
-                        non_preferred.append((resource["namespaced"], group_version, resource))
+                        non_preferred.append(
+                            (resource["namespaced"], group_version, resource)
+                        )
         for namespaced, group_version, resource in non_preferred:
-            if resource['name'] not in yielded:
+            if resource["name"] not in yielded:
                 yield namespaced, group_version, resource
+
 
 def cluster_object_factory(kind: str, name: str, api_version: str):
     # https://github.com/kelproject/pykube/blob/master/pykube/objects.py#L138
@@ -105,6 +108,19 @@ for clazz in get_namespaced_resource_types(api):
 routes = web.RouteTableDef()
 
 
+def context():
+    def decorator(func):
+        async def func_wrapper(request):
+            ctx = await func(request)
+            namespaces = list(Namespace.objects(api).filter())
+            ctx["namespaces"] = namespaces
+            return ctx
+
+        return func_wrapper
+
+    return decorator
+
+
 @routes.get("/")
 @aiohttp_jinja2.template("index.html")
 async def get_index(request):
@@ -119,6 +135,7 @@ async def get_clusters(request):
 
 @routes.get("/clusters/{cluster}")
 @aiohttp_jinja2.template("cluster.html")
+@context()
 async def get_cluster(request):
     cluster = request.match_info["cluster"]
     namespaces = list(Namespace.objects(api).filter())
@@ -132,6 +149,7 @@ async def get_cluster(request):
 
 @routes.get("/clusters/{cluster}/{plural}")
 @aiohttp_jinja2.template("resource-list.html")
+@context()
 async def get_cluster_resource_list(request):
     cluster = request.match_info["cluster"]
     plural = request.match_info["plural"]
@@ -148,6 +166,7 @@ async def get_cluster_resource_list(request):
 
 @routes.get("/clusters/{cluster}/{plural}/{name}")
 @aiohttp_jinja2.template("resource-view.html")
+@context()
 async def get_cluster_resource_view(request):
     cluster = request.match_info["cluster"]
     plural = request.match_info["plural"]
@@ -179,12 +198,13 @@ async def get_cluster_resource_view(request):
 
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}")
 @aiohttp_jinja2.template("resource-list.html")
+@context()
 async def get_namespaced_resource_list(request):
     cluster = request.match_info["cluster"]
     namespace = request.match_info["namespace"]
     plural = request.match_info["plural"]
     tables = []
-    for _type in plural.split(','):
+    for _type in plural.split(","):
         clazz = None
         for c in namespaced_resource_types:
             if c.endpoint == _type:
@@ -209,6 +229,7 @@ async def get_namespaced_resource_list(request):
 
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}/{name}")
 @aiohttp_jinja2.template("resource-view.html")
+@context()
 async def get_namespaced_resource_view(request):
     cluster = request.match_info["cluster"]
     namespace = request.match_info["namespace"]
@@ -250,7 +271,7 @@ aiohttp_jinja2.setup(
 )
 env = aiohttp_jinja2.get_env(app)
 env.filters.update(yaml=filter_yaml, highlight=filter_highlight)
-env.globals['version'] = __version__
+env.globals["version"] = __version__
 
 app.add_routes(routes)
 app.router.add_static("/assets", Path(__file__).parent / "templates" / "assets")
