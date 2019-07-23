@@ -41,17 +41,27 @@ def discover_api_resources(api):
     r.raise_for_status()
     for group in r.json()["groups"]:
         pref_version = group["preferredVersion"]["groupVersion"]
-        logger.debug(f"Collecting resources for {pref_version}..")
-        r2 = api.get(version=pref_version)
-        r2.raise_for_status()
-        for resource in r2.json()["resources"]:
-            if (
-                "/" not in resource["name"]
-                and "get" in resource["verbs"]
-                and "list" in resource["verbs"]
-            ):
-                yield resource["namespaced"], pref_version, resource
-
+        yielded = set()
+        non_preferred = []
+        for version in group['versions']:
+            group_version = version['groupVersion']
+            logger.debug(f"Collecting resources for {group_version}..")
+            r2 = api.get(version=group_version)
+            r2.raise_for_status()
+            for resource in r2.json()["resources"]:
+                if (
+                    "/" not in resource["name"]
+                    and "get" in resource["verbs"]
+                    and "list" in resource["verbs"]
+                ):
+                    if group_version == pref_version:
+                        yield resource["namespaced"], group_version, resource
+                        yielded.add(resource['name'])
+                    else:
+                        non_preferred.append((resource["namespaced"], group_version, resource))
+        for namespaced, group_version, resource in non_preferred:
+            if resource['name'] not in yielded:
+                yield namespaced, group_version, resource
 
 def cluster_object_factory(kind: str, name: str, api_version: str):
     # https://github.com/kelproject/pykube/blob/master/pykube/objects.py#L138

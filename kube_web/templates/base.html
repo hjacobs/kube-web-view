@@ -28,7 +28,18 @@
         <div class="navbar-start">
             <a class="navbar-item {{ 'is-active' if page == 'index' }}" href="/">Overview</a>
             <a class="navbar-item {{ 'is-active' if page == 'clusters' }}" href="/clusters">Clusters</a>
+         <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link">
+            {{ namespace }}
+        </a>
+
+        <div class="navbar-dropdown">
+          <a class="navbar-item">
+            default
+          </a>
         </div>
+        </div>
+      </div>
     </div>
   </nav>
   <section class="section">
@@ -50,6 +61,18 @@
       {% endif %}
       {% endif %}
   </ul>
+    {% if cluster and namespace: %}
+  <p class="menu-label">
+    Controllers
+  </p>
+  <ul class="menu-list">
+      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/deployments">Deployments</a></li>
+      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/cronjobs">CronJobs</a></li>
+      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/jobs">Jobs</a></li>
+      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/daemonsets">DaemonSets</a></li>
+      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/statefulsets">StatefulSets</a></li>
+  </ul>
+      {% endif %}
 </aside>
         <div class="main">
 
