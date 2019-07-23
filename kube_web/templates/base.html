@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% endblock %} - Kubernetes Web UI</title>
     <link rel="stylesheet" href="/assets/bulma.min.css">
-    <script defer src="/assets/all.js"></script>
+    <script defer src="/assets/solid.min.js"></script>
+    <script defer src="/assets/fontawesome.min.js"></script>
     <script src="/assets/sortable.min.js"></script>
     <script src="/assets/navbar.js"></script>
     <script src="/assets/anchor.min.js"></script>
@@ -34,7 +35,9 @@
     <div class="container is-fluid" style="display:flex">
 <aside class="menu">
   <p class="menu-label">
-    General
+    General <span class="icon">
+  <i class="fas fa-home"></i>
+</span>
   </p>
   <ul class="menu-list">
       {% if cluster: %}
