@@ -5,12 +5,13 @@ EARLY HACK
 Goals:
 
 * handling of any API resource: both core Kubernetes and CRDs
-* permalink-friendly URL paths
+* permalink-friendly URL paths for giving links to colleagues (e.g. to help troubleshoot)
 * option to work with multiple clusters
-* replicate some of the common `kubectl` features
+* allow listing different resource types on the same page (e.g. deployments and CRDs with same label)
+* replicate some of the common `kubectl` features, e.g. `-l` (label selector) and `-L` (label columns)
 * simple HTML, only add JavaScript where it adds value
-* editing resources as YAML manifests (`kubectl edit`)
 * pluggable links, e.g. to link to other tools based on resource properties like labels (monitoring, reports, ..)
+* optional: editing resources as YAML manifests (`kubectl edit`)
 
 Non-goals:
 
