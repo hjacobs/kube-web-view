@@ -41,3 +41,8 @@ $ make test
 $ make
 ```
 
+## Developing Locally
+
+```
+$ poetry run python3 -m kube_web
+```

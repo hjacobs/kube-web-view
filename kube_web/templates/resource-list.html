@@ -11,12 +11,13 @@
   </ul>
 </nav>
 
-<h1 class="title">{{ plural }}</h1>
+{% for table in tables: %}
+<h1 class="title">{{ table.api_obj_class.kind }}</h1>
 
 <table class="table is-striped">
     <tr>
         {% for column in table.columns: %}
-        <th>{{ column.name }}</th>
+        <th title="{{ column.description }}">{{ column.name }}</th>
         {% endfor %}
         <th>Created</th>
     </tr>
@@ -25,9 +26,9 @@
     {% for cell in row.cells: %}
     {% if loop.first: %}
     {% if namespace: %}
-    <td><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ plural }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
+    <td><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
       {% else: %}
-    <td><a href="/clusters/{{ cluster }}/{{ plural }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
+    <td><a href="/clusters/{{ cluster }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
       {% endif %}
     {% else: %}
     <td>{{ cell }}</td>
@@ -37,5 +38,7 @@
 </tr>
 {% endfor %}
 </table>
+
+{% endfor %}
 
 {% endblock %}

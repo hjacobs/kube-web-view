@@ -11,6 +11,8 @@ from pathlib import Path
 
 from aiohttp import web
 
+from kube_web import __version__
+
 logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
@@ -131,7 +133,7 @@ async def get_cluster_resource_list(request):
     if not clazz:
         return web.Response(status=404, text="Resource type not found")
     table = clazz.objects(api).as_table()
-    return {"cluster": cluster, "namespace": None, "plural": plural, "table": table}
+    return {"cluster": cluster, "namespace": None, "plural": plural, "tables": [table]}
 
 
 @routes.get("/clusters/{cluster}/{plural}/{name}")
@@ -171,24 +173,27 @@ async def get_namespaced_resource_list(request):
     cluster = request.match_info["cluster"]
     namespace = request.match_info["namespace"]
     plural = request.match_info["plural"]
-    clazz = None
-    for c in namespaced_resource_types:
-        if c.endpoint == plural:
-            clazz = c
-            break
-    if not clazz:
-        return web.Response(status=404, text="Resource type not found")
-    query = clazz.objects(api).filter(namespace=namespace)
-    params = request.rel_url.query
-    if "selector" in params:
-        query = query.filter(selector=params["selector"])
+    tables = []
+    for _type in plural.split(','):
+        clazz = None
+        for c in namespaced_resource_types:
+            if c.endpoint == _type:
+                clazz = c
+                break
+        if not clazz:
+            return web.Response(status=404, text="Resource type not found")
+        query = clazz.objects(api).filter(namespace=namespace)
+        params = request.rel_url.query
+        if "selector" in params:
+            query = query.filter(selector=params["selector"])
 
-    table = query.as_table()
+        table = query.as_table()
+        tables.append(table)
     return {
         "cluster": cluster,
         "namespace": namespace,
         "plural": plural,
-        "table": table,
+        "tables": tables,
     }
 
 
@@ -235,6 +240,7 @@ aiohttp_jinja2.setup(
 )
 env = aiohttp_jinja2.get_env(app)
 env.filters.update(yaml=filter_yaml, highlight=filter_highlight)
+env.globals['version'] = __version__
 
 app.add_routes(routes)
 app.router.add_static("/assets", Path(__file__).parent / "templates" / "assets")
