@@ -43,6 +43,8 @@ docker:
 
 push: docker
 	docker push "$(IMAGE):$(TAG)"
+	docker tag "$(IMAGE):$(TAG)" "$(IMAGE):latest"
+	docker push "$(IMAGE):latest"
 
 mock:
 	docker run $(TTYFLAGS) -p 8080:8080 "$(IMAGE):$(TAG)" --mock

@@ -17,11 +17,15 @@ Non-goals:
 * application management
 * reporting/visualization
 
-## Running Locally
+## Quickstart
+
+This will run Kubernetes Web View locally with your existing Kubeconfig:
 
 ```
 docker run -it -p 8080:8080 -u $(id -u) -v $HOME/.kube:/.kube hjacobs/kube-web-view
 ```
+
+Open http://localhost:8080/ in your browser to see the UI.
 
 ## Running tests
 
