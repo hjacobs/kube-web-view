@@ -17,6 +17,7 @@ black = {version = "^18.3-alpha.0", allows-prereleases = true}
 flake8 = "^3.7"
 pytest-cov = "^2.7"
 Sphinx = "^2.1"
+sphinx-rtd-theme = "^0.4.3"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
