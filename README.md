@@ -1,5 +1,7 @@
 # Kubernetes Web View
 
+![Docker Pulls](https://img.shields.io/docker/pulls/hjacobs/kube-web-view.svg)
+
 EARLY HACK
 
 Goals:
