@@ -1,5 +1,6 @@
 # Kubernetes Web View
 
+[![Documentation Status](https://readthedocs.org/projects/kube-web-view/badge/?version=latest)](https://kube-web-view.readthedocs.io/en/latest/?badge=latest)
 ![Docker Pulls](https://img.shields.io/docker/pulls/hjacobs/kube-web-view.svg)
 
 EARLY HACK
