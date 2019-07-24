@@ -52,3 +52,7 @@ mock:
 .PHONY: docs
 docs:
 	poetry run sphinx-build docs docs/_build
+
+.PHONY: run
+run:
+	poetry run python3 -m kube_web

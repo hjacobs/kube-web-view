@@ -21,8 +21,11 @@ logger = logging.getLogger(__name__)
 
 try:
     api = pykube.HTTPClient(pykube.KubeConfig.from_service_account())
+    CLUSTER_NAME = "local"
 except:
-    api = pykube.HTTPClient(pykube.KubeConfig.from_file())
+    kubeconfig = pykube.KubeConfig.from_file()
+    api = pykube.HTTPClient(kubeconfig)
+    CLUSTER_NAME = kubeconfig.current_context
 
 
 def discover_api_resources(api):
@@ -125,15 +128,14 @@ def context():
 
 
 @routes.get("/")
-@aiohttp_jinja2.template("index.html")
 async def get_index(request):
-    return {}
+    raise web.HTTPFound(location="/clusters")
 
 
 @routes.get("/clusters")
 @aiohttp_jinja2.template("clusters.html")
 async def get_clusters(request):
-    return {"clusters": ["default"]}
+    return {"clusters": [CLUSTER_NAME]}
 
 
 @routes.get("/clusters/{cluster}")
@@ -291,6 +293,11 @@ async def get_namespaced_resource_view(request):
         "resource": resource,
         "view": view,
     }
+
+
+@routes.get("/health")
+async def get_health(request):
+    return web.Response(text="OK")
 
 
 def filter_yaml(value):
