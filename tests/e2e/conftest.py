@@ -69,7 +69,8 @@ def cluster() -> dict:
     logging.info(f"Waiting for proxy {proxy_url} ...")
     while True:
         try:
-            requests.get(proxy_url)
+            response = requests.get(proxy_url)
+            response.raise_for_status()
         except:
             pass
         else:
