@@ -28,22 +28,34 @@ docker run -it -p 8080:8080 -u $(id -u) -v $HOME/.kube:/.kube hjacobs/kube-web-v
 
 Open http://localhost:8080/ in your browser to see the UI.
 
+## Deploying into your cluster
+
+This will deploy a single Pod with Kubernetes Web View into your cluster:
+
+```
+kubectl apply -f deploy/
+kubectl port-forward service/kube-web-view 8080:80
+```
+
+Open http://localhost:8080/ in your browser to see the UI.
+
+
 ## Running tests
 
 Requires Python 3.7 and poetry:
 
 ```
-$ make test
+make test
 ```
 
 ## Building the Docker image
 
 ```
-$ make
+make
 ```
 
 ## Developing Locally
 
 ```
-$ poetry run python3 -m kube_web
+poetry run python3 -m kube_web
 ```
