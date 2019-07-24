@@ -56,3 +56,7 @@ docs:
 .PHONY: run
 run:
 	poetry run python3 -m kube_web
+
+.PHONY: mirror
+mirror:
+	git push --mirror git@github.com:hjacobs/kube-web-view.git
