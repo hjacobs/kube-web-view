@@ -2,9 +2,11 @@ import aiohttp_jinja2
 import jinja2
 import csv
 import pykube
+import asyncio
 import logging
 import yaml
 
+import concurrent.futures
 import pykube
 from pykube import ObjectDoesNotExist
 from pykube.objects import APIObject, NamespacedAPIObject, Namespace, Event
@@ -18,6 +20,10 @@ from kube_web import __version__
 logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
+
+thread_pool = concurrent.futures.ThreadPoolExecutor(
+    max_workers=16, thread_name_prefix="pykube"
+)
 
 
 try:
@@ -226,7 +232,8 @@ async def get_namespaced_resource_list(request):
         if "selector" in params:
             query = query.filter(selector=params["selector"])
 
-        table = query.as_table()
+        loop = asyncio.get_event_loop()
+        table = await loop.run_in_executor(thread_pool, lambda: query.as_table())
         tables.append(table)
     if params.get("download") == "tsv":
         return await download_tsv(request, tables[0])
