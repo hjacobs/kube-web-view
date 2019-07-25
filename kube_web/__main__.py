@@ -5,8 +5,9 @@ import pykube
 import logging
 import yaml
 
+import pykube
 from pykube import ObjectDoesNotExist
-from pykube.objects import APIObject, NamespacedAPIObject, Namespace
+from pykube.objects import APIObject, NamespacedAPIObject, Namespace, Event
 
 from pathlib import Path
 
@@ -172,38 +173,6 @@ async def get_cluster_resource_list(request):
     return {"cluster": cluster, "namespace": None, "plural": plural, "tables": [table]}
 
 
-@routes.get("/clusters/{cluster}/{plural}/{name}")
-@aiohttp_jinja2.template("resource-view.html")
-@context()
-async def get_cluster_resource_view(request):
-    cluster = request.match_info["cluster"]
-    plural = request.match_info["plural"]
-    name = request.match_info["name"]
-    view = request.rel_url.query.get("view")
-    clazz = None
-    for c in cluster_resource_types:
-        if c.endpoint == plural:
-            clazz = c
-            break
-    if not clazz:
-        return web.Response(status=404, text="Resource type not found")
-    try:
-        resource = clazz.objects(api).get(name=name)
-    except ObjectDoesNotExist:
-        return web.Response(status=404, text="Resource does not exist")
-    if resource.kind == "Namespace":
-        namespace = resource.name
-    else:
-        namespace = None
-    return {
-        "cluster": cluster,
-        "namespace": namespace,
-        "plural": plural,
-        "resource": resource,
-        "view": view,
-    }
-
-
 class ResponseWriter:
     def __init__(self, response):
         self.response = response
@@ -269,29 +238,58 @@ async def get_namespaced_resource_list(request):
     }
 
 
+@routes.get("/clusters/{cluster}/{plural}/{name}")
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}/{name}")
 @aiohttp_jinja2.template("resource-view.html")
 @context()
-async def get_namespaced_resource_view(request):
+async def get_resource_view(request):
     cluster = request.match_info["cluster"]
-    namespace = request.match_info["namespace"]
+    namespace = request.match_info.get("namespace")
     plural = request.match_info["plural"]
     name = request.match_info["name"]
     view = request.rel_url.query.get("view")
     clazz = None
-    for c in namespaced_resource_types:
-        if c.endpoint == plural:
-            clazz = c
-            break
+    if namespace:
+        for c in namespaced_resource_types:
+            if c.endpoint == plural:
+                clazz = c
+                break
+    else:
+        for c in cluster_resource_types:
+            if c.endpoint == plural:
+                clazz = c
+                break
     if not clazz:
         return web.Response(status=404, text="Resource type not found")
-    resource = clazz.objects(api).filter(namespace=namespace).get(name=name)
+    query = clazz.objects(api)
+    if namespace:
+        query = query.filter(namespace=namespace)
+    resource = query.get(name=name)
+
+    field_selector = {
+        "involvedObject.name": resource.name,
+        "involvedObject.namespace": namespace or "",
+        "involvedObject.kind": resource.kind,
+        "involvedObject.uid": resource.metadata["uid"],
+    }
+    events = list(
+        Event.objects(api).filter(
+            namespace=namespace or pykube.all, field_selector=field_selector
+        )
+    )
+
+    if resource.kind == "Namespace":
+        namespace = resource.name
+    else:
+        namespace = None
+
     return {
         "cluster": cluster,
         "namespace": namespace,
         "plural": plural,
         "resource": resource,
         "view": view,
+        "events": events,
     }
 
 
