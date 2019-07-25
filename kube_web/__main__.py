@@ -2,11 +2,9 @@ import aiohttp_jinja2
 import jinja2
 import csv
 import pykube
-import asyncio
 import logging
 import yaml
 
-import concurrent.futures
 import pykube
 from pykube import ObjectDoesNotExist
 from pykube.objects import APIObject, NamespacedAPIObject, Namespace, Event
@@ -16,14 +14,11 @@ from pathlib import Path
 from aiohttp import web
 
 from kube_web import __version__
+from kube_web import kubernetes
 
 logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
-
-thread_pool = concurrent.futures.ThreadPoolExecutor(
-    max_workers=16, thread_name_prefix="pykube"
-)
 
 
 try:
@@ -124,7 +119,7 @@ def context():
         async def func_wrapper(request):
             ctx = await func(request)
             if isinstance(ctx, dict):
-                namespaces = list(Namespace.objects(api).filter())
+                namespaces = await kubernetes.get_list(Namespace.objects(api))
                 ctx["namespaces"] = namespaces
                 ctx["rel_url"] = request.rel_url
             return ctx
@@ -150,7 +145,7 @@ async def get_clusters(request):
 @context()
 async def get_cluster(request):
     cluster = request.match_info["cluster"]
-    namespaces = list(Namespace.objects(api).filter())
+    namespaces = await kubernetes.get_list(Namespace.objects(api))
     return {
         "cluster": cluster,
         "namespace": None,
@@ -173,7 +168,7 @@ async def get_cluster_resource_list(request):
             break
     if not clazz:
         return web.Response(status=404, text="Resource type not found")
-    table = clazz.objects(api).as_table()
+    table = await kubernetes.get_table(clazz.objects(api))
     if params.get("download") == "tsv":
         return await download_tsv(request, table)
     return {"cluster": cluster, "namespace": None, "plural": plural, "tables": [table]}
@@ -232,8 +227,7 @@ async def get_namespaced_resource_list(request):
         if "selector" in params:
             query = query.filter(selector=params["selector"])
 
-        loop = asyncio.get_event_loop()
-        table = await loop.run_in_executor(thread_pool, lambda: query.as_table())
+        table = await kubernetes.get_table(query)
         tables.append(table)
     if params.get("download") == "tsv":
         return await download_tsv(request, tables[0])
@@ -271,7 +265,7 @@ async def get_resource_view(request):
     query = clazz.objects(api)
     if namespace:
         query = query.filter(namespace=namespace)
-    resource = query.get(name=name)
+    resource = await kubernetes.get_by_name(query, name)
 
     field_selector = {
         "involvedObject.name": resource.name,
@@ -279,7 +273,7 @@ async def get_resource_view(request):
         "involvedObject.kind": resource.kind,
         "involvedObject.uid": resource.metadata["uid"],
     }
-    events = list(
+    events = await kubernetes.get_list(
         Event.objects(api).filter(
             namespace=namespace or pykube.all, field_selector=field_selector
         )
@@ -287,8 +281,6 @@ async def get_resource_view(request):
 
     if resource.kind == "Namespace":
         namespace = resource.name
-    else:
-        namespace = None
 
     return {
         "cluster": cluster,
