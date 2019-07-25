@@ -1,5 +1,6 @@
 import pykube
 import yaml
+import time
 import threading
 from tempfile import NamedTemporaryFile
 import requests
@@ -61,22 +62,24 @@ def cluster() -> dict:
     logging.info("Waiting for rollout ...")
     kubectl("rollout", "status", "deployment/kube-web-view")
 
-    def proxy():
-        kubectl("proxy", "--port=8011")
+    def port_forward():
+        while True:
+            kubectl("port-forward", "service/kube-web-view", "8087:80")
+            time.sleep(10)
 
-    proxy_url = "http://localhost:8011/"
-    threading.Thread(target=proxy, daemon=True).start()
-    logging.info(f"Waiting for proxy {proxy_url} ...")
+    url = "http://localhost:8087/"
+    threading.Thread(target=port_forward, daemon=True).start()
+    logging.info(f"Waiting for port forward {url} ...")
     while True:
         try:
-            response = requests.get(proxy_url)
+            response = requests.get(url)
             response.raise_for_status()
         except:
             pass
         else:
             break
 
-    return {"proxy_url": proxy_url}
+    return {"url": url}
 
 
 @fixture(scope="class")
