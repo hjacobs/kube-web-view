@@ -350,7 +350,8 @@ OAUTH2_CALLBACK_PATH = "/oauth2/callback"
 
 @web.middleware
 async def auth(request, handler):
-    if request.rel_url.path == OAUTH2_CALLBACK_PATH:
+    path = request.rel_url.path
+    if path == OAUTH2_CALLBACK_PATH:
         client, _ = await get_oauth2_client()
         # Get access token
         code = request.query["code"]
