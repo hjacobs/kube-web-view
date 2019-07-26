@@ -16,3 +16,5 @@ Kubernetes Web View support OAuth2 for protecting its web frontend. Use the foll
     OAuth 2 client secret
 ``OAUTH2_CLIENT_SECRET_FILE``
     Path to file containing the client secret. Use this instead of ``OAUTH2_CLIENT_SECRET`` to read the client secret dynamically from file.
+``SESSION_SECRET_KEY``
+    Secret to encrypt the session cookie. Must be 32 bytes base64-encoded. Use ``cryptography.fernet.Fernet.generate_key()`` to generate such a key.
