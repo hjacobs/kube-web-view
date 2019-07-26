@@ -3,6 +3,9 @@
 {% block content %}
 <h1 class="title">Clusters</h1>
 <table class="table is-stripped">
+    <tr>
+        <th>Name</th>
+    </tr>
 {% for cluster in clusters: %}
 <tr>
     <td><a href="/clusters/{{ cluster }}">{{ cluster }}</a></td>

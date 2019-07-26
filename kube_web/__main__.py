@@ -13,6 +13,7 @@ from pykube import ObjectDoesNotExist
 from pykube.objects import APIObject, NamespacedAPIObject, Namespace, Event
 from aiohttp_session import SimpleCookieStorage, get_session, setup as session_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
+from aiohttp_remotes import XForwardedRelaxed
 from aioauth_client import OAuth2Client
 from cryptography.fernet import Fernet
 
@@ -299,7 +300,10 @@ async def get_resource_view(request):
     }
 
 
-@routes.get("/health")
+HEALTH_PATH = "/health"
+
+
+@routes.get(HEALTH_PATH)
 async def get_health(request):
     return web.Response(text="OK")
 
@@ -357,7 +361,7 @@ async def auth(request, handler):
         session = await get_session(request)
         session["access_token"] = access_token
         raise web.HTTPFound(location="/")
-    else:
+    elif path != HEALTH_PATH:
         session = await get_session(request)
         if not session.get("access_token"):
             client, params = await get_oauth2_client()
@@ -376,6 +380,9 @@ env.globals["version"] = __version__
 
 app.add_routes(routes)
 app.router.add_static("/assets", Path(__file__).parent / "templates" / "assets")
+
+# behind proxy
+app.middlewares.append(XForwardedRelaxed().middleware)
 
 secret_key = os.getenv("SESSION_SECRET_KEY") or Fernet.generate_key()
 secret_key = base64.urlsafe_b64decode(secret_key)
