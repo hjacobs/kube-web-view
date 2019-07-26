@@ -10,6 +10,7 @@ Git repo: https://codeberg.org/hjacobs/kube-web-view
    :caption: Contents:
 
    getting-started
+   oauth2
 
 
 

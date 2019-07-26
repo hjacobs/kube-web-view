@@ -10,7 +10,9 @@ pykube-ng = "^0.28.0"
 Jinja2 = "^2.10"
 aiohttp-jinja2 = "^1.1"
 Pygments = "^2.4"
-
+aiohttp_session = {version = "^2.7", extras = ["secure"]}
+aioauth-client = "^0.17.3"
+aiohttp_remotes = "^0.1.2"
 [tool.poetry.dev-dependencies]
 pytest = "^5.0"
 black = {version = "^18.3-alpha.0", allows-prereleases = true}

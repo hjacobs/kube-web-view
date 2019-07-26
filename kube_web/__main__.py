@@ -1,13 +1,21 @@
 import aiohttp_jinja2
 import jinja2
 import csv
+import base64
+import os
 import pykube
 import logging
+from yarl import URL
 import yaml
 
 import pykube
 from pykube import ObjectDoesNotExist
 from pykube.objects import APIObject, NamespacedAPIObject, Namespace, Event
+from aiohttp_session import SimpleCookieStorage, get_session, setup as session_setup
+from aiohttp_session.cookie_storage import EncryptedCookieStorage
+from aiohttp_remotes import XForwardedRelaxed
+from aioauth_client import OAuth2Client
+from cryptography.fernet import Fernet
 
 from pathlib import Path
 
@@ -292,7 +300,10 @@ async def get_resource_view(request):
     }
 
 
-@routes.get("/health")
+HEALTH_PATH = "/health"
+
+
+@routes.get(HEALTH_PATH)
 async def get_health(request):
     return web.Response(text="OK")
 
@@ -309,6 +320,57 @@ def filter_highlight(value):
     return highlight(value, get_lexer_by_name("yaml"), HtmlFormatter())
 
 
+async def get_oauth2_client():
+    authorize_url = URL(os.getenv("OAUTH2_AUTHORIZE_URL"))
+    access_token_url = URL(os.getenv("OAUTH2_ACCESS_TOKEN_URL"))
+
+    client_id = os.getenv("OAUTH2_CLIENT_ID")
+    client_secret = os.getenv("OAUTH2_CLIENT_SECRET")
+
+    client_id_file = os.getenv("OAUTH2_CLIENT_ID_FILE")
+    if client_id_file:
+        client_id = open(client_id_file).read().strip()
+    client_secret_file = os.getenv("OAUTH2_CLIENT_SECRET_FILE")
+    if client_secret_file:
+        client_secret = open(client_secret_file).read().strip()
+
+    # workaround for a bug in OAuth2Client where the authorize URL won't work with params ("?..")
+    authorize_url_without_query = str(authorize_url.with_query(None))
+    client = OAuth2Client(
+        client_id=client_id,
+        client_secret=client_secret,
+        authorize_url=authorize_url_without_query,
+        access_token_url=access_token_url,
+    )
+    return client, dict(authorize_url.query)
+
+
+OAUTH2_CALLBACK_PATH = "/oauth2/callback"
+
+
+@web.middleware
+async def auth(request, handler):
+    path = request.rel_url.path
+    if path == OAUTH2_CALLBACK_PATH:
+        client, _ = await get_oauth2_client()
+        # Get access token
+        code = request.query["code"]
+        redirect_uri = str(request.url.with_path(OAUTH2_CALLBACK_PATH))
+        access_token, data = await client.get_access_token(
+            code, redirect_uri=redirect_uri
+        )
+        session = await get_session(request)
+        session["access_token"] = access_token
+        raise web.HTTPFound(location="/")
+    elif path != HEALTH_PATH:
+        session = await get_session(request)
+        if not session.get("access_token"):
+            client, params = await get_oauth2_client()
+            raise web.HTTPFound(location=client.get_authorize_url(**params))
+    response = await handler(request)
+    return response
+
+
 app = web.Application()
 aiohttp_jinja2.setup(
     app, loader=jinja2.FileSystemLoader(str(Path(__file__).parent / "templates"))
@@ -319,5 +381,18 @@ env.globals["version"] = __version__
 
 app.add_routes(routes)
 app.router.add_static("/assets", Path(__file__).parent / "templates" / "assets")
+
+# behind proxy
+app.middlewares.append(XForwardedRelaxed().middleware)
+
+secret_key = os.getenv("SESSION_SECRET_KEY") or Fernet.generate_key()
+secret_key = base64.urlsafe_b64decode(secret_key)
+session_setup(app, EncryptedCookieStorage(secret_key, cookie_name="KUBE_WEB_VIEW"))
+
+authorize_url = os.getenv("OAUTH2_AUTHORIZE_URL")
+access_token_url = os.getenv("OAUTH2_ACCESS_TOKEN_URL")
+
+if authorize_url and access_token_url:
+    app.middlewares.append(auth)
 
 web.run_app(app)
