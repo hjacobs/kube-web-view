@@ -3,7 +3,11 @@
 [![Documentation Status](https://readthedocs.org/projects/kube-web-view/badge/?version=latest)](https://kube-web-view.readthedocs.io/en/latest/?badge=latest)
 ![Docker Pulls](https://img.shields.io/docker/pulls/hjacobs/kube-web-view.svg)
 
-EARLY HACK
+**EARLY HACK**
+
+Kubernetes Web View allows to list and view all Kubernetes resources (incl. CRDs) with permalink-friendly URLs in a plain-HTML frontend.
+This tool was mainly developed to provide a web-version of `kubectl` for troubleshooting and supporting colleagues.
+See the [Kubernetes Web View Documentation](https://kube-web-view.readthedocs.io/).
 
 Goals:
 
@@ -20,6 +24,7 @@ Non-goals:
 
 * application management
 * reporting/visualization
+* fancy UI (JS/SPA)
 
 ## Quickstart
 
@@ -59,6 +64,8 @@ make
 
 ## Developing Locally
 
+To start the Python web server locally:
+
 ```
-poetry run python3 -m kube_web
+make run
 ```
