@@ -1,6 +1,7 @@
 import aiohttp.web
 import argparse
 from .web import get_app
+from .cluster_manager import ClusterManager
 from kube_web import __version__
 
 parser = argparse.ArgumentParser(description=f"Kubernetes Web View v{__version__}")
@@ -16,5 +17,6 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-app = get_app()
+cluster_manager = ClusterManager()
+app = get_app(cluster_manager)
 aiohttp.web.run_app(app, port=args.port)

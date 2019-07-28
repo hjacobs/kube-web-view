@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 HEALTH_PATH = "/health"
 OAUTH2_CALLBACK_PATH = "/oauth2/callback"
 
+CLUSTER_MANAGER = "cluster_manager"
+
 
 try:
     api = pykube.HTTPClient(pykube.KubeConfig.from_service_account())
@@ -273,7 +275,7 @@ async def auth(request, handler):
     return response
 
 
-def get_app():
+def get_app(cluster_manager):
     app = web.Application()
     aiohttp_jinja2.setup(
         app, loader=jinja2.FileSystemLoader(str(Path(__file__).parent / "templates"))
@@ -297,5 +299,7 @@ def get_app():
 
     if authorize_url and access_token_url:
         app.middlewares.append(auth)
+
+    app[CLUSTER_MANAGER] = cluster_manager
 
     return app
