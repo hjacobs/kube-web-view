@@ -139,9 +139,26 @@ async def get_namespaced_resource_list(request):
     cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
     namespace = request.match_info["namespace"]
     plural = request.match_info["plural"]
+
+    if plural == "all":
+        # this list was extracted from kubectl get all --v=9
+        resource_types = [
+            "pods",
+            "services",
+            "daemonsets",
+            "deployments",
+            "replicasets",
+            "statefulsets",
+            "horizontalpodautoscalers",
+            "jobs",
+            "cronjobs",
+        ]
+    else:
+        resource_types = plural.split(",")
+
     params = request.rel_url.query
     tables = []
-    for _type in plural.split(","):
+    for _type in resource_types:
         clazz = cluster.resource_registry.get_class_by_plural_name(
             _type, namespaced=True
         )

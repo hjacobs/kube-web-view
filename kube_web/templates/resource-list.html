@@ -46,7 +46,7 @@
 </tr>
 {% else: %}
 <tr>
-    <td colspan="{{ table.columns|length }}">No objects found.</td>
+    <td colspan="{{ table.columns|length }}">No {{ table.api_obj_class.kind }} objects found.</td>
 </tr>
 {% endfor %}
 </table>
