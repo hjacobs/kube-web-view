@@ -44,6 +44,10 @@
     {% endfor %}
     <td>{{ row.object.metadata.creationTimestamp }}</td>
 </tr>
+{% else: %}
+<tr>
+    <td colspan="{{ table.columns|length }}">No objects found.</td>
+</tr>
 {% endfor %}
 </table>
 
