@@ -13,6 +13,7 @@ class ClusterManager:
     def __init__(self, kubeconfig_path):
         self._clusters = {}
 
+        # TODO: reload config, e.g. when kubeconfig changed
         try:
             api = pykube.HTTPClient(pykube.KubeConfig.from_service_account())
             cluster = Cluster("local", api)
