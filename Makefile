@@ -37,6 +37,11 @@ test.e2e: kind kubectl docker
 			--log-cli-format '%(asctime)s %(levelname)s %(message)s' \
 			tests/e2e $(PYTEST_OPTIONS)
 
+.PHONY: clean.e2e
+clean.e2e:
+	./kind delete cluster --name=kube-web-view-e2e
+	pkill -f kubectl
+
 docker: 
 	docker build --build-arg "VERSION=$(VERSION)" -t "$(IMAGE):$(TAG)" .
 	@echo 'Docker image $(IMAGE):$(TAG) can now be used.'
@@ -56,6 +61,10 @@ docs:
 .PHONY: run
 run:
 	poetry run python3 -m kube_web
+
+.PHONY: run.kind
+run.kind:
+	poetry run python3 -m kube_web --kubeconfig-path=$$(./kind get kubeconfig-path --name=kube-web-view-e2e)
 
 .PHONY: mirror
 mirror:
