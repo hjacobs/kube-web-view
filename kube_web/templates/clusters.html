@@ -8,7 +8,7 @@
     </tr>
 {% for cluster in clusters: %}
 <tr>
-    <td><a href="/clusters/{{ cluster }}">{{ cluster }}</a></td>
+    <td><a href="/clusters/{{ cluster.name }}">{{ cluster.name }}</a></td>
 </tr>
 {% endfor %}
 </table>
