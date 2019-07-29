@@ -142,7 +142,7 @@ async def get_namespaced_resource_list(request):
     namespace = request.match_info["namespace"]
     plural = request.match_info["plural"]
 
-    is_all_namespaces = namespace == '_all'
+    is_all_namespaces = namespace == "_all"
 
     if plural == "all":
         # this list was extracted from kubectl get all --v=9
@@ -302,6 +302,8 @@ async def error_handler(request, handler):
     try:
         response = await handler(request)
         return response
+    except web.HTTPRedirection:
+        raise
     except Exception as e:
         status = 500
         error_title = "Error"
