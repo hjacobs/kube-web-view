@@ -1,6 +1,7 @@
 import aiohttp.web
 import argparse
 from .web import get_app
+from .cluster_manager import ClusterManager
 from kube_web import __version__
 
 parser = argparse.ArgumentParser(description=f"Kubernetes Web View v{__version__}")
@@ -13,8 +14,10 @@ parser.add_argument(
 parser.add_argument(
     "--version", action="version", version=f"kube-web-view {__version__}"
 )
+parser.add_argument("--kubeconfig-path", help="Path to ~/.kube/config file")
 
 args = parser.parse_args()
 
-app = get_app()
+cluster_manager = ClusterManager(args.kubeconfig_path)
+app = get_app(cluster_manager)
 aiohttp.web.run_app(app, port=args.port)

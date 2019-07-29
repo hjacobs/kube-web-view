@@ -73,6 +73,10 @@
     <td>{{ event.obj.source.component }}</td>
     <td>{{ event.obj.message }}</td>
 </tr>
+{% else: %}
+<tr>
+    <td colspan="5">No events found.</td>
+</tr>
 {% endfor %}
 </table>
 {% endblock %}
