@@ -5,10 +5,12 @@
 <table class="table is-stripped">
     <tr>
         <th>Name</th>
+        <th>API URL</th>
     </tr>
 {% for cluster in clusters: %}
 <tr>
     <td><a href="/clusters/{{ cluster.name }}">{{ cluster.name }}</a></td>
+    <td>{{ cluster.api.url }}</td>
 </tr>
 {% endfor %}
 </table>
