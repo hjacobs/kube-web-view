@@ -4,7 +4,9 @@
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
       <li><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
-      {% if namespace: %}
+      {% if is_all_namespaces: %}
+      <li><a href="/clusters/{{ cluster }}/namespaces">all</a></li>
+      {% elif namespace: %}
       <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}">{{ namespace }}</a></li>
       {% endif %}
       <li class="is-active"><a href="#">{{ plural }}</a></li>
@@ -24,6 +26,9 @@
 
 <table class="table is-striped">
     <tr>
+        {% if is_all_namespaces: %}
+        <th>Namespace</th>
+        {% endif %}
         {% for column in table.columns: %}
         <th title="{{ column.description }}">{{ column.name }}</th>
         {% endfor %}
@@ -31,10 +36,13 @@
     </tr>
 {% for row in table.rows: %}
 <tr>
+    {% if is_all_namespaces: %}
+    <td><a href="/clusters/{{ cluster }}/namespaces/{{ row.object.metadata.namespace }}">{{ row.object.metadata.namespace }}</a></td>
+    {% endif %}
     {% for cell in row.cells: %}
     {% if loop.first: %}
-    {% if namespace: %}
-    <td><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
+    {% if row.object.metadata.namespace: %}
+    <td><a href="/clusters/{{ cluster }}/namespaces/{{ row.object.metadata.namespace }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
       {% else: %}
     <td><a href="/clusters/{{ cluster }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
       {% endif %}
@@ -46,11 +54,16 @@
 </tr>
 {% else: %}
 <tr>
-    <td colspan="{{ table.columns|length }}">No {{ table.api_obj_class.kind }} objects found.</td>
+    <td colspan="{{ table.columns|length + 1 }}">No {{ table.api_obj_class.kind }} objects {% if namespace and not is_all_namespaces:%} in namespace "{{ namespace }}"{% endif %} found.</td>
 </tr>
 {% endfor %}
 </table>
 
 {% endfor %}
+
+{% if plural != 'namespaces' and not is_all_namespaces: %}
+<a href="/clusters/{{ cluster }}/namespaces/_all/{{ plural }}">Show {{ plural }} across all namespaces</a>
+{% endif %}
+
 
 {% endblock %}

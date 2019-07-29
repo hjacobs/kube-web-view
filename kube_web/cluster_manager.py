@@ -9,6 +9,11 @@ class Cluster:
         self.resource_registry = ResourceRegistry(api)
 
 
+class ClusterNotFound(Exception):
+    def __init__(self, cluster):
+        self.cluster = cluster
+
+
 class ClusterManager:
     def __init__(self, kubeconfig_path):
         self._clusters = {}
@@ -33,4 +38,7 @@ class ClusterManager:
         return list(self._clusters.values())
 
     def get(self, cluster: str):
-        return self._clusters.get(cluster)
+        obj = self._clusters.get(cluster)
+        if not obj:
+            raise ClusterNotFound(cluster)
+        return obj

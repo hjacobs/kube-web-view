@@ -17,6 +17,8 @@ from aiohttp_remotes import XForwardedRelaxed
 from aioauth_client import OAuth2Client
 from cryptography.fernet import Fernet
 
+from .cluster_manager import ClusterNotFound
+
 from pathlib import Path
 
 from aiohttp import web
@@ -88,7 +90,7 @@ async def get_cluster_resource_list(request):
     params = request.rel_url.query
     clazz = cluster.resource_registry.get_class_by_plural_name(plural, namespaced=False)
     if not clazz:
-        return web.Response(status=404, text="Resource type not found")
+        raise web.HTTPNotFound(text="Resource type not found")
     table = await kubernetes.get_table(clazz.objects(cluster.api))
     if params.get("download") == "tsv":
         return await download_tsv(request, table)
@@ -115,9 +117,9 @@ class ResponseWriter:
 
 async def as_tsv(table, fd) -> str:
     writer = csv.writer(fd, delimiter="\t", lineterminator="\n")
-    writer.writerow([col["name"] for col in table.columns])
+    writer.writerow(["Namespace"] + [col["name"] for col in table.columns])
     for row in table.rows:
-        writer.writerow(row["cells"])
+        writer.writerow([row["object"]["metadata"]["namespace"]] + row["cells"])
         await fd.flush()
 
 
@@ -139,6 +141,8 @@ async def get_namespaced_resource_list(request):
     cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
     namespace = request.match_info["namespace"]
     plural = request.match_info["plural"]
+
+    is_all_namespaces = namespace == '_all'
 
     if plural == "all":
         # this list was extracted from kubectl get all --v=9
@@ -163,8 +167,10 @@ async def get_namespaced_resource_list(request):
             _type, namespaced=True
         )
         if not clazz:
-            return web.Response(status=404, text="Resource type not found")
-        query = clazz.objects(cluster.api).filter(namespace=namespace)
+            raise web.HTTPNotFound(text="Resource type not found")
+        query = clazz.objects(cluster.api).filter(
+            namespace=pykube.all if is_all_namespaces else namespace
+        )
         if "selector" in params:
             query = query.filter(selector=params["selector"])
 
@@ -175,6 +181,7 @@ async def get_namespaced_resource_list(request):
     return {
         "cluster": cluster.name,
         "namespace": namespace,
+        "is_all_namespaces": is_all_namespaces,
         "plural": plural,
         "tables": tables,
     }
@@ -194,7 +201,7 @@ async def get_resource_view(request):
         plural, namespaced=bool(namespace)
     )
     if not clazz:
-        return web.Response(status=404, text="Resource type not found")
+        raise web.HTTPNotFound(text="Resource type not found")
     query = clazz.objects(cluster.api)
     if namespace:
         query = query.filter(namespace=namespace)
@@ -290,6 +297,36 @@ async def auth(request, handler):
     return response
 
 
+@web.middleware
+async def error_handler(request, handler):
+    try:
+        response = await handler(request)
+        return response
+    except Exception as e:
+        status = 500
+        error_title = "Error"
+        error_text = str(e)
+        if isinstance(e, web.HTTPError):
+            status = e.status
+            error_text = e.text
+        elif isinstance(e, ClusterNotFound):
+            status = 404
+            error_title = "Error: cluster not found"
+            error_text = f'Cluster "{e.cluster}" not found'
+        elif isinstance(e, ObjectDoesNotExist):
+            status = 404
+            error_title = "Error: object does not exist"
+        context = {
+            "error_title": error_title,
+            "error_text": error_text,
+            "status": status,
+        }
+        response = aiohttp_jinja2.render_template(
+            "error.html", request, context, status=status
+        )
+        return response
+
+
 def get_app(cluster_manager):
     app = web.Application()
     aiohttp_jinja2.setup(
@@ -314,6 +351,8 @@ def get_app(cluster_manager):
 
     if authorize_url and access_token_url:
         app.middlewares.append(auth)
+
+    app.middlewares.append(error_handler)
 
     app[CLUSTER_MANAGER] = cluster_manager
 

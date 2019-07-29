@@ -17,7 +17,11 @@
 {% for resource in namespaces: %}
 <tr>
     <td><a href="/clusters/{{ cluster }}/{{ resource.endpoint }}/{{ resource.name }}">{{ resource.name }}</a></td>
-    <td>{{ resource.labels }}</td>
+    <td>
+    {% for key, val in resource.labels.items()|sort: %}
+        <span class="tag">{{ key }}: {{ val }}</span>
+    {% endfor %}
+    </td>
     <td>{{ resource.metadata.creationTimestamp }}</td>
 </tr>
 {% endfor %}
