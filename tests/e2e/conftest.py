@@ -8,11 +8,12 @@ import logging
 from pytest import fixture
 from pathlib import Path
 import os
+import subprocess
 
-from subprocess import check_output, run
+from subprocess import check_output, run, Popen
 
 
-@fixture(scope="class")
+@fixture(scope="module")
 def cluster() -> dict:
     kind = "./kind"
     cluster_name = "kube-web-view-e2e"
@@ -62,26 +63,25 @@ def cluster() -> dict:
     logging.info("Waiting for rollout ...")
     kubectl("rollout", "status", "deployment/kube-web-view")
 
-    def port_forward():
-        while True:
-            kubectl("port-forward", "service/kube-web-view", "8087:80")
-            time.sleep(10)
-
     url = "http://localhost:8087/"
-    threading.Thread(target=port_forward, daemon=True).start()
+    proc = Popen(
+        ["./kubectl", "port-forward", "service/kube-web-view", "8087:80"],
+        env={"KUBECONFIG": kubeconfig},
+    )
     logging.info(f"Waiting for port forward {url} ...")
     while True:
         try:
             response = requests.get(url)
             response.raise_for_status()
         except:
-            pass
+            time.sleep(0.1)
         else:
             break
 
-    return {"url": url}
+    yield {"url": url}
+    proc.kill()
 
 
-@fixture(scope="class")
+@fixture(scope="module")
 def populated_cluster(cluster):
     return cluster
