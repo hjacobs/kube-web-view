@@ -1,6 +1,7 @@
 import aiohttp_jinja2
 import jinja2
 import csv
+import json
 import base64
 import os
 import pykube
@@ -282,17 +283,23 @@ async def auth(request, handler):
         client, _ = await get_oauth2_client()
         # Get access token
         code = request.query["code"]
+        try:
+            state = json.loads(request.query["state"])
+            original_url = state["url"]
+        except:
+            original_url = "/"
         redirect_uri = str(request.url.with_path(OAUTH2_CALLBACK_PATH))
         access_token, data = await client.get_access_token(
             code, redirect_uri=redirect_uri
         )
         session = await get_session(request)
         session["access_token"] = access_token
-        raise web.HTTPFound(location="/")
+        raise web.HTTPFound(location=original_url)
     elif path != HEALTH_PATH:
         session = await get_session(request)
         if not session.get("access_token"):
             client, params = await get_oauth2_client()
+            params["state"] = json.dumps({"url": str(request.rel_url)})
             raise web.HTTPFound(location=client.get_authorize_url(**params))
     response = await handler(request)
     return response
