@@ -61,7 +61,7 @@
 
 {% endfor %}
 
-{% if plural != 'namespaces' and not is_all_namespaces: %}
+{% if namespace and plural != 'namespaces' and not is_all_namespaces: %}
 <a href="/clusters/{{ cluster }}/namespaces/_all/{{ plural }}">Show {{ plural }} across all namespaces</a>
 {% endif %}
 
