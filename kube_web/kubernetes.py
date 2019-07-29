@@ -1,4 +1,6 @@
 from pykube.query import Query
+from pykube.objects import Pod
+from functools import partial
 import asyncio
 
 import concurrent.futures
@@ -23,3 +25,9 @@ def _get_list(query: Query):
 async def get_list(query: Query):
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(thread_pool, _get_list, query)
+
+
+async def logs(pod: Pod, **kwargs):
+    loop = asyncio.get_event_loop()
+    pod_logs = partial(Pod.logs, **kwargs)
+    return await loop.run_in_executor(thread_pool, pod_logs, pod)

@@ -11,7 +11,7 @@ import yaml
 
 import pykube
 from pykube import ObjectDoesNotExist
-from pykube.objects import APIObject, NamespacedAPIObject, Namespace, Event
+from pykube.objects import APIObject, NamespacedAPIObject, Namespace, Event, Pod
 from aiohttp_session import SimpleCookieStorage, get_session, setup as session_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from aiohttp_remotes import XForwardedRelaxed
@@ -231,6 +231,45 @@ async def get_resource_view(request):
         "resource": resource,
         "view": view,
         "events": events,
+    }
+
+
+@routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}/{name}/logs")
+@aiohttp_jinja2.template("resource-logs.html")
+@context()
+async def get_resource_logs(request):
+    cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
+    namespace = request.match_info.get("namespace")
+    plural = request.match_info["plural"]
+    name = request.match_info["name"]
+    clazz = cluster.resource_registry.get_class_by_plural_name(plural, namespaced=True)
+    if not clazz:
+        raise web.HTTPNotFound(text="Resource type not found")
+    query = clazz.objects(cluster.api)
+    if namespace:
+        query = query.filter(namespace=namespace)
+    resource = await kubernetes.get_by_name(query, name)
+
+    logs = []
+
+    for container in resource.obj["spec"]["containers"]:
+        container_log = await kubernetes.logs(
+            resource, container=container["name"], timestamps=True, tail_lines=1000
+        )
+        for line in container_log.split("\n"):
+            if line.startswith("20"):
+                logs.append((line, container["name"]))
+            else:
+                logs[-1] = (logs[-1][0] + "\n" + line, container["name"])
+
+    logs.sort()
+
+    return {
+        "cluster": cluster.name,
+        "namespace": namespace,
+        "plural": plural,
+        "resource": resource,
+        "logs": logs,
     }
 
 
