@@ -58,6 +58,7 @@ def context():
 
 @routes.get("/")
 async def get_index(request):
+    # we don't have anything to present on the homepage, so let's redirect to the cluster list
     raise web.HTTPFound(location="/clusters")
 
 
