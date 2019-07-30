@@ -1,0 +1,13 @@
+dist: bionic
+sudo: yes
+language: python
+python:
+  - "3.7"
+services:
+  - docker
+install:
+  - pip install poetry
+script:
+  - make test
+after_success:
+  - coveralls
