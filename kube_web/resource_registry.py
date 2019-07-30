@@ -1,8 +1,6 @@
 import logging
 from pykube.objects import APIObject, NamespacedAPIObject, Namespace, Event
 
-logging.basicConfig(level=logging.DEBUG)
-
 logger = logging.getLogger(__name__)
 
 

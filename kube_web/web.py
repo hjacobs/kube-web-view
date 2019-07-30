@@ -30,8 +30,6 @@ from kube_web import __version__
 from kube_web import kubernetes
 from .resource_registry import ResourceRegistry
 
-logging.basicConfig(level=logging.DEBUG)
-
 logger = logging.getLogger(__name__)
 
 HEALTH_PATH = "/health"
@@ -426,13 +424,12 @@ async def error_handler(request, handler):
         response = await handler(request)
         return response
     except web.HTTPRedirection:
+        # handling of redirection (3xx) is done by aiohttp itself
         raise
     except Exception as e:
-        status = 500
-        error_title = "Error"
-        error_text = str(e)
         if isinstance(e, web.HTTPError):
             status = e.status
+            error_title = "Error"
             error_text = e.text
         elif isinstance(e, ClusterNotFound):
             status = 404
@@ -441,6 +438,13 @@ async def error_handler(request, handler):
         elif isinstance(e, ObjectDoesNotExist):
             status = 404
             error_title = "Error: object does not exist"
+            error_text = "The requested Kubernetes object does not exist"
+        else:
+            status = 500
+            error_title = "Server Error"
+            error_text = str(e)
+            logger.exception(f"{error_title}: {error_text}")
+
         context = {
             "error_title": error_title,
             "error_text": error_text,

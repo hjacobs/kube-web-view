@@ -60,7 +60,7 @@ docs:
 
 .PHONY: run
 run:
-	poetry run python3 -m kube_web --show-container-logs
+	poetry run python3 -m kube_web --show-container-logs --debug
 
 .PHONY: run.kind
 run.kind:
