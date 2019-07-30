@@ -19,8 +19,12 @@
   </ul>
 </div>
 
+<div>
+Showing last {{ tail_lines }} log lines per container for {{ pods|length }} pods.
+</div>
+
 <pre>
-{% for log in logs: %}<span class="has-text-info">{{ log[1] }}</span> <span class="has-text-grey">{{ log[2] }}</span> {{ log[0] }}{{ '\n' }}{% endfor %}
+{% for log in logs: %}<span style="color:{{ log[2] }}">{{ log[1] }}</span> <span class="has-text-grey">{{ log[3] }}</span> {{ log[0] }}{{ '\n' }}{% endfor %}
 </pre>
 
 {% endblock %}
