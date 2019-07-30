@@ -1,9 +1,10 @@
 .PHONY: clean test appjs docker push mock
 
 IMAGE            ?= hjacobs/kube-web-view
-VERSION          ?= $(shell git describe --tags --always --dirty)
+GITDIFFHASH       = $(shell git diff | md5sum | cut -c 1-4)
+VERSION          ?= $(shell git describe --tags --always --dirty=-dirty-$(GITDIFFHASH))
 TAG              ?= $(VERSION)
-TTYFLAGS         = $(shell test -t 0 && echo "-it")
+TTYFLAGS          = $(shell test -t 0 && echo "-it")
 OSNAME := $(shell uname | perl -ne 'print lc($$_)')
 
 default: docker

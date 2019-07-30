@@ -60,18 +60,25 @@ def cluster() -> dict:
         yaml.dump_all(documents=resources, stream=tmp)
         kubectl("apply", "-f", tmp.name)
 
+    logging.info("Deploying other test resources ...")
+    kubectl("apply", "-f", str(Path(__file__).parent / "test-resources.yaml"))
+
     logging.info("Waiting for rollout ...")
     kubectl("rollout", "status", "deployment/kube-web-view")
 
     url = "http://localhost:8087/"
-    proc = Popen(
-        ["./kubectl", "port-forward", "service/kube-web-view", "8087:80"],
-        env={"KUBECONFIG": kubeconfig},
-    )
+
+    def port_forward():
+        return Popen(
+            ["./kubectl", "port-forward", "service/kube-web-view", "8087:80"],
+            env={"KUBECONFIG": kubeconfig},
+        )
+
+    proc = port_forward()
     logging.info(f"Waiting for port forward {url} ...")
     while True:
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=3)
             response.raise_for_status()
         except:
             time.sleep(0.1)

@@ -59,3 +59,13 @@ def test_list_resources_in_all_namespaces(populated_cluster):
     assert "application=kube-web-view" in response.text
     # deployments in kube-system are also listed:
     assert "/namespaces/kube-system/deployments/coredns" in response.text
+
+
+def test_list_pods_wrong_container_image(populated_cluster):
+    url = populated_cluster["url"].rstrip("/")
+    response = requests.get(
+        f"{url}/clusters/local/namespaces/default/pods?selector=e2e=wrong-container-image"
+    )
+    response.raise_for_status()
+    assert "ImagePullBackOff" in response.text
+    assert "has-text-danger" in response.text

@@ -47,7 +47,7 @@
     <td><a href="/clusters/{{ cluster }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
       {% endif %}
     {% else: %}
-    <td>{{ cell }}</td>
+    <td class="{{ get_cell_class(table, loop.index0, cell) }}">{{ cell }}</td>
     {% endif %}
     {% endfor %}
     <td>{{ row.object.metadata.creationTimestamp }}</td>

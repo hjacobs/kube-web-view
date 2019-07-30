@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wrong-container-image
+  labels:
+    app: wrong-container-image
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wrong-container-image
+  template:
+    metadata:
+      labels:
+        app: wrong-container-image
+        e2e: wrong-container-image
+    spec:
+      containers:
+        - name: mycontainer
+          image: hjacobs/wrong-container-image:0.1

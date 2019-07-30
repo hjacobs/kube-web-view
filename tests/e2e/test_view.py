@@ -38,7 +38,7 @@ def test_logs(populated_cluster):
     url = populated_cluster["url"].rstrip("/")
     response = requests.get(
         f"{url}/clusters/local/namespaces/default/deployments/kube-web-view",
-        headers={'User-Agent': 'TEST-LOGS-USER-AGENT'}
+        headers={"User-Agent": "TEST-LOGS-USER-AGENT"},
     )
     response.raise_for_status()
     response = requests.get(

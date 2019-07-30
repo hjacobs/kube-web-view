@@ -41,6 +41,24 @@ CLUSTER_MANAGER = "cluster_manager"
 CONFIG = "config"
 
 
+TABLE_CELL_FORMATTING = {
+    "nodes": {"Status": {"Ready": "has-text-success"}},
+    "namespaces": {"Status": {"Active": "has-text-success"}},
+    "deployments": {"Available": {"0": "has-text-danger"}},
+    "pods": {
+        "Status": {
+            "Completed": "has-text-info",
+            "CrashLoopBackOff": "has-text-danger",
+            "CreateContainerConfigError": "has-text-danger",
+            "Error": "has-text-danger",
+            "ImagePullBackOff": "has-text-danger",
+            "Pending": "has-text-warning",
+            "Running": "has-text-success",
+        }
+    },
+}
+
+
 routes = web.RouteTableDef()
 
 
@@ -86,6 +104,16 @@ async def get_cluster(request):
     }
 
 
+def get_cell_class(table, column_index, value):
+    cell_formatting = TABLE_CELL_FORMATTING.get(table.api_obj_class.endpoint)
+    if not cell_formatting:
+        return ""
+    cell_formatting = cell_formatting.get(table.columns[column_index]["name"])
+    if not cell_formatting:
+        return ""
+    return cell_formatting.get(str(value))
+
+
 @routes.get("/clusters/{cluster}/{plural}")
 @aiohttp_jinja2.template("resource-list.html")
 @context()
@@ -104,6 +132,7 @@ async def get_cluster_resource_list(request):
         "namespace": None,
         "plural": plural,
         "tables": [table],
+        "get_cell_class": get_cell_class,
     }
 
 
@@ -183,12 +212,14 @@ async def get_namespaced_resource_list(request):
         tables.append(table)
     if params.get("download") == "tsv":
         return await download_tsv(request, tables[0])
+
     return {
         "cluster": cluster.name,
         "namespace": namespace,
         "is_all_namespaces": is_all_namespaces,
         "plural": plural,
         "tables": tables,
+        "get_cell_class": get_cell_class,
     }
 
 
