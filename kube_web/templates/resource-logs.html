@@ -19,6 +19,19 @@
   </ul>
 </div>
 
+{% if not show_container_logs: %}
+
+<article class="message is-warning">
+  <div class="message-header">
+    <p>Container Logs Disabled</p>
+  </div>
+  <div class="message-body">
+    Container logs are not shown as they were disabled in Kubernetes Web View. Enable them via the "--show-container-logs" kube-web-view command line option.
+  </div>
+</article>
+
+{% else: %}
+
 <div>
 Showing last {{ tail_lines }} log lines per container for {{ pods|length }} pods.
 </div>
@@ -26,5 +39,7 @@ Showing last {{ tail_lines }} log lines per container for {{ pods|length }} pods
 <pre>
 {% for log in logs: %}<span style="color:{{ log[2] }}">{{ log[1] }}</span> <span class="has-text-grey">{{ log[3] }}</span> {{ log[0] }}{{ '\n' }}{% endfor %}
 </pre>
+
+{% endif %}
 
 {% endblock %}

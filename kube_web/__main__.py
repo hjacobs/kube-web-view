@@ -24,5 +24,5 @@ parser.add_argument(
 args = parser.parse_args()
 
 cluster_manager = ClusterManager(args.kubeconfig_path)
-app = get_app(cluster_manager)
+app = get_app(cluster_manager, args)
 aiohttp.web.run_app(app, port=args.port)

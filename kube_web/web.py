@@ -38,6 +38,7 @@ HEALTH_PATH = "/health"
 OAUTH2_CALLBACK_PATH = "/oauth2/callback"
 
 CLUSTER_MANAGER = "cluster_manager"
+CONFIG = "config"
 
 
 routes = web.RouteTableDef()
@@ -279,22 +280,27 @@ async def get_resource_logs(request):
 
     logs = []
 
-    for pod in pods:
-        color = pod_color(pod.name)
-        for container in pod.obj["spec"]["containers"]:
-            container_log = await kubernetes.logs(
-                pod, container=container["name"], timestamps=True, tail_lines=tail_lines
-            )
-            for line in container_log.split("\n"):
-                if line.startswith("20") or not logs:
-                    logs.append((line, pod.name, color, container["name"]))
-                else:
-                    logs[-1] = (
-                        logs[-1][0] + "\n" + line,
-                        pod.name,
-                        color,
-                        container["name"],
-                    )
+    show_container_logs = request.app[CONFIG].show_container_logs
+    if show_container_logs:
+        for pod in pods:
+            color = pod_color(pod.name)
+            for container in pod.obj["spec"]["containers"]:
+                container_log = await kubernetes.logs(
+                    pod,
+                    container=container["name"],
+                    timestamps=True,
+                    tail_lines=tail_lines,
+                )
+                for line in container_log.split("\n"):
+                    if line.startswith("20") or not logs:
+                        logs.append((line, pod.name, color, container["name"]))
+                    else:
+                        logs[-1] = (
+                            logs[-1][0] + "\n" + line,
+                            pod.name,
+                            color,
+                            container["name"],
+                        )
 
     logs.sort()
 
@@ -306,6 +312,7 @@ async def get_resource_logs(request):
         "tail_lines": tail_lines,
         "pods": pods,
         "logs": logs,
+        "show_container_logs": show_container_logs,
     }
 
 
@@ -412,7 +419,7 @@ async def error_handler(request, handler):
         return response
 
 
-def get_app(cluster_manager):
+def get_app(cluster_manager, config):
     app = web.Application()
     aiohttp_jinja2.setup(
         app, loader=jinja2.FileSystemLoader(str(Path(__file__).parent / "templates"))
@@ -440,5 +447,6 @@ def get_app(cluster_manager):
     app.middlewares.append(error_handler)
 
     app[CLUSTER_MANAGER] = cluster_manager
+    app[CONFIG] = config
 
     return app
