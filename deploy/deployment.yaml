@@ -19,7 +19,11 @@ spec:
       - name: kube-web-view
         # see https://codeberg.org/hjacobs/kube-web-view/releases
         image: hjacobs/kube-web-view:latest
-        args: []
+        args:
+        - --port=8080
+        # uncomment the following line to enable pod logs
+        # (disabled by default as they might consider sensitive information)
+        # - "--show-container-logs"
         ports:
         - containerPort: 8080
         readinessProbe:

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ resource.name }} ({{resource.kind}}{% if namespace: %} in {{namespace}}{% endif %}){% endblock %}
+{% block content %}
+<nav class="breadcrumb" aria-label="breadcrumbs">
+  <ul>
+      <li><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
+    <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}">{{ namespace }}</a></li>
+    <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ resource.endpoint }}">{{ resource.endpoint }}</a></li>
+      <li class="is-active"><a href="#">{{ resource.name }}</a></li>
+  </ul>
+</nav>
+
+<h2 class="title">{{ resource.name }}</h2>
+<div class="tabs is-small">
+  <ul>
+      <li ><a href="/clusters/{{ cluster }}/namespaces/{{ resource.metadata.namespace }}/{{ resource.endpoint }}/{{ resource.name }}">Default</a></li>
+      <li ><a href="/clusters/{{ cluster }}/namespaces/{{ resource.metadata.namespace }}/{{ resource.endpoint }}/{{ resource.name }}?view=yaml">YAML</a></li>
+      <li class="is-active"><a>Logs</a></li>
+  </ul>
+</div>
+
+{% if not show_container_logs: %}
+
+<article class="message is-warning">
+  <div class="message-header">
+    <p>Container Logs Disabled</p>
+  </div>
+  <div class="message-body">
+    Container logs are not shown as they were disabled in Kubernetes Web View. Enable them via the "--show-container-logs" kube-web-view command line option.
+  </div>
+</article>
+
+{% else: %}
+
+<div>
+Showing last {{ tail_lines }} log lines per container for {{ pods|length }} pods.
+</div>
+
+<pre>
+{% for log in logs: %}<span style="color:{{ log[2] }}">{{ log[1] }}</span> <span class="has-text-grey">{{ log[3] }}</span> {{ log[0] }}{{ '\n' }}{% endfor %}
+</pre>
+
+{% endif %}
+
+{% endblock %}

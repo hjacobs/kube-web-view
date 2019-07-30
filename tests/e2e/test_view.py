@@ -32,3 +32,17 @@ def test_object_not_found(populated_cluster):
     )
     assert response.status_code == 404
     assert "object does not exist" in response.text
+
+
+def test_logs(populated_cluster):
+    url = populated_cluster["url"].rstrip("/")
+    response = requests.get(
+        f"{url}/clusters/local/namespaces/default/deployments/kube-web-view",
+        headers={'User-Agent': 'TEST-LOGS-USER-AGENT'}
+    )
+    response.raise_for_status()
+    response = requests.get(
+        f"{url}/clusters/local/namespaces/default/deployments/kube-web-view/logs"
+    )
+    response.raise_for_status()
+    assert "TEST-LOGS-USER-AGENT" in response.text

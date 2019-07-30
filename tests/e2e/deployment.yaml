@@ -68,4 +68,6 @@ spec:
         - name: kube-web-view-container
           image: TO_BE_REPLACED_BY_E2E_TEST
           imagePullPolicy: IfNotPresent  # For our E2E tests.
+          args:
+          - --show-container-logs
           env: []

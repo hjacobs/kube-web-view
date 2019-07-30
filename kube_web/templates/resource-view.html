@@ -19,6 +19,9 @@
   <ul>
       <li {% if view != 'yaml': %} class="is-active" {% endif %}><a href="?">Default</a></li>
       <li {% if view == 'yaml': %} class="is-active" {% endif %}><a href="?view=yaml">YAML</a></li>
+      {% if resource.kind in ('Pod', 'Deployment', 'ReplicaSet', 'DaemonSet', 'StatefulSet'): %}
+      <li><a href="/clusters/{{ cluster }}/namespaces/{{ resource.metadata.namespace }}/{{ resource.endpoint }}/{{ resource.name }}/logs">Logs</a></li>
+      {% endif %}
   </ul>
 </div>
 

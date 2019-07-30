@@ -1,6 +1,8 @@
 import aiohttp_jinja2
 import jinja2
 import csv
+import zlib
+import colorsys
 import json
 import base64
 import os
@@ -11,7 +13,7 @@ import yaml
 
 import pykube
 from pykube import ObjectDoesNotExist
-from pykube.objects import APIObject, NamespacedAPIObject, Namespace, Event
+from pykube.objects import APIObject, NamespacedAPIObject, Namespace, Event, Pod
 from aiohttp_session import SimpleCookieStorage, get_session, setup as session_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from aiohttp_remotes import XForwardedRelaxed
@@ -36,6 +38,7 @@ HEALTH_PATH = "/health"
 OAUTH2_CALLBACK_PATH = "/oauth2/callback"
 
 CLUSTER_MANAGER = "cluster_manager"
+CONFIG = "config"
 
 
 routes = web.RouteTableDef()
@@ -234,6 +237,87 @@ async def get_resource_view(request):
     }
 
 
+def pod_color(name):
+    """Return HTML color calculated from given pod name.
+    """
+
+    if name is None:
+        return "#ffa000"
+    v = zlib.crc32(name.encode("utf-8"))
+    r, g, b = colorsys.hsv_to_rgb((v % 300 + 300) / 1000.0, 0.7, 0.7)
+    # g = (v % 7) * 20 + 115;
+    # b = (v % 10) * 20 + 55;
+    return "#%02x%02x%02x" % (int(r * 255), int(g * 255), int(b * 255))
+
+
+@routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}/{name}/logs")
+@aiohttp_jinja2.template("resource-logs.html")
+@context()
+async def get_resource_logs(request):
+    cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
+    namespace = request.match_info.get("namespace")
+    plural = request.match_info["plural"]
+    name = request.match_info["name"]
+    tail_lines = int(request.rel_url.query.get("tail_lines") or 200)
+    clazz = cluster.resource_registry.get_class_by_plural_name(plural, namespaced=True)
+    if not clazz:
+        raise web.HTTPNotFound(text="Resource type not found")
+    query = clazz.objects(cluster.api)
+    if namespace:
+        query = query.filter(namespace=namespace)
+    resource = await kubernetes.get_by_name(query, name)
+
+    if resource.kind == "Pod":
+        pods = [resource]
+    elif resource.obj.get("spec", {}).get("selector", {}).get("matchLabels"):
+        query = Pod.objects(cluster.api).filter(
+            namespace=namespace,
+            selector=resource.obj["spec"]["selector"]["matchLabels"],
+        )
+        pods = await kubernetes.get_list(query)
+    else:
+        raise web.HTTPNotFound(text="Resource has no logs")
+
+    logs = []
+
+    show_container_logs = request.app[CONFIG].show_container_logs
+    if show_container_logs:
+        for pod in pods:
+            color = pod_color(pod.name)
+            for container in pod.obj["spec"]["containers"]:
+                container_log = await kubernetes.logs(
+                    pod,
+                    container=container["name"],
+                    timestamps=True,
+                    tail_lines=tail_lines,
+                )
+                for line in container_log.split("\n"):
+                    # this is a hacky way to determine whether it's a multi-line log message
+                    # (our current year of the timestamp starts with "20"..)
+                    if line.startswith("20") or not logs:
+                        logs.append((line, pod.name, color, container["name"]))
+                    else:
+                        logs[-1] = (
+                            logs[-1][0] + "\n" + line,
+                            pod.name,
+                            color,
+                            container["name"],
+                        )
+
+    logs.sort()
+
+    return {
+        "cluster": cluster.name,
+        "namespace": namespace,
+        "plural": plural,
+        "resource": resource,
+        "tail_lines": tail_lines,
+        "pods": pods,
+        "logs": logs,
+        "show_container_logs": show_container_logs,
+    }
+
+
 @routes.get(HEALTH_PATH)
 async def get_health(request):
     return web.Response(text="OK")
@@ -337,7 +421,7 @@ async def error_handler(request, handler):
         return response
 
 
-def get_app(cluster_manager):
+def get_app(cluster_manager, config):
     app = web.Application()
     aiohttp_jinja2.setup(
         app, loader=jinja2.FileSystemLoader(str(Path(__file__).parent / "templates"))
@@ -365,5 +449,6 @@ def get_app(cluster_manager):
     app.middlewares.append(error_handler)
 
     app[CLUSTER_MANAGER] = cluster_manager
+    app[CONFIG] = config
 
     return app
