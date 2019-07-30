@@ -20,9 +20,12 @@ kubectl:
 	curl -LO https://storage.googleapis.com/kubernetes-release/release/$$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/$(OSNAME)/amd64/kubectl
 	chmod +x ./kubectl
 
+.PHONY: poetry
+poetry:
+	poetry install
 
 .PHONY: test
-test: test.unit test.e2e
+test: poetry test.unit test.e2e
 
 .PHONY: test.unit
 test.unit:
