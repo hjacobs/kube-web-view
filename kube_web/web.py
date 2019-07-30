@@ -292,6 +292,8 @@ async def get_resource_logs(request):
                     tail_lines=tail_lines,
                 )
                 for line in container_log.split("\n"):
+                    # this is a hacky way to determine whether it's a multi-line log message
+                    # (our current year of the timestamp starts with "20"..)
                     if line.startswith("20") or not logs:
                         logs.append((line, pod.name, color, container["name"]))
                     else:
