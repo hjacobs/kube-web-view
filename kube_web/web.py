@@ -250,17 +250,27 @@ async def get_resource_logs(request):
         query = query.filter(namespace=namespace)
     resource = await kubernetes.get_by_name(query, name)
 
+    if resource.kind == "Pod":
+        pods = [resource]
+    elif resource.kind in ("Deployment", "ReplicaSet"):
+        query = Pod.objects(cluster.api).filter(
+            namespace=namespace,
+            selector=resource.obj["spec"]["selector"]["matchLabels"],
+        )
+        pods = await kubernetes.get_list(query)
+
     logs = []
 
-    for container in resource.obj["spec"]["containers"]:
-        container_log = await kubernetes.logs(
-            resource, container=container["name"], timestamps=True, tail_lines=1000
-        )
-        for line in container_log.split("\n"):
-            if line.startswith("20"):
-                logs.append((line, container["name"]))
-            else:
-                logs[-1] = (logs[-1][0] + "\n" + line, container["name"])
+    for pod in pods:
+        for container in pod.obj["spec"]["containers"]:
+            container_log = await kubernetes.logs(
+                pod, container=container["name"], timestamps=True, tail_lines=1000
+            )
+            for line in container_log.split("\n"):
+                if line.startswith("20"):
+                    logs.append((line, pod.name, container["name"]))
+                else:
+                    logs[-1] = (logs[-1][0] + "\n" + line, pod.name, container["name"])
 
     logs.sort()
 

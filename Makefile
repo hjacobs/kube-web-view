@@ -40,7 +40,6 @@ test.e2e: kind kubectl docker
 .PHONY: clean.e2e
 clean.e2e:
 	./kind delete cluster --name=kube-web-view-e2e
-	pkill -f kubectl
 
 docker: 
 	docker build --build-arg "VERSION=$(VERSION)" -t "$(IMAGE):$(TAG)" .
