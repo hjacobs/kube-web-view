@@ -38,6 +38,13 @@ CONFIG = "config"
 
 
 TABLE_CELL_FORMATTING = {
+    "events": {"Type": {"Warning": "has-text-warning"}},
+    "persistentvolumeclaims": {
+        "Status": {"Pending": "has-text-warning", "Bound": "has-text-success"}
+    },
+    "persistentvolumes": {
+        "Status": {"Terminating": "has-text-danger", "Bound": "has-text-success"}
+    },
     "nodes": {"Status": {"Ready": "has-text-success"}},
     "namespaces": {"Status": {"Active": "has-text-success"}},
     "deployments": {"Available": {"0": "has-text-danger"}},
@@ -48,6 +55,7 @@ TABLE_CELL_FORMATTING = {
             "CrashLoopBackOff": "has-text-danger",
             "CreateContainerConfigError": "has-text-danger",
             "Error": "has-text-danger",
+            "ErrImagePull": "has-text-danger",
             "ImagePullBackOff": "has-text-danger",
             "Pending": "has-text-warning",
             "Running": "has-text-success",
@@ -114,6 +122,28 @@ def get_cell_class(table, column_index, value):
     if not cell_formatting:
         return ""
     return cell_formatting.get(str(value))
+
+
+@routes.get("/clusters/{cluster}/_resource-types")
+@aiohttp_jinja2.template("resource-types.html")
+@context()
+async def get_cluster_resource_types(request):
+    cluster = request.match_info["cluster"]
+    is_all_clusters = cluster == "_all"
+    if is_all_clusters:
+        clusters = request.app[CLUSTER_MANAGER].clusters
+    else:
+        clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
+    resource_types = set()
+    for _cluster in clusters:
+        for clazz in _cluster.resource_registry.cluster_resource_types:
+            resource_types.add(clazz)
+    return {
+        "cluster": cluster,
+        "is_all_clusters": is_all_clusters,
+        "namespace": None,
+        "resource_types": sorted(resource_types, key=lambda t: (t.kind, t.version)),
+    }
 
 
 @routes.get("/clusters/{cluster}/{plural}")
@@ -186,6 +216,29 @@ async def download_tsv(request, table):
     await response.prepare(request)
     await as_tsv(table, ResponseWriter(response))
     return response
+
+
+@routes.get("/clusters/{cluster}/namespaces/{namespace}/_resource-types")
+@aiohttp_jinja2.template("resource-types.html")
+@context()
+async def get_namespaced_resource_types(request):
+    cluster = request.match_info["cluster"]
+    is_all_clusters = cluster == "_all"
+    if is_all_clusters:
+        clusters = request.app[CLUSTER_MANAGER].clusters
+    else:
+        clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
+    namespace = request.match_info["namespace"]
+    resource_types = set()
+    for _cluster in clusters:
+        for clazz in _cluster.resource_registry.namespaced_resource_types:
+            resource_types.add(clazz)
+    return {
+        "cluster": cluster,
+        "is_all_clusters": is_all_clusters,
+        "namespace": namespace,
+        "resource_types": sorted(resource_types, key=lambda t: (t.kind, t.version)),
+    }
 
 
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}")

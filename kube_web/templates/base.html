@@ -78,7 +78,23 @@
       <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/pods">Pods</a></li>
       <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/configmaps">ConfigMaps</a></li>
   </ul>
+  <p class="menu-label">
+    Meta
+  </p>
+  <ul class="menu-list">
+      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/_resource-types">Resource Types</a></li>
+      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/events">Events</a></li>
+  </ul>
       {% endif %}
+    {% if cluster and not namespace: %}
+  <p class="menu-label">
+    Meta
+  </p>
+  <ul class="menu-list">
+      <li><a href="/clusters/{{cluster}}/_resource-types">Resource Types</a></li>
+  </ul>
+      {% endif %}
+
 </aside>
         <div class="main">
 

@@ -87,15 +87,29 @@ def test_list_resources_in_all_clusters(populated_cluster):
 
 def test_list_pods_wrong_container_image(populated_cluster):
     url = populated_cluster["url"].rstrip("/")
-    # wait for ImagePullBackOff
     for i in range(10):
         response = requests.get(
             f"{url}/clusters/local/namespaces/default/pods?selector=e2e=wrong-container-image"
         )
         response.raise_for_status()
-        if "ImagePullBackOff" in response.text:
+        if "ImagePullBackOff" in response.text or "ErrImagePull" in response.text:
             break
         else:
             time.sleep(1)
-    assert "ImagePullBackOff" in response.text
+    assert "ImagePullBackOff" in response.text or "ErrImagePull" in response.text
     assert "has-text-danger" in response.text
+
+
+def test_cluster_resource_types(populated_cluster):
+    url = populated_cluster["url"].rstrip("/")
+    response = requests.get(f"{url}/clusters/local/_resource-types")
+    response.raise_for_status()
+    assert "APIService" in response.text
+    assert "CustomResourceDefinition" in response.text
+
+
+def test_namespaced_resource_types(populated_cluster):
+    url = populated_cluster["url"].rstrip("/")
+    response = requests.get(f"{url}/clusters/local/namespaces/default/_resource-types")
+    response.raise_for_status()
+    assert "PersistentVolumeClaim" in response.text
