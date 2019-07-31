@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def comma_separated_values(value):
-    return filter(None, value.split(","))
+    return list(filter(None, value.split(",")))
 
 
 def main(argv=None):

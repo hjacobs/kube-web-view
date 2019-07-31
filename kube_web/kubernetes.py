@@ -2,6 +2,7 @@ from pykube.query import Query
 from pykube.objects import Pod
 from functools import partial
 import asyncio
+import pykube.query
 
 import concurrent.futures
 
