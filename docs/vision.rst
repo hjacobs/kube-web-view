@@ -22,3 +22,14 @@ The focus on troubleshooting and "kubectl on the web" led to the following desig
 * support multiple clusters to streamline discovery in on-call situations (only one entry URL to remember)
 * facilitate ad-hoc analysis where possible (e.g. with download links for resources across clusters/namespaces)
 * provide additional deep-linking and highlighting, e.g. to point colleagues to a certain part of a resource spec (line in YAML)
+* allow customization for org-specific optimizations: e.g. custom view templates for CRDs, custom table views, custom CSS formatting
+* provide means to continue investigation on the command line (e.g. by showing full ``kubectl`` command lines to copy)
+
+Out-of-scope (non-goals) for Kubernetes Web View are:
+
+* abstracting Kubernetes objects
+* application management (e.g. managing deployments, Helm Charts, etc)
+* write operations (this should be done via safe CI/CD tooling and/or GitOps)
+* fancy UI (JavaScript, theming, etc)
+* visualization (check out `kube-ops-view <https://github.com/hjacobs/kube-ops-view>`_)
+* cost analysis (check out `kube-resource-report <https://github.com/hjacobs/kube-resource-report/>`_)
