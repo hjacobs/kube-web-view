@@ -4,10 +4,19 @@ import logging
 
 from kube_web import __version__
 from .web import get_app
+from .cluster_discovery import (
+    ServiceAccountClusterDiscoverer,
+    ServiceAccountNotFound,
+    KubeconfigDiscoverer,
+)
 from .cluster_manager import ClusterManager
 
 
 logger = logging.getLogger(__name__)
+
+
+def comma_separated_values(value):
+    return filter(None, value.split(","))
 
 
 def main(argv=None):
@@ -24,6 +33,11 @@ def main(argv=None):
     )
     parser.add_argument("--kubeconfig-path", help="Path to ~/.kube/config file")
     parser.add_argument(
+        "--kubeconfig-contexts",
+        type=comma_separated_values,
+        help="List of kubeconfig contexts to use (default: use all defined contexts)",
+    )
+    parser.add_argument(
         "--show-container-logs",
         action="store_true",
         help="Enable container logs (hidden by default as they can contain sensitive information)",
@@ -39,6 +53,12 @@ def main(argv=None):
     config_str = ", ".join(f"{k}={v}" for k, v in sorted(vars(args).items()))
     logger.info(f"Kubernetes Web View v{__version__} started with {config_str}")
 
-    cluster_manager = ClusterManager(args.kubeconfig_path)
+    try:
+        cluster_discoverer = ServiceAccountClusterDiscoverer()
+    except ServiceAccountNotFound:
+        cluster_discoverer = KubeconfigDiscoverer(
+            args.kubeconfig_path, args.kubeconfig_contexts
+        )
+    cluster_manager = ClusterManager(cluster_discoverer)
     app = get_app(cluster_manager, args)
     aiohttp.web.run_app(app, port=args.port)
