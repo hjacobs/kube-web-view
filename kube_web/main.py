@@ -2,9 +2,12 @@ import aiohttp.web
 import argparse
 import logging
 
+from pathlib import Path
+
 from kube_web import __version__
 from .web import get_app
 from .cluster_discovery import (
+    ClusterRegistryDiscoverer,
     ServiceAccountClusterDiscoverer,
     ServiceAccountNotFound,
     KubeconfigDiscoverer,
@@ -37,6 +40,12 @@ def main(argv=None):
         type=comma_separated_values,
         help="List of kubeconfig contexts to use (default: use all defined contexts)",
     )
+    parser.add_argument("--cluster-registry-url", help="URL to cluster registry")
+    parser.add_argument(
+        "--cluster-registry-oauth2-bearer-token-path",
+        type=Path,
+        help="Path to OAuth2 Bearer token for Cluster Registry authentication",
+    )
     parser.add_argument(
         "--show-container-logs",
         action="store_true",
@@ -53,12 +62,17 @@ def main(argv=None):
     config_str = ", ".join(f"{k}={v}" for k, v in sorted(vars(args).items()))
     logger.info(f"Kubernetes Web View v{__version__} started with {config_str}")
 
-    try:
-        cluster_discoverer = ServiceAccountClusterDiscoverer()
-    except ServiceAccountNotFound:
-        cluster_discoverer = KubeconfigDiscoverer(
-            args.kubeconfig_path, args.kubeconfig_contexts
+    if args.cluster_registry_url:
+        cluster_discoverer = ClusterRegistryDiscoverer(
+            args.cluster_registry_url, args.cluster_registry_oauth2_bearer_token_path
         )
+    else:
+        try:
+            cluster_discoverer = ServiceAccountClusterDiscoverer()
+        except ServiceAccountNotFound:
+            cluster_discoverer = KubeconfigDiscoverer(
+                args.kubeconfig_path, args.kubeconfig_contexts
+            )
     cluster_manager = ClusterManager(cluster_discoverer)
     app = get_app(cluster_manager, args)
     aiohttp.web.run_app(app, port=args.port)

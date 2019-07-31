@@ -46,6 +46,7 @@ TABLE_CELL_FORMATTING = {
     "pods": {
         "Status": {
             "Completed": "has-text-info",
+            "OutOfcpu": "has-text-danger",
             "CrashLoopBackOff": "has-text-danger",
             "CreateContainerConfigError": "has-text-danger",
             "Error": "has-text-danger",
