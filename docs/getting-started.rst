@@ -19,6 +19,10 @@ Afterwards you can open "kube-web-view" via kubectl port-forward (you might need
 
 Now direct your browser to http://localhost:8080/
 
+Note that pod container logs and Kubernetes secrets are hidden by default for security reasons,
+you can enable them by uncommenting the respective CLI options in ``kube-web-view/deploy/deployment.yaml``.
+See also :ref:`security`.
+
 .. _Minikube: https://github.com/kubernetes/minikube
 .. _kind: https://kind.sigs.k8s.io/
 

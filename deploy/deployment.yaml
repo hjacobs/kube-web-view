@@ -24,6 +24,9 @@ spec:
         # uncomment the following line to enable pod logs
         # (disabled by default as they might consider sensitive information)
         # - "--show-container-logs"
+        # uncomment the following line to unhide secret data
+        # see also https://kube-web-view.readthedocs.io/en/latest/security.html
+        # - "--show-secrets"
         ports:
         - containerPort: 8080
         readinessProbe:
