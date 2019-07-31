@@ -1,4 +1,3 @@
-import pykube
 from .resource_registry import ResourceRegistry
 
 

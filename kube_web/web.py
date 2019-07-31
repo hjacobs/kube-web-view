@@ -11,10 +11,9 @@ import logging
 from yarl import URL
 import yaml
 
-import pykube
 from pykube import ObjectDoesNotExist
-from pykube.objects import APIObject, NamespacedAPIObject, Namespace, Event, Pod
-from aiohttp_session import SimpleCookieStorage, get_session, setup as session_setup
+from pykube.objects import NamespacedAPIObject, Namespace, Event, Pod
+from aiohttp_session import get_session, setup as session_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from aiohttp_remotes import XForwardedRelaxed
 from aioauth_client import OAuth2Client
@@ -28,7 +27,6 @@ from aiohttp import web
 
 from kube_web import __version__
 from kube_web import kubernetes
-from .resource_registry import ResourceRegistry
 
 logger = logging.getLogger(__name__)
 
