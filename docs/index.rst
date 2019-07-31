@@ -12,6 +12,7 @@ Live demo: https://kube-web-view.demo.j-serv.de/
    :caption: Contents:
 
    getting-started
+   features
    oauth2
    security
 
