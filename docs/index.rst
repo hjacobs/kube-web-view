@@ -13,6 +13,7 @@ Live demo: https://kube-web-view.demo.j-serv.de/
 
    getting-started
    oauth2
+   security
 
 
 
