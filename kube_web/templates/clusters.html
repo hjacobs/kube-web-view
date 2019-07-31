@@ -6,11 +6,17 @@
     <tr>
         <th>Name</th>
         <th>API URL</th>
+        <th>Labels</th>
     </tr>
 {% for cluster in clusters: %}
 <tr>
     <td><a href="/clusters/{{ cluster.name }}">{{ cluster.name }}</a></td>
     <td>{{ cluster.api.url }}</td>
+    <td>
+    {% for key, val in cluster.labels.items()|sort: %}
+        <span class="tag">{{ key }}: {{ val }}</span>
+    {% endfor %}
+    </td>
 </tr>
 {% endfor %}
 </table>

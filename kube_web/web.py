@@ -89,7 +89,9 @@ async def get_index(request):
 @routes.get("/clusters")
 @aiohttp_jinja2.template("clusters.html")
 async def get_clusters(request):
-    return {"clusters": request.app[CLUSTER_MANAGER].clusters}
+    return {
+        "clusters": sorted(request.app[CLUSTER_MANAGER].clusters, key=lambda c: c.name)
+    }
 
 
 @routes.get("/clusters/{cluster}")

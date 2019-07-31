@@ -9,9 +9,6 @@ from requests.auth import AuthBase
 
 from pykube import HTTPClient, KubeConfig
 
-# default URL points to kubectl proxy
-DEFAULT_CLUSTERS = "http://localhost:8001/"
-CLUSTER_ID_INVALID_CHARS = re.compile("[^a-z0-9:-]")
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +28,10 @@ class OAuth2BearerTokenAuth(AuthBase):
 
 
 class Cluster:
-    def __init__(self, name: str, api: HTTPClient):
+    def __init__(self, name: str, api: HTTPClient, labels: dict = None):
         self.name = name
         self.api = api
+        self.labels = labels or {}
 
 
 class ServiceAccountNotFound(Exception):
@@ -88,7 +86,17 @@ class ClusterRegistryDiscoverer:
                     client.session.auth = OAuth2BearerTokenAuth(
                         self._oauth2_bearer_token_path
                     )
-                    clusters.append(Cluster(row["alias"], client))
+                    labels = {}
+                    for key in (
+                        "id",
+                        "channel",
+                        "environment",
+                        "infrastructure_account",
+                        "region",
+                    ):
+                        if key in row:
+                            labels[key.replace("_", "-")] = row[key]
+                    clusters.append(Cluster(row["alias"], client, labels))
             self._clusters = clusters
             self._last_cache_refresh = time.time()
         except:

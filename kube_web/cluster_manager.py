@@ -3,9 +3,10 @@ from .resource_registry import ResourceRegistry
 
 
 class Cluster:
-    def __init__(self, name: str, api):
+    def __init__(self, name: str, api, labels: dict = None):
         self.name = name
         self.api = api
+        self.labels = labels or {}
         self.resource_registry = ResourceRegistry(api)
 
 
@@ -23,7 +24,7 @@ class ClusterManager:
     def reload(self):
         _clusters = {}
         for cluster in self.discoverer.get_clusters():
-            _clusters[cluster.name] = Cluster(cluster.name, cluster.api)
+            _clusters[cluster.name] = Cluster(cluster.name, cluster.api, cluster.labels)
 
         self._clusters = _clusters
 
