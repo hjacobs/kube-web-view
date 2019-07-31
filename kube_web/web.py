@@ -171,7 +171,12 @@ async def download_tsv(request, table):
 @aiohttp_jinja2.template("resource-list.html")
 @context()
 async def get_namespaced_resource_list(request):
-    cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
+    cluster = request.match_info["cluster"]
+    is_all_clusters = cluster == "_all"
+    if is_all_clusters:
+        clusters = request.app[CLUSTER_MANAGER].clusters
+    else:
+        clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
     namespace = request.match_info["namespace"]
     plural = request.match_info["plural"]
 
@@ -196,24 +201,26 @@ async def get_namespaced_resource_list(request):
     params = request.rel_url.query
     tables = []
     for _type in resource_types:
-        clazz = cluster.resource_registry.get_class_by_plural_name(
-            _type, namespaced=True
-        )
-        if not clazz:
-            raise web.HTTPNotFound(text="Resource type not found")
-        query = clazz.objects(cluster.api).filter(
-            namespace=pykube.all if is_all_namespaces else namespace
-        )
-        if "selector" in params:
-            query = query.filter(selector=params["selector"])
+        for _cluster in clusters:
+            clazz = _cluster.resource_registry.get_class_by_plural_name(
+                _type, namespaced=True
+            )
+            if not clazz:
+                raise web.HTTPNotFound(text="Resource type not found")
+            query = clazz.objects(_cluster.api).filter(
+                namespace=pykube.all if is_all_namespaces else namespace
+            )
+            if "selector" in params:
+                query = query.filter(selector=params["selector"])
 
-        table = await kubernetes.get_table(query)
-        tables.append(table)
+            table = await kubernetes.get_table(query)
+            tables.append(table)
     if params.get("download") == "tsv":
         return await download_tsv(request, tables[0])
 
     return {
-        "cluster": cluster.name,
+        "cluster": cluster,
+        "is_all_clusters": is_all_clusters,
         "namespace": namespace,
         "is_all_namespaces": is_all_namespaces,
         "plural": plural,
