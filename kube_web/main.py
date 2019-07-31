@@ -52,6 +52,11 @@ def main(argv=None):
         help="Enable container logs (hidden by default as they can contain sensitive information)",
     )
     parser.add_argument(
+        "--show-secrets",
+        action="store_true",
+        help="Show contents of Kubernetes Secrets (hidden by default as they contain sensitive information)",
+    )
+    parser.add_argument(
         "--debug", action="store_true", help="Run in debugging mode (log more)"
     )
 

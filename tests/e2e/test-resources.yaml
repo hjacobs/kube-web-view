@@ -18,3 +18,12 @@ spec:
       containers:
         - name: mycontainer
           image: hjacobs/wrong-container-image:0.1
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: test-secret
+data:
+  my-secret-key: c2VjcmV0LWNvbnRlbnQK
+
+
