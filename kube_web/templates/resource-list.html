@@ -16,7 +16,12 @@
 {% for table in tables: %}
 <h1 class="title">{{ table.api_obj_class.kind }}
     <span class="links">
-        <a href="{{ rel_url.update_query(download='tsv') }}"
+        <a
+            {% if namespace: %}
+            href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ namespace }}/{{ table.api_obj_class.endpoint }}?download=tsv"
+            {% else: %}
+            href="/clusters/{{ table.obj.cluster.name }}/{{ table.api_obj_class.endpoint }}?download=tsv"
+            {% endif %}
             title="Download resource list as Tab-Separated-Values (TSV)"
             class="button is-light">
                 <span class="icon"><i class="fas fa-file-download"></i></span>
@@ -37,14 +42,14 @@
 {% for row in table.rows: %}
 <tr>
     {% if is_all_namespaces: %}
-    <td><a href="/clusters/{{ cluster }}/namespaces/{{ row.object.metadata.namespace }}">{{ row.object.metadata.namespace }}</a></td>
+    <td><a href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}">{{ row.object.metadata.namespace }}</a></td>
     {% endif %}
     {% for cell in row.cells: %}
     {% if loop.first: %}
     {% if row.object.metadata.namespace: %}
-    <td><a href="/clusters/{{ cluster }}/namespaces/{{ row.object.metadata.namespace }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
+    <td><a href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
       {% else: %}
-    <td><a href="/clusters/{{ cluster }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
+    <td><a href="/clusters/{{ table.obj.cluster.name }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
       {% endif %}
     {% else: %}
     <td class="{{ get_cell_class(table, loop.index0, cell) }}">{{ cell }}</td>

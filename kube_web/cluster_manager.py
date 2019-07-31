@@ -1,11 +1,11 @@
-import pykube
 from .resource_registry import ResourceRegistry
 
 
 class Cluster:
-    def __init__(self, name: str, api):
+    def __init__(self, name: str, api, labels: dict = None):
         self.name = name
         self.api = api
+        self.labels = labels or {}
         self.resource_registry = ResourceRegistry(api)
 
 
@@ -15,23 +15,17 @@ class ClusterNotFound(Exception):
 
 
 class ClusterManager:
-    def __init__(self, kubeconfig_path):
+    def __init__(self, discoverer):
         self._clusters = {}
+        self.discoverer = discoverer
+        self.reload()
 
-        # TODO: reload config, e.g. when kubeconfig changed
-        try:
-            api = pykube.HTTPClient(pykube.KubeConfig.from_service_account())
-            cluster = Cluster("local", api)
-            self._clusters[cluster.name] = cluster
-        except:
-            kubeconfig = pykube.KubeConfig.from_file(kubeconfig_path)
+    def reload(self):
+        _clusters = {}
+        for cluster in self.discoverer.get_clusters():
+            _clusters[cluster.name] = Cluster(cluster.name, cluster.api, cluster.labels)
 
-            for context in kubeconfig.contexts:
-                # create a new KubeConfig with new "current context"
-                context_config = pykube.KubeConfig(kubeconfig.doc, context)
-                api = pykube.HTTPClient(context_config)
-                cluster = Cluster(context, api)
-                self._clusters[cluster.name] = cluster
+        self._clusters = _clusters
 
     @property
     def clusters(self):

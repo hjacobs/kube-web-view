@@ -22,6 +22,13 @@ def test_list_cluster_resources(populated_cluster):
     assert "/clusters/local/nodes/kube-web-view-e2e-control-plane" in response.text
 
 
+def test_list_cluster_resources_in_all_clusters(populated_cluster):
+    url = populated_cluster["url"].rstrip("/")
+    response = requests.get(f"{url}/clusters/_all/nodes")
+    response.raise_for_status()
+    assert "/clusters/local/nodes/kube-web-view-e2e-control-plane" in response.text
+
+
 def test_list_namespaced_resources(populated_cluster):
     url = populated_cluster["url"].rstrip("/")
     response = requests.get(f"{url}/clusters/local/namespaces/default/deployments")
@@ -39,6 +46,15 @@ def test_list_multple_namespaced_resources(populated_cluster):
     assert "application=kube-web-view" in response.text
     assert "kube-web-view-container" in response.text
     assert "ClusterIP" in response.text
+
+
+def test_download_nodes_tsv(populated_cluster):
+    url = populated_cluster["url"].rstrip("/")
+    response = requests.get(f"{url}/clusters/local/nodes?download=tsv")
+    response.raise_for_status()
+    lines = response.text.split("\n")
+    assert lines[0].startswith("Name")
+    assert lines[1].startswith("kube-web-view")
 
 
 def test_download_tsv(populated_cluster):
@@ -59,6 +75,13 @@ def test_list_resources_in_all_namespaces(populated_cluster):
     assert "application=kube-web-view" in response.text
     # deployments in kube-system are also listed:
     assert "/namespaces/kube-system/deployments/coredns" in response.text
+
+
+def test_list_resources_in_all_clusters(populated_cluster):
+    url = populated_cluster["url"].rstrip("/")
+    response = requests.get(f"{url}/clusters/_all/namespaces/default/deployments")
+    response.raise_for_status()
+    assert "application=kube-web-view" in response.text
 
 
 def test_list_pods_wrong_container_image(populated_cluster):

@@ -11,10 +11,9 @@ import logging
 from yarl import URL
 import yaml
 
-import pykube
 from pykube import ObjectDoesNotExist
-from pykube.objects import APIObject, NamespacedAPIObject, Namespace, Event, Pod
-from aiohttp_session import SimpleCookieStorage, get_session, setup as session_setup
+from pykube.objects import NamespacedAPIObject, Namespace, Event, Pod
+from aiohttp_session import get_session, setup as session_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from aiohttp_remotes import XForwardedRelaxed
 from aioauth_client import OAuth2Client
@@ -28,7 +27,6 @@ from aiohttp import web
 
 from kube_web import __version__
 from kube_web import kubernetes
-from .resource_registry import ResourceRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +44,7 @@ TABLE_CELL_FORMATTING = {
     "pods": {
         "Status": {
             "Completed": "has-text-info",
+            "OutOfcpu": "has-text-danger",
             "CrashLoopBackOff": "has-text-danger",
             "CreateContainerConfigError": "has-text-danger",
             "Error": "has-text-danger",
@@ -65,9 +64,12 @@ def context():
         async def func_wrapper(request):
             ctx = await func(request)
             if isinstance(ctx, dict) and "cluster" in ctx:
-                cluster = request.app[CLUSTER_MANAGER].get(ctx["cluster"])
-                namespaces = await kubernetes.get_list(Namespace.objects(cluster.api))
-                ctx["namespaces"] = namespaces
+                if ctx["cluster"] != "_all":
+                    cluster = request.app[CLUSTER_MANAGER].get(ctx["cluster"])
+                    namespaces = await kubernetes.get_list(
+                        Namespace.objects(cluster.api)
+                    )
+                    ctx["namespaces"] = namespaces
                 ctx["rel_url"] = request.rel_url
             return ctx
 
@@ -85,7 +87,9 @@ async def get_index(request):
 @routes.get("/clusters")
 @aiohttp_jinja2.template("clusters.html")
 async def get_clusters(request):
-    return {"clusters": request.app[CLUSTER_MANAGER].clusters}
+    return {
+        "clusters": sorted(request.app[CLUSTER_MANAGER].clusters, key=lambda c: c.name)
+    }
 
 
 @routes.get("/clusters/{cluster}")
@@ -116,20 +120,32 @@ def get_cell_class(table, column_index, value):
 @aiohttp_jinja2.template("resource-list.html")
 @context()
 async def get_cluster_resource_list(request):
-    cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
+    cluster = request.match_info["cluster"]
+    is_all_clusters = cluster == "_all"
+    if is_all_clusters:
+        clusters = request.app[CLUSTER_MANAGER].clusters
+    else:
+        clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
     plural = request.match_info["plural"]
     params = request.rel_url.query
-    clazz = cluster.resource_registry.get_class_by_plural_name(plural, namespaced=False)
-    if not clazz:
-        raise web.HTTPNotFound(text="Resource type not found")
-    table = await kubernetes.get_table(clazz.objects(cluster.api))
+    tables = []
+    for _cluster in clusters:
+        clazz = _cluster.resource_registry.get_class_by_plural_name(
+            plural, namespaced=False
+        )
+        if not clazz:
+            raise web.HTTPNotFound(text="Resource type not found")
+        table = await kubernetes.get_table(clazz.objects(_cluster.api))
+        table.obj["cluster"] = _cluster
+        tables.append(table)
     if params.get("download") == "tsv":
-        return await download_tsv(request, table)
+        return await download_tsv(request, tables[0])
     return {
-        "cluster": cluster.name,
+        "cluster": cluster,
+        "is_all_clusters": is_all_clusters,
         "namespace": None,
         "plural": plural,
-        "tables": [table],
+        "tables": tables,
         "get_cell_class": get_cell_class,
     }
 
@@ -149,9 +165,15 @@ class ResponseWriter:
 
 async def as_tsv(table, fd) -> str:
     writer = csv.writer(fd, delimiter="\t", lineterminator="\n")
-    writer.writerow(["Namespace"] + [col["name"] for col in table.columns])
+    if issubclass(table.api_obj_class, NamespacedAPIObject):
+        writer.writerow(["Namespace"] + [col["name"] for col in table.columns])
+    else:
+        writer.writerow([col["name"] for col in table.columns])
     for row in table.rows:
-        writer.writerow([row["object"]["metadata"]["namespace"]] + row["cells"])
+        if issubclass(table.api_obj_class, NamespacedAPIObject):
+            writer.writerow([row["object"]["metadata"]["namespace"]] + row["cells"])
+        else:
+            writer.writerow(row["cells"])
         await fd.flush()
 
 
@@ -170,7 +192,12 @@ async def download_tsv(request, table):
 @aiohttp_jinja2.template("resource-list.html")
 @context()
 async def get_namespaced_resource_list(request):
-    cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
+    cluster = request.match_info["cluster"]
+    is_all_clusters = cluster == "_all"
+    if is_all_clusters:
+        clusters = request.app[CLUSTER_MANAGER].clusters
+    else:
+        clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
     namespace = request.match_info["namespace"]
     plural = request.match_info["plural"]
 
@@ -195,24 +222,27 @@ async def get_namespaced_resource_list(request):
     params = request.rel_url.query
     tables = []
     for _type in resource_types:
-        clazz = cluster.resource_registry.get_class_by_plural_name(
-            _type, namespaced=True
-        )
-        if not clazz:
-            raise web.HTTPNotFound(text="Resource type not found")
-        query = clazz.objects(cluster.api).filter(
-            namespace=pykube.all if is_all_namespaces else namespace
-        )
-        if "selector" in params:
-            query = query.filter(selector=params["selector"])
+        for _cluster in clusters:
+            clazz = _cluster.resource_registry.get_class_by_plural_name(
+                _type, namespaced=True
+            )
+            if not clazz:
+                raise web.HTTPNotFound(text="Resource type not found")
+            query = clazz.objects(_cluster.api).filter(
+                namespace=pykube.all if is_all_namespaces else namespace
+            )
+            if "selector" in params:
+                query = query.filter(selector=params["selector"])
 
-        table = await kubernetes.get_table(query)
-        tables.append(table)
+            table = await kubernetes.get_table(query)
+            table.obj["cluster"] = _cluster
+            tables.append(table)
     if params.get("download") == "tsv":
         return await download_tsv(request, tables[0])
 
     return {
-        "cluster": cluster.name,
+        "cluster": cluster,
+        "is_all_clusters": is_all_clusters,
         "namespace": namespace,
         "is_all_namespaces": is_all_namespaces,
         "plural": plural,
