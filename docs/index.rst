@@ -16,6 +16,7 @@ Live demo: https://kube-web-view.demo.j-serv.de/
    features
    oauth2
    security
+   alternatives
 
 
 
