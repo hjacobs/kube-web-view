@@ -35,9 +35,9 @@
         <th>Namespace</th>
         {% endif %}
         {% for column in table.columns: %}
-        <th title="{{ column.description }}">{{ column.name }}</th>
+        <th title="{{ column.description }}"><a href="{{ rel_url.update_query(sort=column.name) }}">{{ column.name }}</a></th>
         {% endfor %}
-        <th>Created</th>
+        <th><a href="{{ rel_url.update_query(sort='Created') }}">Created</th>
     </tr>
 {% for row in table.rows: %}
 <tr>

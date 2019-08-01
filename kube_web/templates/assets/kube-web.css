@@ -10,6 +10,8 @@ h1 .links {
     margin-left: 1rem;
 }
 
+table th a { color: #363636; }
+
 
 /* Pygments CSS */
 .highlight .hll { background-color: #ffffcc }

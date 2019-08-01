@@ -146,6 +146,25 @@ async def get_cluster_resource_types(request):
     }
 
 
+def sort_table(table, sort):
+    if sort:
+        if sort == "Created":
+            key = lambda row: row["object"]["metadata"]["creationTimestamp"]
+            reverse = False
+        elif sort == "Age":
+            key = lambda row: row["object"]["metadata"]["creationTimestamp"]
+            reverse = True
+        else:
+            column_index = 0
+            for i, col in enumerate(table.columns):
+                if col["name"] == sort:
+                    column_index = i
+                    break
+            reverse = False
+            key = lambda row: (row["cells"][column_index], row["cells"][0])
+        table.rows.sort(key=key, reverse=reverse)
+
+
 @routes.get("/clusters/{cluster}/{plural}")
 @aiohttp_jinja2.template("resource-list.html")
 @context()
@@ -166,6 +185,7 @@ async def get_cluster_resource_list(request):
         if not clazz:
             raise web.HTTPNotFound(text="Resource type not found")
         table = await kubernetes.get_table(clazz.objects(_cluster.api))
+        sort_table(table, params.get("sort"))
         table.obj["cluster"] = _cluster
         tables.append(table)
     if params.get("download") == "tsv":
@@ -288,6 +308,7 @@ async def get_namespaced_resource_list(request):
                 query = query.filter(selector=params["selector"])
 
             table = await kubernetes.get_table(query)
+            sort_table(table, params.get("sort"))
             table.obj["cluster"] = _cluster
             tables.append(table)
     if params.get("download") == "tsv":

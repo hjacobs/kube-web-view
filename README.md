@@ -50,7 +50,7 @@ Open http://localhost:8080/ in your browser to see the UI.
 
 ## Running tests
 
-Requires Python 3.7 and poetry:
+This requires Python 3.7 and [poetry](https://poetry.eustace.io/) and will run unit tests and end-to-end tests with [Kind](https://github.com/kubernetes-sigs/kind):
 
 ```
 make test
