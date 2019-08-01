@@ -27,7 +27,7 @@
 
 {% if view == 'yaml': %}
 <div>
-{{ resource.obj|yaml|highlight|safe }}
+{{ resource.obj|yaml|highlight(linenos=True)|safe }}
 </div>
 {% else: %}
 <div>

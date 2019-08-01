@@ -484,12 +484,22 @@ def filter_yaml(value):
     return yaml.dump(value, default_flow_style=False)
 
 
-def filter_highlight(value):
+def filter_highlight(value, linenos=False):
     from pygments import highlight
     from pygments.lexers import get_lexer_by_name
     from pygments.formatters import HtmlFormatter
 
-    return highlight(value, get_lexer_by_name("yaml"), HtmlFormatter())
+    if linenos:
+        formatter = HtmlFormatter(
+            lineanchors="line",
+            anchorlinenos=True,
+            linenos="table",
+            linespans="yaml-line",
+        )
+    else:
+        formatter = HtmlFormatter()
+
+    return highlight(value, get_lexer_by_name("yaml"), formatter)
 
 
 async def get_oauth2_client():
