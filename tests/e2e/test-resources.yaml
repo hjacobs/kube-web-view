@@ -14,6 +14,7 @@ spec:
       labels:
         app: wrong-container-image
         e2e: wrong-container-image
+        my-pod-label: my-pod-label-value
     spec:
       containers:
         - name: mycontainer

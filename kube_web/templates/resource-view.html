@@ -31,6 +31,7 @@
 </div>
 {% else: %}
 <div>
+    <div>
     {% for key, val in resource.labels.items()|sort: %}
       {% if namespace: %}
     <a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ resource.endpoint }}?selector={{key}}={{val}}"><span class="tag is-link">{{ key }}: {{ val }}</span></a>
@@ -38,9 +39,13 @@
     <a href="/clusters/{{ cluster }}/{{ resource.endpoint }}?selector={{key}}={{val}}"><span class="tag is-link">{{ key }}: {{ val }}</span></a>
     {% endif %}
     {% endfor %}
+    </div>
+    <div>
     {% for key, val in resource.annotations.items()|sort: %}
-    <span class="tag">{{ key }}: {{ val }}</span>
+    <span class="tag">{{ key }}: {{ val|truncate(40) }}</span>
     {% endfor %}
+    </div>
+
     {% for key, val in resource.obj.items()|sort: %}
     {% if key not in ('metadata', 'apiVersion', 'kind'): %}
     <div class="card">
@@ -55,8 +60,13 @@
     </div>
     </div>
     </div>
-{% endif %}
+    {% endif %}
     {% endfor %}
+
+    {% if resource.kind == "Namespace": %}
+    <a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/_resource-types">Resource Types</a>
+    {% endif %}
+
 </div>
 {% endif %}
 

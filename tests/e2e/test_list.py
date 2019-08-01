@@ -113,3 +113,12 @@ def test_namespaced_resource_types(populated_cluster):
     response = requests.get(f"{url}/clusters/local/namespaces/default/_resource-types")
     response.raise_for_status()
     assert "PersistentVolumeClaim" in response.text
+
+
+def test_label_columns(populated_cluster):
+    url = populated_cluster["url"].rstrip("/")
+    response = requests.get(
+        f"{url}/clusters/local/namespaces/default/pods?labelcols=my-pod-label"
+    )
+    response.raise_for_status()
+    assert "my-pod-label-value" in response.text
