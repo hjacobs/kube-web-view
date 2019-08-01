@@ -70,6 +70,41 @@
 </div>
 {% endif %}
 
+{% if table: %}
+<h4 class="title is-4">Managed Pods</h4>
+<table class="table is-striped">
+    <tr>
+        {% for column in table.columns: %}
+        <th title="{{ column.description }}"><a href="{{ rel_url.update_query(sort=column.name) }}">{{ column.name }}</a></th>
+        {% endfor %}
+        <th><a href="{{ rel_url.update_query(sort='Created') }}">Created</th>
+    </tr>
+{% for row in table.rows: %}
+<tr>
+    {% if is_all_namespaces: %}
+    <td><a href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}">{{ row.object.metadata.namespace }}</a></td>
+    {% endif %}
+    {% for cell in row.cells: %}
+    {% if loop.first: %}
+    {% if row.object.metadata.namespace: %}
+    <td><a href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
+      {% else: %}
+    <td><a href="/clusters/{{ table.obj.cluster.name }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
+      {% endif %}
+    {% else: %}
+    <td class="{{ get_cell_class(table, loop.index0, cell) }}">{{ cell if cell is not none}}</td>
+    {% endif %}
+    {% endfor %}
+    <td>{{ row.object.metadata.creationTimestamp }}</td>
+</tr>
+{% else: %}
+<tr>
+    <td colspan="{{ table.columns|length + 1 }}">No {{ table.api_obj_class.kind }} objects {% if namespace and not is_all_namespaces:%} in namespace "{{ namespace }}"{% endif %} found.</td>
+</tr>
+{% endfor %}
+</table>{% endif %}
+
+<h4 class="title is-4">Events</h4>
 <table class="table is-striped">
     <tr>
         <th>Type</th>

@@ -351,7 +351,8 @@ async def get_resource_view(request):
     namespace = request.match_info.get("namespace")
     plural = request.match_info["plural"]
     name = request.match_info["name"]
-    view = request.rel_url.query.get("view")
+    params = request.rel_url.query
+    view = params.get("view")
     clazz = cluster.resource_registry.get_class_by_plural_name(
         plural, namespaced=bool(namespace)
     )
@@ -361,6 +362,17 @@ async def get_resource_view(request):
     if namespace:
         query = query.filter(namespace=namespace)
     resource = await kubernetes.get_by_name(query, name)
+
+    if resource.obj.get("spec", {}).get("selector", {}).get("matchLabels"):
+        query = Pod.objects(cluster.api).filter(
+            namespace=namespace,
+            selector=resource.obj["spec"]["selector"]["matchLabels"],
+        )
+        table = await kubernetes.get_table(query)
+        sort_table(table, params.get("sort"))
+        table.obj["cluster"] = cluster
+    else:
+        table = None
 
     field_selector = {
         "involvedObject.name": resource.name,
@@ -390,7 +402,9 @@ async def get_resource_view(request):
         "plural": plural,
         "resource": resource,
         "view": view,
+        "table": table,
         "events": events,
+        "get_cell_class": get_cell_class,
     }
 
 
