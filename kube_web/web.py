@@ -51,6 +51,7 @@ TABLE_CELL_FORMATTING = {
     "pods": {
         "Status": {
             "Completed": "has-text-info",
+            "Evicted": "has-text-danger",
             "OutOfcpu": "has-text-danger",
             "CrashLoopBackOff": "has-text-danger",
             "CreateContainerConfigError": "has-text-danger",
@@ -245,12 +246,24 @@ async def as_tsv(table, fd) -> str:
 
 async def download_tsv(request, table):
     response = web.StreamResponse()
-    response.content_type = "text/tab-separated-values"
+    response.content_type = "text/tab-separated-values; charset=utf-8"
     path = request.rel_url.path
     filename = path.strip("/").replace("/", "_")
     response.headers["Content-Disposition"] = f'attachment; filename="{filename}.tsv"'
     await response.prepare(request)
     await as_tsv(table, ResponseWriter(response))
+    return response
+
+
+async def download_yaml(request, resource):
+    response = web.StreamResponse()
+    response.content_type = "text/vnd.yaml; charset=utf-8"
+    path = request.rel_url.path
+    filename = path.strip("/").replace("/", "_")
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}.yaml"'
+    await response.prepare(request)
+    data = yaml.dump(resource.obj, default_flow_style=False)
+    await response.write(data.encode("utf-8"))
     return response
 
 
@@ -362,6 +375,9 @@ async def get_resource_view(request):
     if namespace:
         query = query.filter(namespace=namespace)
     resource = await kubernetes.get_by_name(query, name)
+
+    if params.get("download") == "yaml":
+        return await download_yaml(request, resource)
 
     if resource.obj.get("spec", {}).get("selector", {}).get("matchLabels"):
         query = Pod.objects(cluster.api).filter(

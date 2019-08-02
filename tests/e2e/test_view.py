@@ -1,4 +1,5 @@
 import requests
+import yaml
 
 
 def test_view_namespaced_resource(populated_cluster):
@@ -57,3 +58,14 @@ def test_hide_secret_contents(populated_cluster):
     # echo 'secret-content' | base64
     assert "c2VjcmV0LWNvbnRlbnQK" not in response.text
     assert "**SECRET-CONTENT-HIDDEN-BY-KUBE-WEB-VIEW**" in response.text
+
+
+def test_download_yaml(populated_cluster):
+    url = populated_cluster["url"].rstrip("/")
+    response = requests.get(
+        f"{url}/clusters/local/namespaces/default/deployments/kube-web-view?download=yaml"
+    )
+    response.raise_for_status()
+    data = yaml.safe_load(response.text)
+    assert data['kind'] == 'Deployment'
+    assert data['metadata']['name'] == 'kube-web-view'

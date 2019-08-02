@@ -29,11 +29,16 @@ aside.menu { padding: 1.5rem; margin-top: -1.5rem; background: #fafafa; }
     .main { padding: 0 1.5rem; }
 }
 
-h1 .links {
+h1 .links,
+h2 .links {
     margin-left: 1rem;
 }
 
 table th a { color: #363636; }
+table th a:hover { color: #3273dc; }
+
+div.section { margin: 0 0 1rem 0; padding: 0; }
+div.section h4.title { margin-bottom: 1rem; }
 
 
 /* Pygments CSS
