@@ -46,8 +46,13 @@
     </div>
   </nav>
   <section class="section">
-    <div class="container is-fluid" style="display:flex">
+    <div class="container is-fluid is-flex-desktop">
 <aside class="menu">
+    <div class="is-hidden-desktop"><a role="button" class="aside-burger" data-target="aside-menu">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+    </a></div>
+    <div id="aside-menu">
       {% if cluster: %}
   <p class="menu-label">
     Cluster Resources
@@ -94,6 +99,7 @@
       <li><a href="/clusters/{{cluster}}/_resource-types">Resource Types</a></li>
   </ul>
       {% endif %}
+    </div>
 
 </aside>
         <div class="main">

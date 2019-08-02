@@ -3,8 +3,32 @@ html { overflow: scroll; }
 
 section.section { padding: 1.5rem 0; }
 .container.is-fluid { margin-left: 0; }
-aside.menu { flex-grow: 0; flex-shrink: 0; flex-basis: 12rem; padding-left: 32px; margin-right: 32px; background: #fafafa; margin-top: -1.5rem; padding-top: 1.5rem; }
+
+
+/* aside menu has toggle for mobile */
+aside.menu { padding: 1.5rem; margin-top: -1.5rem; background: #fafafa; }
+
+@media screen and (min-width: 1024px) {
+    aside.menu { flex-grow: 0; flex-shrink: 0; flex-basis: 12rem; padding: 1.5rem; margin-right: 1.5rem; margin-top: -1.5rem; }
+}
+@media screen and (max-width: 1023px) {
+    aside.menu { padding: 0.5rem 1.5rem; margin-bottom: 1.5rem; }
+    aside #aside-menu { display: none; padding-top: 1rem; }
+}
+
+aside a[role=button] { display: block; height: 1rem;}
+aside a[role=button] span { display: block; background: hsl(0, 0%, 71%); position: relative; height: 1px; margin: 0 auto; width: 66%; }
+aside a[role=button] span:nth-child(1) { top: calc(50% - 1px); }
+aside a[role=button] span:nth-child(2) { top: calc(50% + 1px); }
+
+#aside-menu.is-active { display: block; }
+
 .main { flex-grow: 1; flex-shrink: 1; }
+
+@media screen and (max-width: 1023px) {
+    .main { padding: 0 1.5rem; }
+}
+
 
 h1 .links {
     margin-left: 1rem;
