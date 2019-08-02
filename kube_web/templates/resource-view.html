@@ -26,9 +26,7 @@
 </div>
 
 {% if view == 'yaml': %}
-<div>
-{{ resource.obj|yaml|highlight(linenos=True)|safe }}
-</div>
+    {% include "partials/yaml.html" %}
 {% else: %}
 <div>
     <div>
@@ -68,7 +66,6 @@
     {% endif %}
 
 </div>
-{% endif %}
 
 {% if table: %}
 <h4 class="title is-4">Managed Pods</h4>
@@ -102,7 +99,8 @@
     <td colspan="{{ table.columns|length + 1 }}">No {{ table.api_obj_class.kind }} objects {% if namespace and not is_all_namespaces:%} in namespace "{{ namespace }}"{% endif %} found.</td>
 </tr>
 {% endfor %}
-</table>{% endif %}
+</table>
+{% endif %}
 
 <h4 class="title is-4">Events</h4>
 <table class="table is-striped">
@@ -127,4 +125,7 @@
 </tr>
 {% endfor %}
 </table>
+
+{% endif %}
+
 {% endblock %}
