@@ -67,5 +67,17 @@ def test_download_yaml(populated_cluster):
     )
     response.raise_for_status()
     data = yaml.safe_load(response.text)
-    assert data['kind'] == 'Deployment'
-    assert data['metadata']['name'] == 'kube-web-view'
+    assert data["kind"] == "Deployment"
+    assert data["metadata"]["name"] == "kube-web-view"
+
+
+def test_download_secret_yaml(populated_cluster):
+    url = populated_cluster["url"].rstrip("/")
+    response = requests.get(
+        f"{url}/clusters/local/namespaces/default/secrets/test-secret?download=yaml"
+    )
+    response.raise_for_status()
+    data = yaml.safe_load(response.text)
+    assert data["kind"] == "Secret"
+    assert data["metadata"]["name"] == "test-secret"
+    assert data["data"]["my-secret-key"] == "**SECRET-CONTENT-HIDDEN-BY-KUBE-WEB-VIEW**"

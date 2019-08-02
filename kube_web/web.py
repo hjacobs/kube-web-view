@@ -376,6 +376,14 @@ async def get_resource_view(request):
         query = query.filter(namespace=namespace)
     resource = await kubernetes.get_by_name(query, name)
 
+    if resource.kind == "Secret" and not request.app[CONFIG].show_secrets:
+        # mask out all secret values, but still show keys
+        for key in resource.obj["data"].keys():
+            resource.obj["data"][key] = "**SECRET-CONTENT-HIDDEN-BY-KUBE-WEB-VIEW**"
+        # the secret data is also leaked in annotations ("last-applied-configuration")
+        # => hide annotations
+        resource.metadata["annotations"] = {"annotations-hidden": "by-kube-web-view"}
+
     if params.get("download") == "yaml":
         return await download_yaml(request, resource)
 
@@ -404,13 +412,6 @@ async def get_resource_view(request):
 
     if resource.kind == "Namespace":
         namespace = resource.name
-    elif resource.kind == "Secret" and not request.app[CONFIG].show_secrets:
-        # mask out all secret values, but still show keys
-        for key in resource.obj["data"].keys():
-            resource.obj["data"][key] = "**SECRET-CONTENT-HIDDEN-BY-KUBE-WEB-VIEW**"
-        # the secret data is also leaked in annotations ("last-applied-configuration")
-        # => hide annotations
-        resource.metadata["annotations"] = {"annotations-hidden": "by-kube-web-view"}
 
     return {
         "cluster": cluster.name,
