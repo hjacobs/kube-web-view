@@ -36,6 +36,11 @@ Viewing Resources
 Object details are available via ``/clusters/{cluster}/{resource-type}/{name}`` for cluster resources
 and ``/clusters/{cluster}/namespaces/{namespace}/{resource-type}/{name}`` for namespaced resources.
 Object details are either rendered via HTML or can be viewed as their YAML source.
+Resources can also be downloaded as YAML.
+
+To make it easier to point colleagues to a specific portion of a resource spec, the YAML view supports linking and highlighting individual lines.
+Just click on the respective line number.
+
 
 Container Logs
 ==============
