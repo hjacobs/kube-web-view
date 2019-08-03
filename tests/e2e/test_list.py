@@ -17,8 +17,8 @@ def test_list_cluster_resource_type_not_found(session):
 def test_list_cluster_resources(session):
     response = session.get("/clusters/local/nodes")
     response.raise_for_status()
-    title = response.html.find('h1', first=True)
-    assert title.text == 'Nodes'
+    title = response.html.find("h1", first=True)
+    assert title.text == "Nodes"
     assert "/clusters/local/nodes/kube-web-view-e2e-control-plane" in response.text
 
 
@@ -36,9 +36,7 @@ def test_list_namespaced_resources(session):
 
 
 def test_list_multiple_namespaced_resources(session):
-    response = session.get(
-        "/clusters/local/namespaces/default/deployments,services"
-    )
+    response = session.get("/clusters/local/namespaces/default/deployments,services")
     response.raise_for_status()
     assert "application=kube-web-view" in response.text
     assert "kube-web-view-container" in response.text
