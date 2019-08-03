@@ -8,7 +8,10 @@ import logging
 from pytest import fixture
 from pathlib import Path
 import os
+from functools import partial
 import subprocess
+
+from requests_html import HTMLSession
 
 from subprocess import check_output, run, Popen
 
@@ -92,3 +95,17 @@ def cluster() -> dict:
 @fixture(scope="module")
 def populated_cluster(cluster):
     return cluster
+
+
+@fixture(scope="module")
+def session(populated_cluster):
+
+    url = populated_cluster["url"].rstrip("/")
+
+    s = HTMLSession()
+
+    def new_request(prefix, f, method, url, *args, **kwargs):
+        return f(method, prefix + url, *args, **kwargs)
+
+    s.request = partial(new_request, url, s.request)
+    return s

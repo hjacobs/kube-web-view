@@ -2,9 +2,8 @@ import time
 import requests
 
 
-def test_list_clusters(populated_cluster):
-    url = populated_cluster["url"].rstrip("/")
-    response = requests.get(f"{url}/clusters")
+def test_list_clusters(session):
+    response = session.get("/clusters")
     response.raise_for_status()
     assert "/clusters/local" in response.text
 
@@ -126,8 +125,6 @@ def test_label_columns(populated_cluster):
 
 def test_download_sort_link(populated_cluster):
     url = populated_cluster["url"].rstrip("/")
-    response = requests.get(
-        f"{url}/clusters/local/namespaces/default/pods?sort=Status"
-    )
+    response = requests.get(f"{url}/clusters/local/namespaces/default/pods?sort=Status")
     response.raise_for_status()
     assert "?download=tsv&sort=Status" in response.text

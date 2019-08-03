@@ -14,7 +14,7 @@
 </nav>
 
 {% for table in tables: %}
-<h1 class="title">{{ table.api_obj_class.kind }}
+<h1 class="title">{{ table.api_obj_class.kind|pluralize }}
     <span class="links">
         <a
             {% if namespace: %}
@@ -43,7 +43,13 @@
                 {% endif %}
         </a></th>
         {% endfor %}
-        <th><a href="{{ rel_url.update_query(sort='Created') }}">Created</a></th>
+        <th><a href="{{ rel_url.update_query(sort=('Created:desc' if rel_url.query.sort == 'Created' else 'Created')) }}">Created
+                {% if rel_url.query.sort == 'Created': %}
+                <span class="icon"><i class="fas fa-sort-down"></i></span>
+                {% elif rel_url.query.sort == 'Created:desc': %}
+                <span class="icon"><i class="fas fa-sort-up"></i></span>
+                {% endif %}
+        </a></th>
     </tr>
 {% for row in table.rows: %}
 <tr>
@@ -58,10 +64,14 @@
     <td><a href="/clusters/{{ table.obj.cluster.name }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
       {% endif %}
     {% else: %}
-    <td class="{{ get_cell_class(table, loop.index0, cell) }}">{{ cell if cell is not none}}</td>
+    <td class="{{ get_cell_class(table, loop.index0, cell) }}"
+        {% if table.columns[loop.index0].name == 'Age': %}
+        style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}"
+        {% endif %}
+        >{{ cell if cell is not none}}</td>
     {% endif %}
     {% endfor %}
-    <td>{{ row.object.metadata.creationTimestamp }}</td>
+    <td style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}">{{ row.object.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
 </tr>
 {% else: %}
 <tr>

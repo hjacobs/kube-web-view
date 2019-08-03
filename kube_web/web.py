@@ -27,6 +27,7 @@ from aiohttp import web
 
 from kube_web import __version__
 from kube_web import kubernetes
+from kube_web import jinja2_filters
 
 logger = logging.getLogger(__name__)
 
@@ -511,28 +512,6 @@ async def get_health(request):
     return web.Response(text="OK")
 
 
-def filter_yaml(value):
-    return yaml.dump(value, default_flow_style=False)
-
-
-def filter_highlight(value, linenos=False):
-    from pygments import highlight
-    from pygments.lexers import get_lexer_by_name
-    from pygments.formatters import HtmlFormatter
-
-    if linenos:
-        formatter = HtmlFormatter(
-            lineanchors="line",
-            anchorlinenos=True,
-            linenos="table",
-            linespans="yaml-line",
-        )
-    else:
-        formatter = HtmlFormatter()
-
-    return highlight(value, get_lexer_by_name("yaml"), formatter)
-
-
 async def get_oauth2_client():
     authorize_url = URL(os.getenv("OAUTH2_AUTHORIZE_URL"))
     access_token_url = URL(os.getenv("OAUTH2_ACCESS_TOKEN_URL"))
@@ -631,7 +610,12 @@ def get_app(cluster_manager, config):
         app, loader=jinja2.FileSystemLoader(str(Path(__file__).parent / "templates"))
     )
     env = aiohttp_jinja2.get_env(app)
-    env.filters.update(yaml=filter_yaml, highlight=filter_highlight)
+    env.filters.update(
+        pluralize=jinja2_filters.pluralize,
+        yaml=jinja2_filters.yaml,
+        highlight=jinja2_filters.highlight,
+        age_color=jinja2_filters.age_color,
+    )
     env.globals["version"] = __version__
 
     app.add_routes(routes)
