@@ -33,7 +33,7 @@ def sort_table(table, sort_param):
 def add_label_columns(table, label_columns_param):
     if not label_columns_param:
         return
-    label_columns = label_columns_param.split(",")
+    label_columns = list(l.strip() for l in label_columns_param.split(","))
     for i, label_column in enumerate(label_columns):
         if label_column == "*":
             name = "Labels"
@@ -59,10 +59,14 @@ def filter_table(table, filter_param):
         return
 
     key_value = {}
+    text_filters = []
 
     for part in filter_param.split(","):
-        k, _, v = part.strip().partition("=")
-        key_value[k] = v
+        k, sep, v = part.partition("=")
+        if not sep:
+            text_filters.append(part.strip().lower())
+        else:
+            key_value[k.strip()] = v.strip()
 
     index_filter = {}
     for i, col in enumerate(table.columns):
@@ -70,9 +74,21 @@ def filter_table(table, filter_param):
         if filter_value is not None:
             index_filter[i] = filter_value
 
+    if len(key_value) != len(index_filter):
+        # filter was defined for a column which does not exist
+        table.rows[:] = []
+        return
+
     for i, row in reversed(list(enumerate(table.rows))):
         for j, cell in enumerate(row["cells"]):
             filter_value = index_filter.get(j)
-            if filter_value is not None and str(cell) != filter_value:
+            is_match = filter_value is None or str(cell) == filter_value
+            if is_match:
+                for text in text_filters:
+                    if text not in str(cell).lower():
+                        is_match = False
+                        break
+
+            if not is_match:
                 del table.rows[i]
                 break
