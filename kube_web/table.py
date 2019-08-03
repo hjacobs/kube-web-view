@@ -1,0 +1,78 @@
+from functools import partial
+
+
+def _creation_timestamp(row):
+    return row["object"]["metadata"]["creationTimestamp"]
+
+
+def _column(row, column_index: int):
+    return (row["cells"][column_index], row["cells"][0])
+
+
+def sort_table(table, sort_param):
+    if not sort_param:
+        return
+    parts = sort_param.split(":")
+    sort = parts[0]
+    reverse = len(parts) > 1 and parts[1] == "desc"
+    if sort == "Created":
+        key = _creation_timestamp
+    elif sort == "Age":
+        key = _creation_timestamp
+        reverse = not reverse
+    else:
+        column_index = 0
+        for i, col in enumerate(table.columns):
+            if col["name"] == sort:
+                column_index = i
+                break
+        key = partial(_column, column_index=column_index)
+    table.rows.sort(key=key, reverse=reverse)
+
+
+def add_label_columns(table, label_columns_param):
+    if not label_columns_param:
+        return
+    label_columns = label_columns_param.split(",")
+    for i, label_column in enumerate(label_columns):
+        if label_column == "*":
+            name = "Labels"
+        else:
+            name = label_column.capitalize()
+        table.columns.insert(
+            i + 1, {"name": name, "description": f"{label_column} label"}
+        )
+    for row in table.rows:
+        for i, label in enumerate(label_columns):
+            if label == "*":
+                contents = ",".join(
+                    f"{k}={v}"
+                    for k, v in sorted(row["object"]["metadata"]["labels"].items())
+                )
+            else:
+                contents = row["object"]["metadata"]["labels"].get(label, "")
+            row["cells"].insert(i + 1, contents)
+
+
+def filter_table(table, filter_param):
+    if not filter_param:
+        return
+
+    key_value = {}
+
+    for part in filter_param.split(","):
+        k, _, v = part.strip().partition("=")
+        key_value[k] = v
+
+    index_filter = {}
+    for i, col in enumerate(table.columns):
+        filter_value = key_value.get(col["name"])
+        if filter_value is not None:
+            index_filter[i] = filter_value
+
+    for i, row in reversed(list(enumerate(table.rows))):
+        for j, cell in enumerate(row["cells"]):
+            filter_value = index_filter.get(j)
+            if filter_value is not None and str(cell) != filter_value:
+                del table.rows[i]
+                break

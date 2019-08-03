@@ -40,6 +40,12 @@ table th a:hover { color: #3273dc; }
 div.section { margin: 0 0 1rem 0; padding: 0; }
 div.section h4.title { margin-bottom: 1rem; }
 
+a.toggle-tools.is-active span {
+    transform: rotate(180deg);
+}
+form.tools-form { display: none; margin-bottom: 1rem; }
+form.tools-form.is-active { display: block; }
+
 
 /* Pygments CSS
  * print(HtmlFormatter(style='friendly').get_style_defs('.highlight'))

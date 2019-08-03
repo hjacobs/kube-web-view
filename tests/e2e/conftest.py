@@ -1,7 +1,5 @@
-import pykube
 import yaml
 import time
-import threading
 from tempfile import NamedTemporaryFile
 import requests
 import logging
@@ -9,7 +7,6 @@ from pytest import fixture
 from pathlib import Path
 import os
 from functools import partial
-import subprocess
 
 from requests_html import HTMLSession
 
@@ -69,22 +66,30 @@ def cluster() -> dict:
     logging.info("Waiting for rollout ...")
     kubectl("rollout", "status", "deployment/kube-web-view")
 
-    url = "http://localhost:8087/"
-
-    def port_forward():
-        return Popen(
-            ["./kubectl", "port-forward", "service/kube-web-view", "8087:80"],
-            env={"KUBECONFIG": kubeconfig},
+    def port_forward(port):
+        return (
+            Popen(
+                ["./kubectl", "port-forward", "service/kube-web-view", f"{port}:80"],
+                env={"KUBECONFIG": kubeconfig},
+            ),
+            f"http://localhost:{port}/",
         )
 
-    proc = port_forward()
+    port = 38080
+    proc, url = port_forward(port)
     logging.info(f"Waiting for port forward {url} ...")
-    while True:
+    for i in range(10):
+        time.sleep(1)
         try:
-            response = requests.get(url, timeout=3)
+            response = requests.get(url, timeout=2)
             response.raise_for_status()
-        except:
-            time.sleep(0.1)
+        except Exception as e:
+            logging.info(f"Failed to connect: {e}")
+            if i >= 9:
+                raise
+            proc.kill()
+            port += 1
+            proc, url = port_forward(port)
         else:
             break
 

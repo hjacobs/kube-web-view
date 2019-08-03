@@ -1,5 +1,4 @@
 import time
-import requests
 
 
 def test_list_clusters(session):
@@ -113,4 +112,8 @@ def test_label_columns(session):
 def test_download_sort_link(session):
     response = session.get("/clusters/local/namespaces/default/pods?sort=Status")
     response.raise_for_status()
-    assert "?download=tsv&sort=Status" in response.text
+    link = response.html.find("h1 a", first=True)
+    assert (
+        "/clusters/local/namespaces/default/pods?sort=Status&download=tsv"
+        == link.attrs["href"]
+    )

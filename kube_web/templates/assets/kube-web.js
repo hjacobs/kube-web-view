@@ -2,13 +2,13 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   // Get all "navbar-burger" elements
-  const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger, .aside-burger'), 0);
+  const $toggleButtons = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger, .aside-burger, .toggle-tools'), 0);
 
   // Check if there are any navbar burgers
-  if ($navbarBurgers.length > 0) {
+  if ($toggleButtons.length > 0) {
 
     // Add a click event on each of them
-    $navbarBurgers.forEach( el => {
+    $toggleButtons.forEach( el => {
       el.addEventListener('click', () => {
 
         // Get the target from the "data-target" attribute

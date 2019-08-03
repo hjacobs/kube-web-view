@@ -25,11 +25,15 @@ poetry:
 	poetry install
 
 .PHONY: test
-test: poetry test.unit test.e2e
+test: poetry lint test.unit test.e2e
+
+.PHONY: lint
+lint: 
+	flake8
+	poetry run black --check kube_web
 
 .PHONY: test.unit
 test.unit:
-	poetry run black --check kube_web
 	poetry run coverage run --source=kube_web -m py.test tests/unit
 	poetry run coverage report
 

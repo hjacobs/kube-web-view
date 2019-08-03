@@ -28,6 +28,7 @@ from aiohttp import web
 from kube_web import __version__
 from kube_web import kubernetes
 from kube_web import jinja2_filters
+from .table import add_label_columns, filter_table, sort_table
 
 logger = logging.getLogger(__name__)
 
@@ -148,40 +149,6 @@ async def get_cluster_resource_types(request):
     }
 
 
-def sort_table(table, sort_param):
-    if not sort_param:
-        return
-    parts = sort_param.split(":")
-    sort = parts[0]
-    reverse = len(parts) > 1 and parts[1] == "desc"
-    if sort == "Created":
-        key = lambda row: row["object"]["metadata"]["creationTimestamp"]
-    elif sort == "Age":
-        key = lambda row: row["object"]["metadata"]["creationTimestamp"]
-        reverse = not reverse
-    else:
-        column_index = 0
-        for i, col in enumerate(table.columns):
-            if col["name"] == sort:
-                column_index = i
-                break
-        key = lambda row: (row["cells"][column_index], row["cells"][0])
-    table.rows.sort(key=key, reverse=reverse)
-
-
-def add_label_columns(table, label_columns_param):
-    if not label_columns_param:
-        return
-    label_columns = label_columns_param.split(",")
-    for i, label_column in enumerate(label_columns):
-        table.columns.insert(i + 1, {"name": label_column.capitalize()})
-    for row in table.rows:
-        for i, label in enumerate(label_columns):
-            row["cells"].insert(
-                i + 1, row["object"]["metadata"]["labels"].get(label, "")
-            )
-
-
 @routes.get("/clusters/{cluster}/{plural}")
 @aiohttp_jinja2.template("resource-list.html")
 @context()
@@ -201,8 +168,13 @@ async def get_cluster_resource_list(request):
         )
         if not clazz:
             raise web.HTTPNotFound(text="Resource type not found")
-        table = await kubernetes.get_table(clazz.objects(_cluster.api))
+
+        query = clazz.objects(_cluster.api)
+        if params.get("selector"):
+            query = query.filter(selector=params["selector"])
+        table = await kubernetes.get_table(query)
         add_label_columns(table, params.get("labelcols"))
+        filter_table(table, params.get("filter"))
         sort_table(table, params.get("sort"))
         table.obj["cluster"] = _cluster
         tables.append(table)
@@ -334,11 +306,12 @@ async def get_namespaced_resource_list(request):
             query = clazz.objects(_cluster.api).filter(
                 namespace=pykube.all if is_all_namespaces else namespace
             )
-            if "selector" in params:
+            if params.get("selector"):
                 query = query.filter(selector=params["selector"])
 
             table = await kubernetes.get_table(query)
             add_label_columns(table, params.get("labelcols"))
+            filter_table(table, params.get("filter"))
             sort_table(table, params.get("sort"))
             table.obj["cluster"] = _cluster
             tables.append(table)

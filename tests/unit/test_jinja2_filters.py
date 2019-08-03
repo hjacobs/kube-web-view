@@ -1,7 +1,11 @@
 import datetime
 
 
-from kube_web.jinja2_filters import age_color, yaml, highlight, pluralize
+from kube_web.jinja2_filters import age_color, yaml, pluralize
+
+
+def test_yaml():
+    assert yaml({}) == "{}\n"
 
 
 def test_pluralize():
