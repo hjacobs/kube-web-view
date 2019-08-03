@@ -1,0 +1,25 @@
+<div>
+{{ resource.obj|yaml|highlight(linenos=True)|safe }}
+</div>
+<script>
+    function highlight() {
+        const fragment = location.hash;
+        if (!!fragment) {
+            document.querySelectorAll('pre>span').forEach( el => { el.style.background = null; });
+            const element = document.getElementById('yaml-' + fragment.substring(1));
+            if (!!element) {
+                element.style.background = 'hsl(48, 100%, 67%)';
+                element.scrollIntoView({block: 'center'});
+            }
+        }
+    }
+    highlight();
+    const $lineNumbers = Array.prototype.slice.call(document.querySelectorAll('.linenos a'), 0);
+    $lineNumbers.forEach( el => {
+      el.addEventListener('click', (event) => {
+          location.hash = '#' + el.href.split('#')[1];
+          highlight();
+          event.preventDefault();
+      });
+    });
+</script>

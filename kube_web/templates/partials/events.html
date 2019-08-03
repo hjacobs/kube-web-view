@@ -1,0 +1,23 @@
+<h4 class="title is-5">Events</h4>
+<table class="table is-striped">
+    <tr>
+        <th>Type</th>
+        <th>Reason</th>
+        <th>Age</th>
+        <th>From</th>
+        <th>Message</th>
+    </tr>
+{% for event in events: %}
+<tr>
+    <td>{{ event.obj.type }}</td>
+    <td>{{ event.obj.reason }}</td>
+    <td>{{ event.obj.lastTimestamp }}</td>
+    <td>{{ event.obj.source.component }}</td>
+    <td>{{ event.obj.message }}</td>
+</tr>
+{% else: %}
+<tr>
+    <td colspan="5">No events found.</td>
+</tr>
+{% endfor %}
+</table>
