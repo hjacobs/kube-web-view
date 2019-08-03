@@ -12,8 +12,8 @@ def single_pod_table():
         Pod,
         {
             "kind": "Table",
-            "columnDefinitions": [{"name": "Name"}],
-            "rows": [{"cells": ["myname"]}],
+            "columnDefinitions": [{"name": "Name"}, {"name": "Status"}],
+            "rows": [{"cells": ["myname", "ImagePullBackOff"]}],
         },
     )
     return table
@@ -74,6 +74,12 @@ def test_filter_table_text_match(single_pod_table):
 def test_filter_table_text_match_case_insensitive(single_pod_table):
     table = single_pod_table
     filter_table(table, " MyName")
+    assert len(table.rows) == 1
+
+
+def test_filter_table_text_match_case_insensitive2(single_pod_table):
+    table = single_pod_table
+    filter_table(table, "backoff")
     assert len(table.rows) == 1
 
 

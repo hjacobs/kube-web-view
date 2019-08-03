@@ -80,15 +80,18 @@ def filter_table(table, filter_param):
         return
 
     for i, row in reversed(list(enumerate(table.rows))):
+        is_match = False
         for j, cell in enumerate(row["cells"]):
             filter_value = index_filter.get(j)
             is_match = filter_value is None or str(cell) == filter_value
-            if is_match:
-                for text in text_filters:
-                    if text not in str(cell).lower():
-                        is_match = False
-                        break
-
             if not is_match:
-                del table.rows[i]
                 break
+
+        if is_match:
+            for text in text_filters:
+                if text not in " ".join(str(cell).lower() for cell in row["cells"]):
+                    is_match = False
+                    break
+
+        if not is_match:
+            del table.rows[i]
