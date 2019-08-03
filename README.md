@@ -1,5 +1,6 @@
 # Kubernetes Web View
 
+[![Build Status](https://travis-ci.com/hjacobs/kube-web-view.svg?branch=master)](https://travis-ci.com/hjacobs/kube-web-view)
 [![Documentation Status](https://readthedocs.org/projects/kube-web-view/badge/?version=latest)](https://kube-web-view.readthedocs.io/en/latest/?badge=latest)
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/hjacobs/kube-web-view)
 ![Docker Pulls](https://img.shields.io/docker/pulls/hjacobs/kube-web-view.svg)
