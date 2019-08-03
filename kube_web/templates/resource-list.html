@@ -35,6 +35,7 @@
 </h1>
 
     <form action="#" method="get" id="tools-table-{{ loop.index }}" class="tools-form {% if rel_url.query.labelcols or rel_url.query.selector or rel_url.query.filter: %}is-active{% endif%}">
+        <input type="hidden" name="sort" value="{{ rel_url.query.sort }}">
     <div class="field is-horizontal">
         <div class="field-label is-normal">
             <label class="label">Label Columns</label>
@@ -148,7 +149,7 @@
 {% endfor %}
 
 {% if namespace and plural != 'namespaces' and not is_all_namespaces: %}
-<a href="/clusters/{{ cluster }}/namespaces/_all/{{ plural }}">Show {{ plural }} across all namespaces</a>
+<a href="/clusters/{{ cluster }}/namespaces/_all/{{ plural }}?{{ rel_url.query_string }}">Show {{ plural }} across all namespaces</a>
 {% endif %}
 
 
