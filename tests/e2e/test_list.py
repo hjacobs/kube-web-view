@@ -122,3 +122,12 @@ def test_label_columns(populated_cluster):
     )
     response.raise_for_status()
     assert "my-pod-label-value" in response.text
+
+
+def test_download_sort_link(populated_cluster):
+    url = populated_cluster["url"].rstrip("/")
+    response = requests.get(
+        f"{url}/clusters/local/namespaces/default/pods?sort=Status"
+    )
+    response.raise_for_status()
+    assert "?download=tsv&sort=Status" in response.text

@@ -18,9 +18,9 @@
     <span class="links">
         <a
             {% if namespace: %}
-            href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ namespace }}/{{ table.api_obj_class.endpoint }}?download=tsv"
+            href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ namespace }}/{{ table.api_obj_class.endpoint }}?download=tsv&sort={{ rel_url.query.sort }}"
             {% else: %}
-            href="/clusters/{{ table.obj.cluster.name }}/{{ table.api_obj_class.endpoint }}?download=tsv"
+            href="/clusters/{{ table.obj.cluster.name }}/{{ table.api_obj_class.endpoint }}?download=tsv&sort={{ rel_url.query_sort }}"
             {% endif %}
             title="Download resource list as Tab-Separated-Values (TSV)"
             class="button is-light">
@@ -35,7 +35,13 @@
         <th>Namespace</th>
         {% endif %}
         {% for column in table.columns: %}
-        <th title="{{ column.description }}"><a href="{{ rel_url.update_query(sort=column.name) }}">{{ column.name }}</a></th>
+        <th title="{{ column.description }}"><a href="{{ rel_url.update_query(sort=(column.name + ':desc' if rel_url.query.sort == column.name else column.name)) }}">{{ column.name }}
+                {% if rel_url.query.sort == column.name: %}
+                <span class="icon"><i class="fas fa-sort-down"></i></span>
+                {% elif rel_url.query.sort == column.name + ':desc': %}
+                <span class="icon"><i class="fas fa-sort-up"></i></span>
+                {% endif %}
+        </a></th>
         {% endfor %}
         <th><a href="{{ rel_url.update_query(sort='Created') }}">Created</th>
     </tr>
