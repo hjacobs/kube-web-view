@@ -11,7 +11,7 @@
 <tr>
     <td>{{ event.obj.type }}</td>
     <td>{{ event.obj.reason }}</td>
-    <td>{{ event.obj.lastTimestamp }}</td>
+    <td style="color:{{ event.obj.lastTimestamp|age_color(days=1) }}">{{ event.obj.lastTimestamp.replace('T', ' ').replace('Z', '') }}</td>
     <td>{{ event.obj.source.component }}</td>
     <td>{{ event.obj.message }}</td>
 </tr>

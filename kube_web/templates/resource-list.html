@@ -57,7 +57,7 @@
     <td><a href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}">{{ row.object.metadata.namespace }}</a></td>
     {% endif %}
     {% for cell in row.cells: %}
-    {% if loop.first: %}
+    {% if table.columns[loop.index0].name == 'Name': %}
     {% if row.object.metadata.namespace: %}
     <td><a href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
       {% else: %}
@@ -65,7 +65,7 @@
       {% endif %}
     {% else: %}
     <td class="{{ get_cell_class(table, loop.index0, cell) }}"
-        {% if table.columns[loop.index0].name == 'Age': %}
+        {% if table.columns[loop.index0].name in ('Age', 'First Seen'): %}
         style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}"
         {% endif %}
         >{{ cell if cell is not none}}</td>
