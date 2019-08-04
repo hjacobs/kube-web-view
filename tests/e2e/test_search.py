@@ -18,7 +18,7 @@ def test_no_results_found(session):
     response.raise_for_status()
     search_results = response.html.find(".search-result")
     assert len(search_results) == 0
-    p = response.html.find(".main .content p", first=True)
+    p = response.html.find("main .content p", first=True)
     assert p.text == 'No results found for "stringwithnoresults".'
 
 

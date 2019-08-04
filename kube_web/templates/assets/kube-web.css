@@ -17,7 +17,7 @@ section.section { padding: 1.5rem 0; }
 /* aside menu has toggle for mobile */
 aside.menu { padding: 1.5rem; margin-top: -1.5rem; background: #fafafa; }
 
-.main { flex-grow: 1; flex-shrink: 1; }
+main { flex-grow: 1; flex-shrink: 1; }
 
 /* desktop+ */
 @media screen and (min-width: 1024px) {
@@ -39,7 +39,7 @@ aside.menu { padding: 1.5rem; margin-top: -1.5rem; background: #fafafa; }
 
     #aside-menu.is-active { display: block; }
 
-    .main { padding: 0 1.5rem; }
+    main { padding: 0 1.5rem; }
 }
 
 h1 .links,
