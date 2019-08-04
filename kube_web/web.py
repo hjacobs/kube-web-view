@@ -5,6 +5,7 @@ import zlib
 import colorsys
 import json
 import base64
+import time
 import os
 import pykube
 import logging
@@ -523,56 +524,73 @@ async def get_search(request):
     }
 
     results = []
+    errors = []
 
+    start = time.time()
     for _type in resource_types:
         for _cluster in clusters:
-            namespaced = True
-            clazz = _cluster.resource_registry.get_class_by_plural_name(
-                _type, namespaced=True
-            )
-            if not clazz:
+            try:
+                namespaced = True
                 clazz = _cluster.resource_registry.get_class_by_plural_name(
-                    _type, namespaced=False
+                    _type, namespaced=True
                 )
                 if not clazz:
-                    raise web.HTTPNotFound(text=f"Resource type '{_type}' not found")
-                namespaced = False
-            query = clazz.objects(_cluster.api)
-            if namespaced:
-                query = query.filter(
-                    namespace=pykube.all if is_all_namespaces else namespace
-                )
-
-            table = await kubernetes.get_table(query)
-            add_label_columns(table, "*")
-            filter_table(table, search_query)
-            name_column = 0
-            for i, col in enumerate(table.columns):
-                if col["name"] == "Name":
-                    name_column = i
-                    break
-            for row in table.rows:
-                name = row["cells"][name_column]
+                    clazz = _cluster.resource_registry.get_class_by_plural_name(
+                        _type, namespaced=False
+                    )
+                    if not clazz:
+                        raise web.HTTPNotFound(
+                            text=f"Resource type '{_type}' not found"
+                        )
+                    namespaced = False
+                query = clazz.objects(_cluster.api)
                 if namespaced:
-                    ns = row["object"]["metadata"]["namespace"]
-                    link = f"/clusters/{_cluster.name}/namespaces/{ns}/{_type}/{name}"
-                else:
-                    link = f"/clusters/{_cluster.name}/{_type}/{name}"
-                results.append(
-                    {
-                        "title": row["cells"][0],
-                        "kind": clazz.kind,
-                        "link": link,
-                        "labels": row["object"]["metadata"].get("labels", {}),
-                        "created": row["object"]["metadata"]["creationTimestamp"],
-                    }
+                    query = query.filter(
+                        namespace=pykube.all if is_all_namespaces else namespace
+                    )
+
+                table = await kubernetes.get_table(query)
+            except Exception as e:
+                errors.append(
+                    {"cluster": _cluster, "resource_type": _type, "exception": e}
                 )
+            else:
+                add_label_columns(table, "*")
+                filter_table(table, search_query)
+                name_column = 0
+                for i, col in enumerate(table.columns):
+                    if col["name"] == "Name":
+                        name_column = i
+                        break
+                for row in table.rows:
+                    name = row["cells"][name_column]
+                    if namespaced:
+                        ns = row["object"]["metadata"]["namespace"]
+                        link = (
+                            f"/clusters/{_cluster.name}/namespaces/{ns}/{_type}/{name}"
+                        )
+                    else:
+                        link = f"/clusters/{_cluster.name}/{_type}/{name}"
+                    results.append(
+                        {
+                            "title": row["cells"][0],
+                            "kind": clazz.kind,
+                            "link": link,
+                            "labels": row["object"]["metadata"].get("labels", {}),
+                            "created": row["object"]["metadata"]["creationTimestamp"],
+                        }
+                    )
+
+    duration = time.time() - start
 
     return {
         "cluster": cluster,
         "namespace": namespace,
         "search_results": results,
+        "search_errors": errors,
         "search_query": search_query,
+        "search_clusters": clusters,
+        "search_duration": duration,
         "resource_types": resource_types,
         "searchable_resource_types": searchable_resource_types,
         "is_all_namespaces": is_all_namespaces,

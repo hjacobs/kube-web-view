@@ -64,6 +64,7 @@
     </div>
 </form>
 
+
 {% for result in search_results: %}
 
 <div class="search-result">
@@ -86,5 +87,12 @@
 {% if not is_all_namespaces: %}
 <p><a href="{{ rel_url.update_query(namespace='') }}">Repeat search across all namespaces</a></p>
 {% endif %}
+
+<p class="has-text-grey">Searched {{ resource_types|length }} resource types in {{ search_clusters|length }} cluster{{ 's' if search_clusters|length > 1 }} in {{ '%.3f'|format(search_duration) }} seconds.</p>
+
+
+{% for error in search_errors: %}
+<p>{{ error }}</p>
+{% endfor %}
 
 {% endblock %}
