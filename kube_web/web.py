@@ -480,6 +480,60 @@ async def get_resource_logs(request):
     }
 
 
+@routes.get("/search")
+@aiohttp_jinja2.template("search.html")
+@context()
+async def get_search(request):
+    params = request.rel_url.query
+    cluster = params.get("cluster")
+    namespace = params.get("namespace")
+    search_query = params.get("q")
+
+    is_all_clusters = not cluster
+    if is_all_clusters:
+        clusters = request.app[CLUSTER_MANAGER].clusters
+    else:
+        clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
+
+    is_all_namespaces = not namespace
+
+    results = []
+
+    resource_types = [
+        "deployments",
+        "replicasets",
+        "services",
+        "ingresses",
+        "daemonsets",
+        "statefulsets",
+    ]
+    for _type in resource_types:
+        for _cluster in clusters:
+            clazz = _cluster.resource_registry.get_class_by_plural_name(
+                _type, namespaced=True
+            )
+            if not clazz:
+                raise web.HTTPNotFound(text="Resource type not found")
+            query = clazz.objects(_cluster.api).filter(
+                namespace=pykube.all if is_all_namespaces else namespace
+            )
+
+            table = await kubernetes.get_table(query)
+            add_label_columns(table, params.get("labelcols"))
+            filter_table(table, search_query)
+            sort_table(table, params.get("sort"))
+            table.obj["cluster"] = _cluster
+            for row in table.rows:
+                results.append(
+                    {
+                        "title": row["cells"][0],
+                        "link": f"/clusters/{_cluster.name}/namespaces",
+                    }
+                )
+
+    return {"cluster": cluster, "namespace": namespace, "search_results": results}
+
+
 @routes.get(HEALTH_PATH)
 async def get_health(request):
     return web.Response(text="OK")

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<nav class="breadcrumb" aria-label="breadcrumbs">
+  <ul>
+      {% if cluster: %}
+      <li><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
+      {% if namespace: %}
+      <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}">{{ namespace }}</a></li>
+      {% endif %}
+      {% endif %}
+      <li class="is-active"><a href="#">search</a></li>
+  </ul>
+</nav>
+
+<h1 class="title">Search</h1>
+
+{% for result in search_results: %}
+
+<div>
+    <h3 class="title is-6"><a href="{{ result.link }}">{{ result.title }}</a></h3>
+</div>
+
+{% endfor %}
+
+{% endblock %}
