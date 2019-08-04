@@ -1,12 +1,13 @@
 import logging
 from pykube.objects import APIObject, NamespacedAPIObject
+from kube_web import kubernetes
 
 logger = logging.getLogger(__name__)
 
 
-def discover_api_resources(api):
+async def discover_api_resources(api):
     core_version = "v1"
-    r = api.get(version=core_version)
+    r = await kubernetes.api_get(api, version=core_version)
     r.raise_for_status()
     for resource in r.json()["resources"]:
         # ignore subresources like pods/proxy
@@ -17,7 +18,7 @@ def discover_api_resources(api):
         ):
             yield resource["namespaced"], core_version, resource
 
-    r = api.get(version="/apis")
+    r = await kubernetes.api_get(api, version="/apis")
     r.raise_for_status()
     for group in r.json()["groups"]:
         pref_version = group["preferredVersion"]["groupVersion"]
@@ -26,7 +27,7 @@ def discover_api_resources(api):
         for version in group["versions"]:
             group_version = version["groupVersion"]
             logger.debug(f"Collecting resources for {group_version}..")
-            r2 = api.get(version=group_version)
+            r2 = await kubernetes.api_get(api, version=group_version)
             r2.raise_for_status()
             for resource in r2.json()["resources"]:
                 if (
@@ -62,8 +63,8 @@ def namespaced_object_factory(kind: str, name: str, api_version: str):
     )
 
 
-def get_namespaced_resource_types(api):
-    for namespaced, api_version, resource in discover_api_resources(api):
+async def get_namespaced_resource_types(api):
+    async for namespaced, api_version, resource in discover_api_resources(api):
         if namespaced:
             clazz = namespaced_object_factory(
                 resource["kind"], resource["name"], api_version
@@ -82,33 +83,33 @@ class ResourceRegistry:
         self._cluster_resource_types = []
         self._namespaced_resource_types = []
 
-    def initialize(self):
-        for clazz in get_namespaced_resource_types(self.api):
+    async def initialize(self):
+        async for clazz in get_namespaced_resource_types(self.api):
             if issubclass(clazz, NamespacedAPIObject):
                 self._namespaced_resource_types.append(clazz)
             else:
                 self._cluster_resource_types.append(clazz)
 
     @property
-    def cluster_resource_types(self):
+    async def cluster_resource_types(self):
         if not self._cluster_resource_types:
-            self.initialize()
+            await self.initialize()
         return self._cluster_resource_types
 
     @property
-    def namespaced_resource_types(self):
+    async def namespaced_resource_types(self):
         if not self._namespaced_resource_types:
-            self.initialize()
+            await self.initialize()
         return self._namespaced_resource_types
 
-    def get_class_by_plural_name(self, plural: str, namespaced: bool):
+    async def get_class_by_plural_name(self, plural: str, namespaced: bool):
         _types = (
             self.namespaced_resource_types
             if namespaced
             else self.cluster_resource_types
         )
         clazz = None
-        for c in _types:
+        for c in await _types:
             if c.endpoint == plural:
                 clazz = c
                 break
