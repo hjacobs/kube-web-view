@@ -15,12 +15,76 @@
 
 <h1 class="title">Search</h1>
 
+<form action="/search" method="get" class="tools-form is-active">
+    <input type="hidden" name="cluster" value="{{ cluster }}">
+    <input type="hidden" name="namespace" value="{{ namespace }}">
+    <div class="field is-horizontal">
+        <div class="field-label is-normal">
+            <label class="label">Search Text</label>
+        </div>
+        <div class="field-body">
+            <div class="field">
+                <p class="control is-expanded has-icons-left">
+                    <input class="input" type="text" placeholder="Search query text" name="q" value="{{ search_query }}">
+                    <span class="icon is-small is-left">
+                        <i class="fas fa-search"></i>
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="field is-horizontal">
+        <div class="field-label is-normal">
+            <label class="label">Resource Types</label>
+        </div>
+        <div class="field-body">
+            <div class="field">
+                <p class="control checkboxes" id="type-checkboxes">
+                    {% for _type, kind in searchable_resource_types.items()|sort: %}
+                        <label class="checkbox"><input type="checkbox" name="type" value="{{ _type }}" {{ 'checked' if _type in resource_types }}> {{ kind }}</label>
+                    {% endfor %}
+                    <a class="button is-light unselect" title="unselect all types" data-target="type-checkboxes">
+                        <span class="icon">
+                            <i class="fas fa-times"></i>
+                        </span>
+                        <span>unselect all</span>
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="field is-horizontal">
+        <div class="field-label is-normal">
+        </div>
+        <div class="field-body">
+            <div class="control">
+                <button class="button is-primary" type="submit">Submit</button>
+            </div>
+        </div>
+    </div>
+</form>
+
 {% for result in search_results: %}
 
-<div>
-    <h3 class="title is-6"><a href="{{ result.link }}">{{ result.title }}</a></h3>
+<div class="search-result">
+    <h3 class="title is-6"><a href="{{ result.link }}">{{ result.title }} ({{ result.kind }})</a></h3>
+    <p><a href="{{ result.link }}">{{ result.link }}</a></p>
+    <p>Created: {{ result.created.replace('T', ' ').replace('Z', '') }}</p>
+    <p>
+    {% for key, val in result.labels.items()|sort: %}
+    <span class="tag">{{ key }}: {{ val }}</span>
+    {% endfor %}
+    </p>
 </div>
 
+{% else: %}
+
+<p>No results found for "{{ search_query }}".</p>
+
 {% endfor %}
+
+{% if not is_all_namespaces: %}
+<p><a href="{{ rel_url.update_query(namespace='') }}">Repeat search across all namespaces</a></p>
+{% endif %}
 
 {% endblock %}

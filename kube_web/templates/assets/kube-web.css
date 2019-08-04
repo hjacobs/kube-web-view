@@ -1,6 +1,15 @@
 /* */
 html { overflow: scroll; }
 
+.navbar-end { flex-grow: 0.33; }
+.navbar-end .navbar-item { width: 100%; }
+.navbar-end form { width: 100%; }
+.navbar-end input { color: #fff; background: transparent; box-shadow: none; border: none; border-radius: 0; border-bottom: 1px solid #98b8ed;}
+.navbar-end input::placeholder { color: #98b8ed; }
+.navbar-end input:focus { border-color: #fff; }
+.navbar-end .control .icon { color: #98b8ed; }
+.navbar-end .control .icon { color: #98b8ed; }
+
 section.section { padding: 1.5rem 0; }
 .container.is-fluid { margin-left: 0; }
 
@@ -45,7 +54,12 @@ a.toggle-tools.is-active span {
 }
 form.tools-form { display: none; margin-bottom: 1rem; }
 form.tools-form.is-active { display: block; }
+form .checkboxes { }
+form .checkboxes label { margin-right: 0.5rem; padding-top: 0.375em; }
 
+.search-result p { font-size: 0.75rem; }
+.search-result h3.title { margin: 0 0 0.5rem 0; }
+.search-result { margin-bottom: 1.5rem; }
 
 /* Pygments CSS
  * print(HtmlFormatter(style='friendly').get_style_defs('.highlight'))

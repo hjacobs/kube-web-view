@@ -1,27 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}{% endblock %} - Kubernetes Web View</title>
-    <link rel="stylesheet" href="/assets/bulma.min.css">
-    <script defer src="/assets/solid.min.js"></script>
-    <script defer src="/assets/fontawesome.min.js"></script>
-    <script src="/assets/kube-web.js"></script>
-    <script src="/assets/anchor.min.js"></script>
-    <link rel="stylesheet" href="/assets/kube-web.css" />
-    <link rel="shortcut icon" href="/assets/favicon.png">
-    <link rel="icon" type="image/png" href="/assets/favicon.png">
-  </head>
-  <body class="has-navbar-fixed-top">
-  <nav class="navbar is-fixed-top is-link" aria-label="main navigation">
-    <div class="navbar-brand">
-        <a role="button" class="navbar-burger" data-target="nav-menu" aria-label="menu" aria-expanded="false">
-          <span aria-hidden="true"></span>
-          <span aria-hidden="true"></span>
-          <span aria-hidden="true"></span>
-        </a>
-    </div>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}{% endblock %} - Kubernetes Web View</title>
+        <link rel="stylesheet" href="/assets/bulma.min.css">
+        <script defer src="/assets/solid.min.js"></script>
+        <script defer src="/assets/fontawesome.min.js"></script>
+        <script src="/assets/kube-web.js"></script>
+        <script src="/assets/anchor.min.js"></script>
+        <link rel="stylesheet" href="/assets/kube-web.css" />
+        <link rel="shortcut icon" href="/assets/favicon.png">
+        <link rel="icon" type="image/png" href="/assets/favicon.png">
+    </head>
+    <body class="has-navbar-fixed-top">
+    <nav class="navbar is-fixed-top is-link" aria-label="main navigation">
+        <div class="navbar-brand">
+            <a role="button" class="navbar-burger" data-target="nav-menu" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
     <div class="navbar-menu" id="nav-menu">
         <div class="navbar-start">
             <a class="navbar-item {{ 'is-active' if page == 'clusters' }}" href="/clusters">Clusters</a>
@@ -47,11 +47,11 @@
             <form method="get" action="/search">
             <div class="field">
 
-            <p class="control has-icons-left">
+            <p class="control has-icons-right">
                 <input type="hidden" name="cluster" value="{{ cluster }}" >
                 <input type="hidden" name="namespace" value="{{ namespace if cluster and namespace else '' }}" >
-                <input class="input" type="text" placeholder="Search.." name="q">
-                <span class="icon is-small is-left">
+                <input class="input" type="text" placeholder="Search Kubernetes objects.." name="q">
+                <span class="icon is-small is-right">
                     <i class="fas fa-search"></i>
                 </span>
             </p>

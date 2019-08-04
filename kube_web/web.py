@@ -74,7 +74,7 @@ def context():
     def decorator(func):
         async def func_wrapper(request):
             ctx = await func(request)
-            if isinstance(ctx, dict) and "cluster" in ctx:
+            if isinstance(ctx, dict) and ctx.get("cluster"):
                 if ctx["cluster"] != "_all":
                     cluster = request.app[CLUSTER_MANAGER].get(ctx["cluster"])
                     namespaces = await kubernetes.get_list(
@@ -488,50 +488,95 @@ async def get_search(request):
     cluster = params.get("cluster")
     namespace = params.get("namespace")
     search_query = params.get("q")
+    resource_types = params.getall("type", None)
+    if not resource_types:
+        resource_types = [
+            "namespaces",
+            "deployments",
+            "replicasets",
+            "services",
+            "ingresses",
+            "daemonsets",
+            "statefulsets",
+            "cronjobs",
+        ]
 
-    is_all_clusters = not cluster
+    is_all_clusters = not bool(cluster)
     if is_all_clusters:
         clusters = request.app[CLUSTER_MANAGER].clusters
     else:
         clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
 
-    is_all_namespaces = not namespace
+    is_all_namespaces = not namespace or namespace == "_all"
+
+    searchable_resource_types = {
+        "namespaces": "Namespace",
+        "deployments": "Deployment",
+        "replicasets": "ReplicaSet",
+        "services": "Service",
+        "ingresses": "Ingress",
+        "daemonsets": "DaemonSet",
+        "statefulsets": "StatefulSet",
+        "cronjobs": "CronJob",
+        "pods": "Pod",
+        "nodes": "Node",
+    }
 
     results = []
 
-    resource_types = [
-        "deployments",
-        "replicasets",
-        "services",
-        "ingresses",
-        "daemonsets",
-        "statefulsets",
-    ]
     for _type in resource_types:
         for _cluster in clusters:
+            namespaced = True
             clazz = _cluster.resource_registry.get_class_by_plural_name(
                 _type, namespaced=True
             )
             if not clazz:
-                raise web.HTTPNotFound(text="Resource type not found")
-            query = clazz.objects(_cluster.api).filter(
-                namespace=pykube.all if is_all_namespaces else namespace
-            )
+                clazz = _cluster.resource_registry.get_class_by_plural_name(
+                    _type, namespaced=False
+                )
+                if not clazz:
+                    raise web.HTTPNotFound(text=f"Resource type '{_type}' not found")
+                namespaced = False
+            query = clazz.objects(_cluster.api)
+            if namespaced:
+                query = query.filter(
+                    namespace=pykube.all if is_all_namespaces else namespace
+                )
 
             table = await kubernetes.get_table(query)
-            add_label_columns(table, params.get("labelcols"))
+            add_label_columns(table, "*")
             filter_table(table, search_query)
-            sort_table(table, params.get("sort"))
-            table.obj["cluster"] = _cluster
+            name_column = 0
+            for i, col in enumerate(table.columns):
+                if col["name"] == "Name":
+                    name_column = i
+                    break
             for row in table.rows:
+                name = row["cells"][name_column]
+                if namespaced:
+                    ns = row["object"]["metadata"]["namespace"]
+                    link = f"/clusters/{_cluster.name}/namespaces/{ns}/{_type}/{name}"
+                else:
+                    link = f"/clusters/{_cluster.name}/{_type}/{name}"
                 results.append(
                     {
                         "title": row["cells"][0],
-                        "link": f"/clusters/{_cluster.name}/namespaces",
+                        "kind": clazz.kind,
+                        "link": link,
+                        "labels": row["object"]["metadata"].get("labels", {}),
+                        "created": row["object"]["metadata"]["creationTimestamp"],
                     }
                 )
 
-    return {"cluster": cluster, "namespace": namespace, "search_results": results}
+    return {
+        "cluster": cluster,
+        "namespace": namespace,
+        "search_results": results,
+        "search_query": search_query,
+        "resource_types": resource_types,
+        "searchable_resource_types": searchable_resource_types,
+        "is_all_namespaces": is_all_namespaces,
+    }
 
 
 @routes.get(HEALTH_PATH)
