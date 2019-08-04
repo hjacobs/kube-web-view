@@ -23,13 +23,16 @@
             <label class="label">Search Text</label>
         </div>
         <div class="field-body">
-            <div class="field">
+            <div class="field has-addons">
                 <p class="control is-expanded has-icons-left">
                 <input class="input" type="text" placeholder="Search query text" name="q" value="{{ search_query }}">
                 <span class="icon is-small is-left">
                     <i class="fas fa-search"></i>
                 </span>
                 </p>
+                <div class="control">
+                    <button class="button is-primary" type="submit">Search!</button>
+                </div>
             </div>
         </div>
     </div>
@@ -53,15 +56,6 @@
             </div>
         </div>
     </div>
-    <div class="field is-horizontal">
-        <div class="field-label is-normal">
-        </div>
-        <div class="field-body">
-            <div class="control">
-                <button class="button is-primary" type="submit">Submit</button>
-            </div>
-        </div>
-    </div>
 </form>
 
 
@@ -80,15 +74,21 @@
 
 {% else: %}
 
-<p>No results found for "{{ search_query }}".</p>
+<div class="content">
+    <p>No results found for "{{ search_query }}".</p>
+</div>
 
 {% endfor %}
 
-{% if not is_all_namespaces: %}
-<p><a href="{{ rel_url.update_query(namespace='') }}">Repeat search across all namespaces</a></p>
-{% endif %}
+<div class="content">
 
-<p class="has-text-grey">Searched {{ resource_types|length }} resource types in {{ search_clusters|length }} cluster{{ 's' if search_clusters|length > 1 }} in {{ '%.3f'|format(search_duration) }} seconds.</p>
+    {% if not is_all_namespaces: %}
+    <p><a href="{{ rel_url.update_query(namespace='') }}">Repeat search across all namespaces</a></p>
+    {% endif %}
+
+    <p class="has-text-grey">Searched {{ resource_types|length }} resource types in {{ search_clusters|length }} cluster{{ 's' if search_clusters|length > 1 }} in {{ '%.3f'|format(search_duration) }} seconds.</p>
+
+</div>
 
 
 {% for error in search_errors: %}
