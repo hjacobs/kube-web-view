@@ -20,3 +20,11 @@ def test_no_results_found(session):
     assert len(search_results) == 0
     p = response.html.find(".main .content p", first=True)
     assert p.text == 'No results found for "stringwithnoresults".'
+
+
+def test_search_non_standard_resource_type(session):
+    response = session.get("/search?q=whatever&type=podsecuritypolicies")
+    response.raise_for_status()
+    # check that the type was added as checkbox
+    labels = response.html.find("label.checkbox")
+    assert "PodSecurityPolicy" in [label.text for label in labels]

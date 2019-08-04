@@ -487,6 +487,7 @@ async def get_resource_logs(request):
 
 
 async def search(search_query, _type, _cluster, namespace, is_all_namespaces):
+    clazz = None
     results = []
     errors = []
     try:
@@ -534,7 +535,7 @@ async def search(search_query, _type, _cluster, namespace, is_all_namespaces):
                     "created": row["object"]["metadata"]["creationTimestamp"],
                 }
             )
-    return results, errors
+    return clazz, results, errors
 
 
 def sort_rank(result, search_query_lower):
@@ -606,7 +607,10 @@ async def get_search(request):
                 )
                 tasks.append(task)
 
-        for _results, _errors in await asyncio.gather(*tasks):
+        for clazz, _results, _errors in await asyncio.gather(*tasks):
+            if clazz.endpoint not in searchable_resource_types:
+                # search was done with a non-standard resource type (e.g. CRD)
+                searchable_resource_types[clazz.endpoint] = clazz.kind
             results.extend(_results)
             errors.extend(_errors)
 
