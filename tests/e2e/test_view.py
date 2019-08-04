@@ -1,6 +1,13 @@
 import yaml
 
 
+def test_view_namespace(session):
+    response = session.get("/clusters/local/namespaces/default")
+    response.raise_for_status()
+    title = response.html.find("title", first=True)
+    assert title.text == "default (Namespace) - Kubernetes Web View"
+
+
 def test_view_namespaced_resource(session):
     response = session.get(
         "/clusters/local/namespaces/default/deployments/kube-web-view"

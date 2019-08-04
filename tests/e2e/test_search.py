@@ -3,7 +3,7 @@ def test_search_form(session):
     response.raise_for_status()
     search_results = response.html.find(".search-result")
     assert len(search_results) == 0
-    assert 'No results found for ' not in response.text
+    assert "No results found for " not in response.text
 
 
 def test_search_namespace(session):

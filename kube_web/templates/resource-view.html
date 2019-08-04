@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ resource.name }} ({{resource.kind}}{% if namespace: %} in {{namespace}}{% endif %}){% endblock %}
+{% block title %}{{ resource.name }} ({{resource.kind}}{% if namespace and resource.kind != 'Namespace': %} in {{namespace}}{% endif %}){% endblock %}
 {% block content %}
 <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
