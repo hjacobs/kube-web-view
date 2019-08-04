@@ -16,8 +16,8 @@
 <h1 class="title">Search</h1>
 
 <form action="/search" method="get" class="tools-form is-active">
-    <input type="hidden" name="cluster" value="{{ cluster }}">
-    <input type="hidden" name="namespace" value="{{ namespace }}">
+    <input type="hidden" name="cluster" value="{{ cluster or '' }}">
+    <input type="hidden" name="namespace" value="{{ namespace or '' }}">
     <div class="field is-horizontal">
         <div class="field-label is-normal">
             <label class="label">Search Text</label>
