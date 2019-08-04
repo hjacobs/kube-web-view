@@ -74,12 +74,17 @@
 
 {% else: %}
 
+{% if search_query: %}
+
 <div class="content">
     <p>No results found for "{{ search_query }}".</p>
 </div>
 
+{% endif %}
+
 {% endfor %}
 
+{% if search_query: %}
 <div class="content">
 
     {% if not is_all_namespaces: %}
@@ -89,6 +94,7 @@
     <p class="has-text-grey">Searched {{ resource_types|length }} resource types in {{ search_clusters|length }} cluster{{ 's' if search_clusters|length > 1 }} in {{ '%.3f'|format(search_duration) }} seconds.</p>
 
 </div>
+{% endif %}
 
 
 {% for error in search_errors: %}

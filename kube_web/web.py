@@ -558,10 +558,11 @@ async def get_search(request):
     search_query = params.get("q", "").strip()
     resource_types = params.getall("type", None)
     if not resource_types:
+        # note that ReplicaSet, Pod, and Node are not included by default
+        # as they are usually less relevant for search queries
         resource_types = [
             "namespaces",
             "deployments",
-            "replicasets",
             "services",
             "ingresses",
             "daemonsets",
