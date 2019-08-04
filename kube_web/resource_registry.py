@@ -1,8 +1,16 @@
+import asyncio
 import logging
 from pykube.objects import APIObject, NamespacedAPIObject
 from kube_web import kubernetes
 
 logger = logging.getLogger(__name__)
+
+
+async def discover_api_group(api, group, group_version, pref_version):
+    logger.debug(f"Collecting resources for {group_version}..")
+    response = await kubernetes.api_get(api, version=group_version)
+    response.raise_for_status()
+    return group, group_version, pref_version, response.json()["resources"]
 
 
 async def discover_api_resources(api):
@@ -20,31 +28,38 @@ async def discover_api_resources(api):
 
     r = await kubernetes.api_get(api, version="/apis")
     r.raise_for_status()
+    tasks = []
     for group in r.json()["groups"]:
+        print(group)
         pref_version = group["preferredVersion"]["groupVersion"]
-        yielded = set()
-        non_preferred = []
         for version in group["versions"]:
             group_version = version["groupVersion"]
-            logger.debug(f"Collecting resources for {group_version}..")
-            r2 = await kubernetes.api_get(api, version=group_version)
-            r2.raise_for_status()
-            for resource in r2.json()["resources"]:
-                if (
-                    "/" not in resource["name"]
-                    and "get" in resource["verbs"]
-                    and "list" in resource["verbs"]
-                ):
-                    if group_version == pref_version:
-                        yield resource["namespaced"], group_version, resource
-                        yielded.add(resource["name"])
-                    else:
-                        non_preferred.append(
-                            (resource["namespaced"], group_version, resource)
-                        )
-        for namespaced, group_version, resource in non_preferred:
-            if resource["name"] not in yielded:
-                yield namespaced, group_version, resource
+            tasks.append(
+                asyncio.create_task(
+                    discover_api_group(api, group["name"], group_version, pref_version)
+                )
+            )
+
+    yielded = set()
+    non_preferred = []
+    for group, group_version, pref_version, resources in await asyncio.gather(*tasks):
+        for resource in resources:
+            if (
+                "/" not in resource["name"]
+                and "get" in resource["verbs"]
+                and "list" in resource["verbs"]
+            ):
+                if group_version == pref_version:
+                    yield resource["namespaced"], group_version, resource
+                    yielded.add((group, resource["name"]))
+                else:
+                    non_preferred.append(
+                        (group, resource["namespaced"], group_version, resource)
+                    )
+
+    for group, namespaced, group_version, resource in non_preferred:
+        if (group, resource["name"]) not in yielded:
+            yield namespaced, group_version, resource
 
 
 def cluster_object_factory(kind: str, name: str, api_version: str):
