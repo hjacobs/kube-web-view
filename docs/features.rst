@@ -30,6 +30,14 @@ Resources can be filtered by label: use the ``selector`` query parameter with la
 
 To facilitate processing in spreadsheets or command line tools (``grep``, ``awk``, etc), all resource listings can be downloaded as tab-separated-values (TSV). Just append ``download=tsv`` to the URL.
 
+Searching
+=========
+
+Any resource type can be searched by name and/or label value across clusters and namespaces.
+While Kubernetes Web View does not maintain its own search index, searches across clusters and resource types are done in parallel, so that results should be returned in a reasonable time.
+Please note that the search feature might produce (heavy) load on the queried Kubernetes API servers.
+
+
 Viewing Resources
 =================
 
