@@ -1,3 +1,4 @@
+import asyncio
 import aiohttp_jinja2
 import jinja2
 import csv
@@ -5,11 +6,14 @@ import zlib
 import colorsys
 import json
 import base64
+import time
 import os
 import pykube
 import logging
 from yarl import URL
 import yaml
+
+from functools import partial
 
 from pykube import ObjectDoesNotExist
 from pykube.objects import NamespacedAPIObject, Namespace, Event, Pod
@@ -74,7 +78,7 @@ def context():
     def decorator(func):
         async def func_wrapper(request):
             ctx = await func(request)
-            if isinstance(ctx, dict) and "cluster" in ctx:
+            if isinstance(ctx, dict) and ctx.get("cluster"):
                 if ctx["cluster"] != "_all":
                     cluster = request.app[CLUSTER_MANAGER].get(ctx["cluster"])
                     namespaces = await kubernetes.get_list(
@@ -113,7 +117,7 @@ async def get_cluster(request):
         "cluster": cluster.name,
         "namespace": None,
         "namespaces": namespaces,
-        "resource_types": cluster.resource_registry.cluster_resource_types,
+        "resource_types": await cluster.resource_registry.cluster_resource_types,
     }
 
 
@@ -139,7 +143,7 @@ async def get_cluster_resource_types(request):
         clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
     resource_types = set()
     for _cluster in clusters:
-        for clazz in _cluster.resource_registry.cluster_resource_types:
+        for clazz in await _cluster.resource_registry.cluster_resource_types:
             resource_types.add(clazz)
     return {
         "cluster": cluster,
@@ -163,7 +167,7 @@ async def get_cluster_resource_list(request):
     params = request.rel_url.query
     tables = []
     for _cluster in clusters:
-        clazz = _cluster.resource_registry.get_class_by_plural_name(
+        clazz = await _cluster.resource_registry.get_class_by_plural_name(
             plural, namespaced=False
         )
         if not clazz:
@@ -253,7 +257,7 @@ async def get_namespaced_resource_types(request):
     namespace = request.match_info["namespace"]
     resource_types = set()
     for _cluster in clusters:
-        for clazz in _cluster.resource_registry.namespaced_resource_types:
+        for clazz in await _cluster.resource_registry.namespaced_resource_types:
             resource_types.add(clazz)
     return {
         "cluster": cluster,
@@ -298,7 +302,7 @@ async def get_namespaced_resource_list(request):
     tables = []
     for _type in resource_types:
         for _cluster in clusters:
-            clazz = _cluster.resource_registry.get_class_by_plural_name(
+            clazz = await _cluster.resource_registry.get_class_by_plural_name(
                 _type, namespaced=True
             )
             if not clazz:
@@ -340,7 +344,7 @@ async def get_resource_view(request):
     name = request.match_info["name"]
     params = request.rel_url.query
     view = params.get("view")
-    clazz = cluster.resource_registry.get_class_by_plural_name(
+    clazz = await cluster.resource_registry.get_class_by_plural_name(
         plural, namespaced=bool(namespace)
     )
     if not clazz:
@@ -421,7 +425,9 @@ async def get_resource_logs(request):
     plural = request.match_info["plural"]
     name = request.match_info["name"]
     tail_lines = int(request.rel_url.query.get("tail_lines") or 200)
-    clazz = cluster.resource_registry.get_class_by_plural_name(plural, namespaced=True)
+    clazz = await cluster.resource_registry.get_class_by_plural_name(
+        plural, namespaced=True
+    )
     if not clazz:
         raise web.HTTPNotFound(text="Resource type not found")
     query = clazz.objects(cluster.api)
@@ -477,6 +483,147 @@ async def get_resource_logs(request):
         "pods": pods,
         "logs": logs,
         "show_container_logs": show_container_logs,
+    }
+
+
+async def search(search_query, _type, _cluster, namespace, is_all_namespaces):
+    results = []
+    errors = []
+    try:
+        namespaced = True
+        clazz = await _cluster.resource_registry.get_class_by_plural_name(
+            _type, namespaced=True
+        )
+        if not clazz:
+            clazz = await _cluster.resource_registry.get_class_by_plural_name(
+                _type, namespaced=False
+            )
+            if not clazz:
+                raise web.HTTPNotFound(text=f"Resource type '{_type}' not found")
+            namespaced = False
+        query = clazz.objects(_cluster.api)
+        if namespaced:
+            query = query.filter(
+                namespace=pykube.all if is_all_namespaces else namespace
+            )
+
+        table = await kubernetes.get_table(query)
+    except Exception as e:
+        errors.append({"cluster": _cluster, "resource_type": _type, "exception": e})
+    else:
+        add_label_columns(table, "*")
+        filter_table(table, search_query)
+        name_column = 0
+        for i, col in enumerate(table.columns):
+            if col["name"] == "Name":
+                name_column = i
+                break
+        for row in table.rows:
+            name = row["cells"][name_column]
+            if namespaced:
+                ns = row["object"]["metadata"]["namespace"]
+                link = f"/clusters/{_cluster.name}/namespaces/{ns}/{_type}/{name}"
+            else:
+                link = f"/clusters/{_cluster.name}/{_type}/{name}"
+            results.append(
+                {
+                    "title": row["cells"][0],
+                    "kind": clazz.kind,
+                    "link": link,
+                    "labels": row["object"]["metadata"].get("labels", {}),
+                    "created": row["object"]["metadata"]["creationTimestamp"],
+                }
+            )
+    return results, errors
+
+
+def sort_rank(result, search_query_lower):
+    score = 0
+    if search_query_lower in result["title"].lower():
+        score += 2
+
+    if search_query_lower in result["labels"].values():
+        score += 1
+
+    return (-score, result["title"], result["kind"], result["link"])
+
+
+@routes.get("/search")
+@aiohttp_jinja2.template("search.html")
+@context()
+async def get_search(request):
+    params = request.rel_url.query
+    cluster = params.get("cluster")
+    namespace = params.get("namespace")
+    search_query = params.get("q", "").strip()
+    resource_types = params.getall("type", None)
+    if not resource_types:
+        resource_types = [
+            "namespaces",
+            "deployments",
+            "replicasets",
+            "services",
+            "ingresses",
+            "daemonsets",
+            "statefulsets",
+            "cronjobs",
+        ]
+
+    is_all_clusters = not bool(cluster)
+    if is_all_clusters:
+        clusters = request.app[CLUSTER_MANAGER].clusters
+    else:
+        clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
+
+    is_all_namespaces = not namespace or namespace == "_all"
+
+    searchable_resource_types = {
+        "namespaces": "Namespace",
+        "deployments": "Deployment",
+        "replicasets": "ReplicaSet",
+        "services": "Service",
+        "ingresses": "Ingress",
+        "daemonsets": "DaemonSet",
+        "statefulsets": "StatefulSet",
+        "cronjobs": "CronJob",
+        "pods": "Pod",
+        "nodes": "Node",
+    }
+
+    results = []
+    errors = []
+
+    start = time.time()
+
+    if search_query:
+        tasks = []
+
+        for _type in resource_types:
+            for _cluster in clusters:
+                task = asyncio.create_task(
+                    search(search_query, _type, _cluster, namespace, is_all_namespaces)
+                )
+                tasks.append(task)
+
+        for _results, _errors in await asyncio.gather(*tasks):
+            results.extend(_results)
+            errors.extend(_errors)
+
+        results.sort(key=partial(sort_rank, search_query_lower=search_query.lower()))
+
+    duration = time.time() - start
+
+    return {
+        "cluster": cluster,
+        "namespace": namespace,
+        "search_results": results,
+        "search_errors": errors,
+        "search_query": search_query,
+        "search_clusters": clusters,
+        "search_duration": duration,
+        "resource_types": resource_types,
+        "searchable_resource_types": searchable_resource_types,
+        "is_all_namespaces": is_all_namespaces,
     }
 
 

@@ -23,4 +23,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const $unselectButtons = Array.prototype.slice.call(document.querySelectorAll('.unselect'), 0);
+
+  if ($unselectButtons.length > 0) {
+
+    $unselectButtons.forEach( el => {
+      el.addEventListener('click', () => {
+
+        // Get the target from the "data-target" attribute
+        const target = el.dataset.target;
+
+        const $inputs = Array.prototype.slice.call(document.querySelectorAll('#' + target + ' input[type=checkbox]'), 0);
+        $inputs.forEach( inp => {
+            inp.checked = false;
+        });
+
+      });
+    });
+  }
+
 });

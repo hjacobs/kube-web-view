@@ -47,7 +47,9 @@ def add_label_columns(table, label_columns_param):
             if label == "*":
                 contents = ",".join(
                     f"{k}={v}"
-                    for k, v in sorted(row["object"]["metadata"]["labels"].items())
+                    for k, v in sorted(
+                        row["object"]["metadata"].get("labels", {}).items()
+                    )
                 )
             else:
                 contents = row["object"]["metadata"]["labels"].get(label, "")

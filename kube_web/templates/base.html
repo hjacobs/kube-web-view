@@ -1,120 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}{% endblock %} - Kubernetes Web View</title>
-    <link rel="stylesheet" href="/assets/bulma.min.css">
-    <script defer src="/assets/solid.min.js"></script>
-    <script defer src="/assets/fontawesome.min.js"></script>
-    <script src="/assets/kube-web.js"></script>
-    <script src="/assets/anchor.min.js"></script>
-    <link rel="stylesheet" href="/assets/kube-web.css" />
-    <link rel="shortcut icon" href="/assets/favicon.png">
-    <link rel="icon" type="image/png" href="/assets/favicon.png">
-  </head>
-  <body class="has-navbar-fixed-top">
-  <nav class="navbar is-fixed-top is-link" aria-label="main navigation">
-    <div class="navbar-brand">
-        <a role="button" class="navbar-burger" data-target="nav-menu" aria-label="menu" aria-expanded="false">
-          <span aria-hidden="true"></span>
-          <span aria-hidden="true"></span>
-          <span aria-hidden="true"></span>
-        </a>
-    </div>
-    <div class="navbar-menu" id="nav-menu">
-        <div class="navbar-start">
-            <a class="navbar-item {{ 'is-active' if page == 'clusters' }}" href="/clusters">Clusters</a>
-            {% if namespaces: %}
-         <div class="navbar-item has-dropdown is-hoverable">
-        <a class="navbar-link">
-            {{ namespace }}
-        </a>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}{% endblock %} - Kubernetes Web View</title>
+        <link rel="stylesheet" href="/assets/bulma.min.css">
+        <script defer src="/assets/solid.min.js"></script>
+        <script defer src="/assets/fontawesome.min.js"></script>
+        <script src="/assets/kube-web.js"></script>
+        <script src="/assets/anchor.min.js"></script>
+        <link rel="stylesheet" href="/assets/kube-web.css" />
+        <link rel="shortcut icon" href="/assets/favicon.png">
+        <link rel="icon" type="image/png" href="/assets/favicon.png">
+    </head>
+    <body class="has-navbar-fixed-top">
+        <nav class="navbar is-fixed-top is-link" aria-label="main navigation">
+            <div class="navbar-brand">
+                <a role="button" class="navbar-burger" data-target="nav-menu" aria-label="menu" aria-expanded="false">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+            <div class="navbar-menu" id="nav-menu">
+                <div class="navbar-start">
+                    <a class="navbar-item {{ 'is-active' if page == 'clusters' }}" href="/clusters">Clusters</a>
+                    {% if namespaces: %}
+                    <div class="navbar-item has-dropdown is-hoverable">
+                        <a class="navbar-link">
+                            {{ namespace }}
+                        </a>
 
-        <div class="navbar-dropdown">
-        {% for ns in namespaces: %}
-        <a class="navbar-item" href="/clusters/{{ cluster}}/namespaces/{{ ns.name }}">
-              {{ ns.name }}
-          </a>
-        {% endfor %}
-        </div>
-        </div>
-        {% endif %}
-        </div>
-    </div>
-  </nav>
-  <section class="section">
-    <div class="container is-fluid is-flex-desktop">
-<aside class="menu">
-    <div class="is-hidden-desktop"><a role="button" class="aside-burger" data-target="aside-menu">
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-    </a></div>
-    <div id="aside-menu">
-      {% if cluster: %}
-  <p class="menu-label">
-    Cluster Resources
-  </p>
-  <ul class="menu-list">
-      <li><a href="/clusters/{{cluster}}/namespaces">Namespaces</a></li>
-      <li><a href="/clusters/{{cluster}}/nodes">Nodes</a></li>
-      <li><a href="/clusters/{{cluster}}/persistentvolumes">PersistentVolumes</a></li>
-  </ul>
-      {% endif %}
-    {% if cluster and namespace: %}
-  <p class="menu-label">
-    Controllers
-  </p>
-  <ul class="menu-list">
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/deployments">Deployments</a></li>
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/cronjobs">CronJobs</a></li>
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/jobs">Jobs</a></li>
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/daemonsets">DaemonSets</a></li>
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/statefulsets">StatefulSets</a></li>
-  </ul>
-  <p class="menu-label">
-    Pod Management
-  </p>
-  <ul class="menu-list">
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/ingresses">Ingresses</a></li>
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/services">Services</a></li>
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/pods">Pods</a></li>
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/configmaps">ConfigMaps</a></li>
-  </ul>
-  <p class="menu-label">
-    Meta
-  </p>
-  <ul class="menu-list">
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/_resource-types">Resource Types</a></li>
-      <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/events">Events</a></li>
-  </ul>
-      {% endif %}
-    {% if cluster and not namespace: %}
-  <p class="menu-label">
-    Meta
-  </p>
-  <ul class="menu-list">
-      <li><a href="/clusters/{{cluster}}/_resource-types">Resource Types</a></li>
-  </ul>
-      {% endif %}
-    </div>
+                        <div class="navbar-dropdown">
+                            {% for ns in namespaces: %}
+                            <a class="navbar-item" href="/clusters/{{ cluster}}/namespaces/{{ ns.name }}">
+                                {{ ns.name }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
 
-</aside>
-        <div class="main">
+                </div>
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <form method="get" action="/search">
+                            <div class="field">
+                                <p class="control has-icons-right">
+                                <input type="hidden" name="cluster" value="{{ cluster }}" >
+                                <input type="hidden" name="namespace" value="{{ namespace if cluster and namespace else '' }}" >
+                                <input class="input" type="text" placeholder="Search Kubernetes objects.." name="q">
+                                <span class="icon is-small is-right">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                </p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <section class="section">
+            <div class="container is-fluid is-flex-desktop">
+                <aside class="menu">
+                    <div class="is-hidden-desktop"><a role="button" class="aside-burger" data-target="aside-menu">
+                            <span aria-hidden="true"></span>
+                            <span aria-hidden="true"></span>
+                        </a></div>
+                        <div id="aside-menu">
+                            {% if cluster: %}
+                            <p class="menu-label">
+                            Cluster Resources
+                            </p>
+                            <ul class="menu-list">
+                                <li><a href="/clusters/{{cluster}}/namespaces">Namespaces</a></li>
+                                <li><a href="/clusters/{{cluster}}/nodes">Nodes</a></li>
+                                <li><a href="/clusters/{{cluster}}/persistentvolumes">PersistentVolumes</a></li>
+                            </ul>
+                            {% endif %}
+                            {% if cluster and namespace: %}
+                            <p class="menu-label">
+                            Controllers
+                            </p>
+                            <ul class="menu-list">
+                                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/deployments">Deployments</a></li>
+                                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/cronjobs">CronJobs</a></li>
+                                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/jobs">Jobs</a></li>
+                                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/daemonsets">DaemonSets</a></li>
+                                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/statefulsets">StatefulSets</a></li>
+                            </ul>
+                            <p class="menu-label">
+                            Pod Management
+                            </p>
+                            <ul class="menu-list">
+                                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/ingresses">Ingresses</a></li>
+                                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/services">Services</a></li>
+                                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/pods">Pods</a></li>
+                                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/configmaps">ConfigMaps</a></li>
+                            </ul>
+                            <p class="menu-label">
+                            Meta
+                            </p>
+                            <ul class="menu-list">
+                                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/_resource-types">Resource Types</a></li>
+                                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/events">Events</a></li>
+                            </ul>
+                            {% endif %}
+                            {% if cluster and not namespace: %}
+                            <p class="menu-label">
+                            Meta
+                            </p>
+                            <ul class="menu-list">
+                                <li><a href="/clusters/{{cluster}}/_resource-types">Resource Types</a></li>
+                            </ul>
+                            {% endif %}
+                        </div>
 
-        {% block content %}{% endblock %}
-        </div>
-    </div>
-    </section>
-  <footer class="footer">
-      <div class="container">
-          <div class="has-text-centered">
-              <p><a href="https://codeberg.org/hjacobs/kube-web-view">Kubernetes Web View</a> {{ version }}</p>
-          </div>
-      </div>
-  </footer>
-  <!-- https://www.bryanbraun.com/anchorjs/#basic-usage -->
-  <script>anchors.add('h2.title'); </script>
-  </body>
+                </aside>
+                <div class="main">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </section>
+        <footer class="footer">
+            <div class="container">
+                <div class="has-text-centered">
+                    <p><a href="https://codeberg.org/hjacobs/kube-web-view">Kubernetes Web View</a> {{ version }}</p>
+                </div>
+            </div>
+        </footer>
+        <!-- https://www.bryanbraun.com/anchorjs/#basic-usage -->
+        <script>anchors.add('h2.title'); </script>
+    </body>
 </html>
 

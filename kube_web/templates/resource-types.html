@@ -2,23 +2,23 @@
 {% block title %}Resource Types{% endblock %}
 {% block content %}
 <nav class="breadcrumb" aria-label="breadcrumbs">
-  <ul>
-      <li><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
-      {% if namespace: %}
-      <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}">{{ namespace }}</a></li>
-      <li class="is-active"><a href="#">resource types</a></li>
-      {% else: %}
-      <li class="is-active"><a href="#">cluster resource types</a></li>
-      {% endif %}
-  </ul>
+    <ul>
+        <li><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
+        {% if namespace: %}
+        <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}">{{ namespace }}</a></li>
+        <li class="is-active"><a href="#">resource types</a></li>
+        {% else: %}
+        <li class="is-active"><a href="#">cluster resource types</a></li>
+        {% endif %}
+    </ul>
 </nav>
 
 <h1 class="title">Resource Types</h1>
 <div class="tabs is-small">
-  <ul>
-      <li {% if not namespace: %} class="is-active" {% endif %}><a href="/clusters/{{ cluster }}/_resource-types">Cluster</a></li>
-      <li {% if namespace: %} class="is-active" {% endif %}><a href="/clusters/{{ cluster }}/namespaces/{{ namespace or "default" }}/_resource-types">Namespaced</a></li>
-  </ul>
+    <ul>
+        <li {% if not namespace: %} class="is-active" {% endif %}><a href="/clusters/{{ cluster }}/_resource-types">Cluster</a></li>
+        <li {% if namespace: %} class="is-active" {% endif %}><a href="/clusters/{{ cluster }}/namespaces/{{ namespace or "default" }}/_resource-types">Namespaced</a></li>
+    </ul>
 </div>
 
 <table class="table is-striped">
@@ -27,17 +27,17 @@
         <th>Plural</th>
         <th>Version</th>
     </tr>
-{% for _type in resource_types: %}
-<tr>
-    <td>{{ _type.kind }}</td>
-    {% if namespace: %}
-    <td><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ _type.endpoint }}">{{ _type.endpoint }}</a></td>
-    {% else: %}
-    <td><a href="/clusters/{{ cluster }}/{{ _type.endpoint }}">{{ _type.endpoint }}</a></td>
-    {% endif %}
-    <td>{{ _type.version }}</td>
-</tr>
-{% endfor %}
+    {% for _type in resource_types: %}
+    <tr>
+        <td>{{ _type.kind }}</td>
+        {% if namespace: %}
+        <td><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ _type.endpoint }}">{{ _type.endpoint }}</a></td>
+        {% else: %}
+        <td><a href="/clusters/{{ cluster }}/{{ _type.endpoint }}">{{ _type.endpoint }}</a></td>
+        {% endif %}
+        <td>{{ _type.version }}</td>
+    </tr>
+    {% endfor %}
 </table>
 
 
