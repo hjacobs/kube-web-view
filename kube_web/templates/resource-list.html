@@ -2,98 +2,98 @@
 {% block title %}{{ plural }}{% endblock %}
 {% block content %}
 <nav class="breadcrumb" aria-label="breadcrumbs">
-  <ul>
-      <li><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
-      {% if is_all_namespaces: %}
-      <li><a href="/clusters/{{ cluster }}/namespaces">all</a></li>
-      {% elif namespace: %}
-      <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}">{{ namespace }}</a></li>
-      {% endif %}
-      <li class="is-active"><a href="#">{{ plural }}</a></li>
-  </ul>
+    <ul>
+        <li><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
+        {% if is_all_namespaces: %}
+        <li><a href="/clusters/{{ cluster }}/namespaces">all</a></li>
+        {% elif namespace: %}
+        <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}">{{ namespace }}</a></li>
+        {% endif %}
+        <li class="is-active"><a href="#">{{ plural }}</a></li>
+    </ul>
 </nav>
 
 {% for table in tables: %}
 <h1 class="title">{{ table.api_obj_class.kind|pluralize }}
     <span class="links">
         <a
-            {% if namespace: %}
-            href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ namespace }}/{{ table.api_obj_class.endpoint }}?{{ rel_url.update_query(download='tsv').query_string }}"
-            {% else: %}
-            href="/clusters/{{ table.obj.cluster.name }}/{{ table.api_obj_class.endpoint }}?{{ rel_url.update_query(download='tsv').query_string }}"
-            {% endif %}
-            title="Download resource list as Tab-Separated-Values (TSV)"
-            class="button is-light">
-                <span class="icon"><i class="fas fa-file-download"></i></span>
-            </a>
+          {% if namespace: %}
+          href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ namespace }}/{{ table.api_obj_class.endpoint }}?{{ rel_url.update_query(download='tsv').query_string }}"
+          {% else: %}
+          href="/clusters/{{ table.obj.cluster.name }}/{{ table.api_obj_class.endpoint }}?{{ rel_url.update_query(download='tsv').query_string }}"
+          {% endif %}
+          title="Download resource list as Tab-Separated-Values (TSV)"
+          class="button is-light">
+            <span class="icon"><i class="fas fa-file-download"></i></span>
+        </a>
         <a
-            href="#"
-            class="button is-light toggle-tools" data-target="tools-table-{{ loop.index }}">
-                <span class="icon"><i class="fas fa-caret-square-down"></i></span>
-            </a>
+                                  href="#"
+                                  class="button is-light toggle-tools" data-target="tools-table-{{ loop.index }}">
+            <span class="icon"><i class="fas fa-caret-square-down"></i></span>
+        </a>
     </span>
 </h1>
 
-    <form action="#" method="get" id="tools-table-{{ loop.index }}" class="tools-form {% if rel_url.query.labelcols or rel_url.query.selector or rel_url.query.filter: %}is-active{% endif%}">
-        <input type="hidden" name="sort" value="{{ rel_url.query.sort }}">
+<form action="#" method="get" id="tools-table-{{ loop.index }}" class="tools-form {% if rel_url.query.labelcols or rel_url.query.selector or rel_url.query.filter: %}is-active{% endif%}">
+    <input type="hidden" name="sort" value="{{ rel_url.query.sort }}">
     <div class="field is-horizontal">
         <div class="field-label is-normal">
             <label class="label">Label Columns</label>
         </div>
-  <div class="field-body">
-    <div class="field has-addons">
-      <p class="control is-expanded has-icons-left">
-      <input class="input" type="text" placeholder="Labels to show as columns (comma separated) or '*' to show all labels" name="labelcols" value="{{ rel_url.query.labelcols }}">
-        <span class="icon is-small is-left">
-          <i class="fas fa-table"></i>
-        </span>
-      </p>
-    </div>
+        <div class="field-body">
+            <div class="field has-addons">
+                <p class="control is-expanded has-icons-left">
+                <input class="input" type="text" placeholder="Labels to show as columns (comma separated) or '*' to show all labels" name="labelcols" value="{{ rel_url.query.labelcols }}">
+                <span class="icon is-small is-left">
+                    <i class="fas fa-table"></i>
+                </span>
+                </p>
+            </div>
 
-    </div>
+        </div>
     </div>
 
     <div class="field is-horizontal">
-  <div class="field-label is-normal">
-    <label class="label">Label Selector</label>
-  </div>
-  <div class="field-body">
-    <div class="field">
-      <p class="control is-expanded has-icons-left">
-      <input class="input" type="text" placeholder="Label selector (label=value)" name="selector" value="{{ rel_url.query.selector }}">
-        <span class="icon is-small is-left">
-          <i class="fas fa-equals"></i>
-        </span>
-      </p>
-    </div>
-    </div>
+        <div class="field-label is-normal">
+            <label class="label">Label Selector</label>
+        </div>
+        <div class="field-body">
+            <div class="field">
+                <p class="control is-expanded has-icons-left">
+                <input class="input" type="text" placeholder="Label selector (label=value)" name="selector" value="{{ rel_url.query.selector }}">
+                <span class="icon is-small is-left">
+                    <i class="fas fa-tags"></i>
+                </span>
+                </p>
+            </div>
+        </div>
     </div>
 
     <div class="field is-horizontal">
         <div class="field-label is-normal">
             <label class="label">Filter</label>
-      </div>
-    <div class="field-body">
-        <div class="field">
-      <p class="control is-expanded has-icons-left">
-      <input class="input" type="text" placeholder="Filter by any column (Column=value) or text" name="filter" value="{{ rel_url.query.filter }}">
-        <span class="icon is-small is-left">
-          <i class="fas fa-filter"></i>
-        </span>
-      </p>
-    </div>
-    </div>
+        </div>
+        <div class="field-body">
+            <div class="field">
+                <p class="control is-expanded has-icons-left">
+                <input class="input" type="text" placeholder="Filter by any column (Column=value) or text" name="filter" value="{{ rel_url.query.filter }}">
+                <span class="icon is-small is-left">
+                    <i class="fas fa-filter"></i>
+                </span>
+                </p>
+            </div>
+        </div>
     </div>
     <div class="field is-horizontal">
         <div class="field-label is-normal">
-      </div>
-        <div class="field-body">
-        <div class="control">
-            <button class="button is-primary" type="submit">Submit</button>
         </div>
+        <div class="field-body">
+            <div class="control">
+                <button class="button is-primary" type="submit">Submit</button>
+            </div>
         </div>
     </div>
-    </form>
+</form>
 
 <table class="table is-striped">
     <tr>
@@ -107,43 +107,43 @@
                 {% elif rel_url.query.sort == column.name + ':desc': %}
                 <span class="icon"><i class="fas fa-sort-up"></i></span>
                 {% endif %}
-        </a></th>
-        {% endfor %}
-        <th><a href="{{ rel_url.update_query(sort=('Created:desc' if rel_url.query.sort == 'Created' else 'Created')) }}">Created
-                {% if rel_url.query.sort == 'Created': %}
-                <span class="icon"><i class="fas fa-sort-down"></i></span>
-                {% elif rel_url.query.sort == 'Created:desc': %}
-                <span class="icon"><i class="fas fa-sort-up"></i></span>
-                {% endif %}
-        </a></th>
+            </a></th>
+            {% endfor %}
+            <th><a href="{{ rel_url.update_query(sort=('Created:desc' if rel_url.query.sort == 'Created' else 'Created')) }}">Created
+                    {% if rel_url.query.sort == 'Created': %}
+                    <span class="icon"><i class="fas fa-sort-down"></i></span>
+                    {% elif rel_url.query.sort == 'Created:desc': %}
+                    <span class="icon"><i class="fas fa-sort-up"></i></span>
+                    {% endif %}
+                </a></th>
     </tr>
-{% for row in table.rows: %}
-<tr>
-    {% if is_all_namespaces: %}
-    <td><a href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}">{{ row.object.metadata.namespace }}</a></td>
-    {% endif %}
-    {% for cell in row.cells: %}
-    {% if table.columns[loop.index0].name == 'Name': %}
-    {% if row.object.metadata.namespace: %}
-    <td><a href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
-      {% else: %}
-    <td><a href="/clusters/{{ table.obj.cluster.name }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
-      {% endif %}
-    {% else: %}
-    <td class="{{ get_cell_class(table, loop.index0, cell) }}"
-        {% if table.columns[loop.index0].name in ('Age', 'First Seen'): %}
-        style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}"
+    {% for row in table.rows: %}
+    <tr>
+        {% if is_all_namespaces: %}
+        <td><a href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}">{{ row.object.metadata.namespace }}</a></td>
         {% endif %}
-        >{{ cell if cell is not none}}</td>
-    {% endif %}
+        {% for cell in row.cells: %}
+        {% if table.columns[loop.index0].name == 'Name': %}
+        {% if row.object.metadata.namespace: %}
+        <td><a href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
+        {% else: %}
+        <td><a href="/clusters/{{ table.obj.cluster.name }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
+        {% endif %}
+        {% else: %}
+        <td class="{{ get_cell_class(table, loop.index0, cell) }}"
+            {% if table.columns[loop.index0].name in ('Age', 'First Seen'): %}
+            style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}"
+            {% endif %}
+            >{{ cell if cell is not none}}</td>
+        {% endif %}
+        {% endfor %}
+        <td style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}">{{ row.object.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
+    </tr>
+    {% else: %}
+    <tr>
+        <td colspan="{{ table.columns|length + 1 }}">No {{ table.api_obj_class.kind }} objects {% if namespace and not is_all_namespaces:%} in namespace "{{ namespace }}"{% endif %} found.</td>
+    </tr>
     {% endfor %}
-    <td style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}">{{ row.object.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
-</tr>
-{% else: %}
-<tr>
-    <td colspan="{{ table.columns|length + 1 }}">No {{ table.api_obj_class.kind }} objects {% if namespace and not is_all_namespaces:%} in namespace "{{ namespace }}"{% endif %} found.</td>
-</tr>
-{% endfor %}
 </table>
 
 {% endfor %}

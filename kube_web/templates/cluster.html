@@ -2,9 +2,9 @@
 {% block title %}{{ cluster }} Cluster{% endblock %}
 {% block content %}
 <nav class="breadcrumb" aria-label="breadcrumbs">
-  <ul>
-      <li class="is-active"><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
-  </ul>
+    <ul>
+        <li class="is-active"><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
+    </ul>
 </nav>
 
 <h2 class="title">Namespaces</h2>
@@ -14,26 +14,26 @@
         <th>Labels</th>
         <th>Created</th>
     </tr>
-{% for resource in namespaces: %}
-<tr>
-    <td><a href="/clusters/{{ cluster }}/{{ resource.endpoint }}/{{ resource.name }}">{{ resource.name }}</a></td>
-    <td>
-    {% for key, val in resource.labels.items()|sort: %}
-        <span class="tag">{{ key }}: {{ val }}</span>
+    {% for resource in namespaces: %}
+    <tr>
+        <td><a href="/clusters/{{ cluster }}/{{ resource.endpoint }}/{{ resource.name }}">{{ resource.name }}</a></td>
+        <td>
+            {% for key, val in resource.labels.items()|sort: %}
+            <span class="tag">{{ key }}: {{ val }}</span>
+            {% endfor %}
+        </td>
+        <td style="color:{{ resource.metadata.creationTimestamp|age_color(days=1) }}">{{ resource.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
+    </tr>
     {% endfor %}
-    </td>
-    <td style="color:{{ resource.metadata.creationTimestamp|age_color(days=1) }}">{{ resource.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
-</tr>
-{% endfor %}
 </table>
 
 <h2 class="title">Cluster Resource Types</h2>
 <table class="table is-stripped">
-{% for resource_type in resource_types: %}
-<tr>
-    <td>{{ resource_type.kind }}</td>
-    <td><a href="/clusters/{{ cluster }}/{{ resource_type.endpoint }}">{{ resource_type.endpoint }}</a></td>
-</tr>
-{% endfor %}
+    {% for resource_type in resource_types: %}
+    <tr>
+        <td>{{ resource_type.kind }}</td>
+        <td><a href="/clusters/{{ cluster }}/{{ resource_type.endpoint }}">{{ resource_type.endpoint }}</a></td>
+    </tr>
+    {% endfor %}
 </table>
 {% endblock %}
