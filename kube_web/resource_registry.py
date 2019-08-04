@@ -6,11 +6,11 @@ from kube_web import kubernetes
 logger = logging.getLogger(__name__)
 
 
-async def discover_api_group(api, group, group_version, pref_version):
+async def discover_api_group(api, group_version, pref_version):
     logger.debug(f"Collecting resources for {group_version}..")
     response = await kubernetes.api_get(api, version=group_version)
     response.raise_for_status()
-    return group, group_version, pref_version, response.json()["resources"]
+    return group_version, pref_version, response.json()["resources"]
 
 
 async def discover_api_resources(api):
@@ -30,19 +30,18 @@ async def discover_api_resources(api):
     r.raise_for_status()
     tasks = []
     for group in r.json()["groups"]:
-        print(group)
         pref_version = group["preferredVersion"]["groupVersion"]
         for version in group["versions"]:
             group_version = version["groupVersion"]
             tasks.append(
                 asyncio.create_task(
-                    discover_api_group(api, group["name"], group_version, pref_version)
+                    discover_api_group(api, group_version, pref_version)
                 )
             )
 
     yielded = set()
     non_preferred = []
-    for group, group_version, pref_version, resources in await asyncio.gather(*tasks):
+    for group_version, pref_version, resources in await asyncio.gather(*tasks):
         for resource in resources:
             if (
                 "/" not in resource["name"]
@@ -51,14 +50,14 @@ async def discover_api_resources(api):
             ):
                 if group_version == pref_version:
                     yield resource["namespaced"], group_version, resource
-                    yielded.add((group, resource["name"]))
+                    yielded.add((group_version, resource["name"]))
                 else:
                     non_preferred.append(
-                        (group, resource["namespaced"], group_version, resource)
+                        (resource["namespaced"], group_version, resource)
                     )
 
-    for group, namespaced, group_version, resource in non_preferred:
-        if (group, resource["name"]) not in yielded:
+    for namespaced, group_version, resource in non_preferred:
+        if (group_version, resource["name"]) not in yielded:
             yield namespaced, group_version, resource
 
 
