@@ -528,7 +528,7 @@ async def search(search_query, _type, _cluster, namespace, is_all_namespaces):
                 link = f"/clusters/{_cluster.name}/{_type}/{name}"
             results.append(
                 {
-                    "title": row["cells"][0],
+                    "title": name,
                     "kind": clazz.kind,
                     "link": link,
                     "labels": row["object"]["metadata"].get("labels", {}),
