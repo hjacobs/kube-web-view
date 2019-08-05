@@ -1,0 +1,55 @@
+<aside class="menu">
+    <div class="is-hidden-desktop"><a role="button" class="aside-burger" data-target="aside-menu">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a></div>
+        <div id="aside-menu">
+            {% if cluster: %}
+            <p class="menu-label">
+            Cluster Resources
+            </p>
+            <ul class="menu-list">
+                <li><a href="/clusters/{{cluster}}/namespaces">Namespaces</a></li>
+                <li><a href="/clusters/{{cluster}}/nodes">Nodes</a></li>
+                <li><a href="/clusters/{{cluster}}/persistentvolumes">PersistentVolumes</a></li>
+            </ul>
+            {% endif %}
+            {% if cluster and namespace: %}
+            <p class="menu-label">
+            Controllers
+            </p>
+            <ul class="menu-list">
+                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/deployments">Deployments</a></li>
+                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/cronjobs">CronJobs</a></li>
+                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/jobs">Jobs</a></li>
+                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/daemonsets">DaemonSets</a></li>
+                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/statefulsets">StatefulSets</a></li>
+            </ul>
+            <p class="menu-label">
+            Pod Management
+            </p>
+            <ul class="menu-list">
+                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/ingresses">Ingresses</a></li>
+                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/services">Services</a></li>
+                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/pods">Pods</a></li>
+                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/configmaps">ConfigMaps</a></li>
+            </ul>
+            <p class="menu-label">
+            Meta
+            </p>
+            <ul class="menu-list">
+                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/_resource-types">Resource Types</a></li>
+                <li><a href="/clusters/{{cluster}}/namespaces/{{namespace}}/events">Events</a></li>
+            </ul>
+            {% endif %}
+            {% if cluster and not namespace: %}
+            <p class="menu-label">
+            Meta
+            </p>
+            <ul class="menu-list">
+                <li><a href="/clusters/{{cluster}}/_resource-types">Resource Types</a></li>
+            </ul>
+            {% endif %}
+        </div>
+
+</aside>

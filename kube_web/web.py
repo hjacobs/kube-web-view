@@ -730,13 +730,23 @@ async def error_handler(request, handler):
 
 
 def get_app(cluster_manager, config):
-    template_paths = [str(Path(__file__).parent / "templates")]
-    if config.template_path:
+    templates_paths = [str(Path(__file__).parent / "templates")]
+    if config.templates_path:
         # prepend the custom template path so custom templates will overwrite any default ones
-        template_paths.insert(0, config.template_path)
+        templates_paths.insert(0, config.templates_path)
+
+    static_assets_path = Path(__file__).parent / "templates" / "assets"
+    if config.static_assets_path:
+        # overwrite assets path
+        static_assets_path = Path(config.static_assets_path)
 
     app = web.Application()
-    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(template_paths))
+    aiohttp_jinja2.setup(
+        app,
+        loader=jinja2.FileSystemLoader(templates_paths),
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
     env = aiohttp_jinja2.get_env(app)
     env.filters.update(
         pluralize=jinja2_filters.pluralize,
@@ -747,7 +757,7 @@ def get_app(cluster_manager, config):
     env.globals["version"] = __version__
 
     app.add_routes(routes)
-    app.router.add_static("/assets", Path(__file__).parent / "templates" / "assets")
+    app.router.add_static("/assets", static_assets_path)
 
     # behind proxy
     app.middlewares.append(XForwardedRelaxed().middleware)

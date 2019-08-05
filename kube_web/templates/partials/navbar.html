@@ -1,0 +1,46 @@
+<nav class="navbar is-fixed-top is-link" aria-label="main navigation">
+    <div class="navbar-brand">
+        <a role="button" class="navbar-burger" data-target="nav-menu" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+    </div>
+    <div class="navbar-menu" id="nav-menu">
+        <div class="navbar-start">
+            <a class="navbar-item {{ 'is-active' if page == 'clusters' }}" href="/clusters">Clusters</a>
+            {% if namespaces: %}
+            <div class="navbar-item has-dropdown is-hoverable">
+                <a class="navbar-link">
+                    {{ namespace }}
+                </a>
+
+                <div class="navbar-dropdown">
+                    {% for ns in namespaces: %}
+                    <a class="navbar-item" href="/clusters/{{ cluster}}/namespaces/{{ ns.name }}">
+                        {{ ns.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+        <div class="navbar-end">
+            <div class="navbar-item">
+                <form method="get" action="/search">
+                    <div class="field">
+                        <p class="control has-icons-right">
+                        <input type="hidden" name="cluster" value="{{ cluster }}" >
+                        <input type="hidden" name="namespace" value="{{ namespace if cluster and namespace else '' }}" >
+                        <input class="input" type="text" placeholder="Search Kubernetes objects.." name="q">
+                        <span class="icon is-small is-right">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>

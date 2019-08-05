@@ -59,8 +59,13 @@ def main(argv=None):
     parser.add_argument(
         "--debug", action="store_true", help="Run in debugging mode (log more)"
     )
+    # customization options
     parser.add_argument(
-        "--template-path", help="Path to directory with custom HTML/Jinja2 templates"
+        "--templates-path", help="Path to directory with custom HTML/Jinja2 templates"
+    )
+    parser.add_argument(
+        "--static-assets-path",
+        help="Path to custom JS/CSS assets (will be mounted as /assets HTTP path)",
     )
 
     args = parser.parse_args(argv)
