@@ -730,10 +730,13 @@ async def error_handler(request, handler):
 
 
 def get_app(cluster_manager, config):
+    template_paths = [str(Path(__file__).parent / "templates")]
+    if config.template_path:
+        # prepend the custom template path so custom templates will overwrite any default ones
+        template_paths.insert(0, config.template_path)
+
     app = web.Application()
-    aiohttp_jinja2.setup(
-        app, loader=jinja2.FileSystemLoader(str(Path(__file__).parent / "templates"))
-    )
+    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(template_paths))
     env = aiohttp_jinja2.get_env(app)
     env.filters.update(
         pluralize=jinja2_filters.pluralize,

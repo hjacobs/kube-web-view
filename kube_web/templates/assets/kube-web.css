@@ -10,8 +10,7 @@ html { overflow: scroll; }
 .navbar-end .control .icon { color: #98b8ed; }
 .navbar-end .control .icon { color: #98b8ed; }
 
-section.section { padding: 1.5rem 0; }
-.container.is-fluid { margin-left: 0; }
+.container.is-fluid { margin-left: 0; padding: 1.5rem 0; }
 
 
 /* aside menu has toggle for mobile */
