@@ -35,6 +35,11 @@
                                   class="button is-light toggle-tools" data-target="tools-table-{{ loop.index }}">
             <span class="icon"><i class="fas fa-caret-square-down"></i></span>
         </a>
+        <a
+                                  href="/search?cluster={{ table.obj.cluster.name }}&namespace={{ namespace or '' }}&type={{ table.api_obj_class.endpoint }}"
+                                  class="button is-light">
+            <span class="icon"><i class="fas fa-search"></i></span>
+        </a>
     </span>
 </h1>
 

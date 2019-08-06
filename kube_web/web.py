@@ -506,41 +506,43 @@ async def search(search_query, _type, _cluster, namespace, is_all_namespaces):
                 _type, namespaced=False
             )
             namespaced = False
-        query = clazz.objects(_cluster.api)
-        if namespaced:
-            query = query.filter(
-                namespace=pykube.all if is_all_namespaces else namespace
-            )
 
-        table = await kubernetes.get_table(query)
+        # without a search query, only return the clazz
+        if search_query:
+            query = clazz.objects(_cluster.api)
+            if namespaced:
+                query = query.filter(
+                    namespace=pykube.all if is_all_namespaces else namespace
+                )
+
+            table = await kubernetes.get_table(query)
+            add_label_columns(table, "*")
+            filter_table(table, search_query)
+            name_column = 0
+            for i, col in enumerate(table.columns):
+                if col["name"] == "Name":
+                    name_column = i
+                    break
+            for row in table.rows:
+                name = row["cells"][name_column]
+                if namespaced:
+                    ns = row["object"]["metadata"]["namespace"]
+                    link = f"/clusters/{_cluster.name}/namespaces/{ns}/{_type}/{name}"
+                else:
+                    link = f"/clusters/{_cluster.name}/{_type}/{name}"
+                results.append(
+                    {
+                        "title": name,
+                        "kind": clazz.kind,
+                        "link": link,
+                        "labels": row["object"]["metadata"].get("labels", {}),
+                        "created": row["object"]["metadata"]["creationTimestamp"],
+                    }
+                )
     except Exception as e:
         # just log as DEBUG because the error is shown in the web frontend already
         logger.debug(f"Failed to search {_type} in {_cluster.name}: {e}")
         errors.append({"cluster": _cluster, "resource_type": _type, "exception": e})
-    else:
-        add_label_columns(table, "*")
-        filter_table(table, search_query)
-        name_column = 0
-        for i, col in enumerate(table.columns):
-            if col["name"] == "Name":
-                name_column = i
-                break
-        for row in table.rows:
-            name = row["cells"][name_column]
-            if namespaced:
-                ns = row["object"]["metadata"]["namespace"]
-                link = f"/clusters/{_cluster.name}/namespaces/{ns}/{_type}/{name}"
-            else:
-                link = f"/clusters/{_cluster.name}/{_type}/{name}"
-            results.append(
-                {
-                    "title": name,
-                    "kind": clazz.kind,
-                    "link": link,
-                    "labels": row["object"]["metadata"].get("labels", {}),
-                    "created": row["object"]["metadata"]["creationTimestamp"],
-                }
-            )
     return clazz, results, errors
 
 
@@ -603,24 +605,23 @@ async def get_search(request):
 
     start = time.time()
 
-    if search_query:
-        tasks = []
+    tasks = []
 
-        for _type in resource_types:
-            for _cluster in clusters:
-                task = asyncio.create_task(
-                    search(search_query, _type, _cluster, namespace, is_all_namespaces)
-                )
-                tasks.append(task)
+    for _type in resource_types:
+        for _cluster in clusters:
+            task = asyncio.create_task(
+                search(search_query, _type, _cluster, namespace, is_all_namespaces)
+            )
+            tasks.append(task)
 
-        for clazz, _results, _errors in await asyncio.gather(*tasks):
-            if clazz and clazz.endpoint not in searchable_resource_types:
-                # search was done with a non-standard resource type (e.g. CRD)
-                searchable_resource_types[clazz.endpoint] = clazz.kind
-            results.extend(_results)
-            errors.extend(_errors)
+    for clazz, _results, _errors in await asyncio.gather(*tasks):
+        if clazz and clazz.endpoint not in searchable_resource_types:
+            # search was done with a non-standard resource type (e.g. CRD)
+            searchable_resource_types[clazz.endpoint] = clazz.kind
+        results.extend(_results)
+        errors.extend(_errors)
 
-        results.sort(key=partial(sort_rank, search_query_lower=search_query.lower()))
+    results.sort(key=partial(sort_rank, search_query_lower=search_query.lower()))
 
     duration = time.time() - start
 

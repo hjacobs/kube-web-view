@@ -71,7 +71,10 @@
 
 {% if resource.kind == "Namespace": %}
 <div class="section">
-    <a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/_resource-types">Resource Types</a>
+    <a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/all">Show all objects in this namespace</a>
+</div>
+<div class="section">
+    <a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/_resource-types">Show Resource Types in this namespace</a>
 </div>
 {% endif %}
 
@@ -81,6 +84,9 @@
     <h4 class="title is-5">Pods</h4>
     <table class="table is-striped">
         <tr>
+            {% if not namespace: %}
+            <th>Namespace</th>
+            {% endif %}
             {% for column in table.columns: %}
             <th title="{{ column.description }}"><a href="{{ rel_url.update_query(sort=column.name) }}">{{ column.name }}</a></th>
             {% endfor %}
@@ -88,7 +94,7 @@
         </tr>
         {% for row in table.rows: %}
         <tr>
-            {% if is_all_namespaces: %}
+            {% if not namespace: %}
             <td><a href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}">{{ row.object.metadata.namespace }}</a></td>
             {% endif %}
             {% for cell in row.cells: %}
@@ -99,10 +105,20 @@
             <td><a href="/clusters/{{ table.obj.cluster.name }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
             {% endif %}
             {% else: %}
-            <td class="{{ get_cell_class(table, loop.index0, cell) }}">{{ cell if cell is not none}}</td>
+            <td class="{{ get_cell_class(table, loop.index0, cell) }}"
+                {% if table.columns[loop.index0].name in ('Age', 'First Seen'): %}
+                style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}"
+                {% endif %}
+                >
+                {% if table.columns[loop.index0].name == 'Node': %}
+                <a href="/clusters/{{ table.obj.cluster.name }}/nodes/{{ cell }}">{{ cell if cell is not none}}</a>
+                {% else: %}
+                {{ cell if cell is not none}}
+                {% endif %}
+            </td>
             {% endif %}
             {% endfor %}
-            <td>{{ row.object.metadata.creationTimestamp }}</td>
+            <td style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}">{{ row.object.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
         </tr>
         {% else: %}
         <tr>
