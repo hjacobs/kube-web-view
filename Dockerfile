@@ -25,6 +25,10 @@ COPY --from=0 /usr/local/lib/python3.7/site-packages /usr/local/lib/python3.7/si
 COPY kube_web /kube_web
 
 ARG VERSION=dev
-RUN sed -i "s/__version__ = .*/__version__ = '${VERSION}'/" /kube_web/__init__.py
+
+# replace build version in package and
+# add build version to static asset links to break browser cache
+RUN sed -i "s/__version__ = .*/__version__ = '${VERSION}'/" /kube_web/__init__.py && \
+    sed -i "s/BUILD_VERSION/${VERSION}/g" /kube_web/templates/base.html
 
 ENTRYPOINT ["/usr/local/bin/python", "-m", "kube_web"]
