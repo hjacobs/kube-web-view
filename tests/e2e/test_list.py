@@ -118,6 +118,18 @@ def test_list_pods_wrong_container_image(session):
     assert "has-text-danger" in response.text
 
 
+def test_list_pods_filter_status_notequal(session):
+    response = session.get(
+        "/clusters/local/namespaces/default/pods?filter=Status!=Running"
+    )
+    response.raise_for_status()
+    links = response.html.find("html table td a")
+    assert (
+        "/clusters/local/namespaces/default/pods/wrong-container-image-"
+        in " ".join(l.attrs["href"] for l in links)
+    )
+
+
 def test_cluster_resource_types(session):
     response = session.get("/clusters/local/_resource-types")
     response.raise_for_status()

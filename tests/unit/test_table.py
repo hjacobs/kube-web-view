@@ -89,6 +89,13 @@ def test_filter_table_text_no_match(single_pod_table):
     assert len(table.rows) == 0
 
 
+def test_filter_table_not_equal(two_pod_table):
+    table = two_pod_table
+    filter_table(table, "Name!=pod-a")
+    assert len(table.rows) == 1
+    assert table.rows[0]["cells"][0] == "pod-b"
+
+
 def test_sort_table(two_pod_table):
     table = two_pod_table
     sort_table(table, "Name")

@@ -61,22 +61,35 @@ def filter_table(table, filter_param):
         return
 
     key_value = {}
+    key_value_neq = {}
     text_filters = []
 
     for part in filter_param.split(","):
         k, sep, v = part.partition("=")
         if not sep:
             text_filters.append(part.strip().lower())
+        elif k.endswith("!"):
+            key_value_neq[k[:-1].strip()] = v.strip()
         else:
             key_value[k.strip()] = v.strip()
 
     index_filter = {}
+    index_filter_neq = {}
     for i, col in enumerate(table.columns):
         filter_value = key_value.get(col["name"])
         if filter_value is not None:
             index_filter[i] = filter_value
 
+        filter_value = key_value_neq.get(col["name"])
+        if filter_value is not None:
+            index_filter_neq[i] = filter_value
+
     if len(key_value) != len(index_filter):
+        # filter was defined for a column which does not exist
+        table.rows[:] = []
+        return
+
+    if len(key_value_neq) != len(index_filter_neq):
         # filter was defined for a column which does not exist
         table.rows[:] = []
         return
@@ -86,6 +99,11 @@ def filter_table(table, filter_param):
         for j, cell in enumerate(row["cells"]):
             filter_value = index_filter.get(j)
             is_match = filter_value is None or str(cell) == filter_value
+            if not is_match:
+                break
+
+            filter_value = index_filter_neq.get(j)
+            is_match = filter_value is None or str(cell) != filter_value
             if not is_match:
                 break
 
