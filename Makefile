@@ -71,7 +71,7 @@ run:
 
 .PHONY: run.kind
 run.kind:
-	poetry run python3 -m kube_web --kubeconfig-path=$$(./kind get kubeconfig-path --name=kube-web-view-e2e) --debug
+	poetry run python3 -m kube_web --kubeconfig-path=$$(./kind get kubeconfig-path --name=kube-web-view-e2e) --debug --show-container-logs
 
 .PHONY: mirror
 mirror:
