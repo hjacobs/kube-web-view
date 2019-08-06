@@ -360,11 +360,24 @@ async def get_resource_view(request):
     if params.get("download") == "yaml":
         return await download_yaml(request, resource)
 
-    if resource.obj.get("spec", {}).get("selector", {}).get("matchLabels"):
-        query = Pod.objects(cluster.api).filter(
-            namespace=namespace,
-            selector=resource.obj["spec"]["selector"]["matchLabels"],
-        )
+    selector = field_selector = None
+    if resource.kind == "Node":
+        field_selector = {"spec.nodeName": resource.name}
+    elif resource.obj.get("spec", {}).get("selector", {}).get("matchLabels"):
+        # e.g. Deployment, DaemonSet, ..
+        selector = resource.obj["spec"]["selector"]["matchLabels"]
+    elif resource.obj.get("spec", {}).get("selector"):
+        # e.g. Service
+        selector = resource.obj["spec"]["selector"]
+
+    if selector or field_selector:
+        query = Pod.objects(cluster.api).filter(namespace=namespace or pykube.all)
+
+        if selector:
+            query = query.filter(selector=selector)
+        if field_selector:
+            query = query.filter(field_selector=field_selector)
+
         table = await kubernetes.get_table(query)
         sort_table(table, params.get("sort"))
         table.obj["cluster"] = cluster

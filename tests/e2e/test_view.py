@@ -76,3 +76,13 @@ def test_download_secret_yaml(session):
     assert data["kind"] == "Secret"
     assert data["metadata"]["name"] == "test-secret"
     assert data["data"]["my-secret-key"] == "**SECRET-CONTENT-HIDDEN-BY-KUBE-WEB-VIEW**"
+
+
+def test_node_shows_pods(session):
+    response = session.get("/clusters/local/nodes/kube-web-view-e2e-control-plane")
+    response.raise_for_status()
+    links = response.html.find("main table a")
+    # check that our kube-web-view pod (dynamic name) is linked from the node page
+    assert "/clusters/local/namespaces/default/pods/kube-web-view-" in " ".join(
+        l.attrs["href"] for l in links
+    )
