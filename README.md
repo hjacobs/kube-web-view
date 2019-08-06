@@ -57,15 +57,29 @@ This requires Python 3.7 and [poetry](https://poetry.eustace.io/) and will run u
 make test
 ```
 
+The end-to-end (e2e) tests will bootstrap a new Kind cluster, you can run Kubernetes Web View for development against this cluster:
+
+```
+make run.kind
+```
+
+To clean up the e2e test cluster (also needed after a machine reboot):
+
+```
+make clean.e2e
+```
+
+
 ## Building the Docker image
 
 ```
 make
 ```
 
+
 ## Developing Locally
 
-To start the Python web server locally:
+To start the Python web server locally with the default kubeconfig (`~/.kube/config`):
 
 ```
 make run
