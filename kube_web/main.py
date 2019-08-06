@@ -47,6 +47,11 @@ def main(argv=None):
         help="Path to OAuth2 Bearer token for Cluster Registry authentication",
     )
     parser.add_argument(
+        "--cluster-auth-use-session-token",
+        action="store_true",
+        help="Use OAuth2 access token from frontend session for cluster authentication",
+    )
+    parser.add_argument(
         "--show-container-logs",
         action="store_true",
         help="Enable container logs (hidden by default as they can contain sensitive information)",

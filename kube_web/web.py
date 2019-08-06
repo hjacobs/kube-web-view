@@ -16,8 +16,9 @@ import yaml
 
 from functools import partial
 
-from pykube import ObjectDoesNotExist
+from pykube import ObjectDoesNotExist, HTTPClient
 from pykube.objects import NamespacedAPIObject, Namespace, Event, Pod
+from pykube.query import Query
 from aiohttp_session import get_session, setup as session_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from aiohttp_remotes import XForwardedRelaxed
@@ -83,6 +84,25 @@ TABLE_CELL_FORMATTING = {
 routes = web.RouteTableDef()
 
 
+class HTTPClientWithAccessToken(HTTPClient):
+    def __init__(self, base, access_token):
+        self.__dict__ = base.__dict__
+        self._access_token = access_token
+        self.config.user["token"] = None
+
+    def get(self, *args, **kwargs):
+        if "headers" not in kwargs:
+            kwargs["headers"] = {}
+        kwargs["headers"]["Authorization"] = f"Bearer {self._access_token}"
+        return super().get(*args, **kwargs)
+
+
+def wrap_query(query: Query, request, session):
+    if request.app[CONFIG].cluster_auth_use_session_token:
+        query.api = HTTPClientWithAccessToken(query.api, session["access_token"])
+    return query
+
+
 def get_clusters(request, cluster: str):
     is_all_clusters = not bool(cluster) or cluster == ALL
     if is_all_clusters:
@@ -103,8 +123,9 @@ def context():
                 clusters, is_all_clusters = get_clusters(request, ctx["cluster"])
                 if not is_all_clusters and len(clusters) == 1:
                     cluster = clusters[0]
+                    session = await get_session(request)
                     namespaces = await kubernetes.get_list(
-                        Namespace.objects(cluster.api)
+                        wrap_query(Namespace.objects(cluster.api), request, session)
                     )
                     ctx["namespaces"] = namespaces
                 ctx["rel_url"] = request.rel_url
