@@ -1,3 +1,4 @@
+import collections
 from functools import partial
 
 
@@ -61,7 +62,7 @@ def filter_table(table, filter_param):
         return
 
     key_value = {}
-    key_value_neq = {}
+    key_value_neq = collections.defaultdict(set)
     text_filters = []
 
     for part in filter_param.split(","):
@@ -69,7 +70,7 @@ def filter_table(table, filter_param):
         if not sep:
             text_filters.append(part.strip().lower())
         elif k.endswith("!"):
-            key_value_neq[k[:-1].strip()] = v.strip()
+            key_value_neq[k[:-1].strip()].add(v.strip())
         else:
             key_value[k.strip()] = v.strip()
 
@@ -80,9 +81,9 @@ def filter_table(table, filter_param):
         if filter_value is not None:
             index_filter[i] = filter_value
 
-        filter_value = key_value_neq.get(col["name"])
-        if filter_value is not None:
-            index_filter_neq[i] = filter_value
+        filter_values = key_value_neq.get(col["name"])
+        if filter_values is not None:
+            index_filter_neq[i] = filter_values
 
     if len(key_value) != len(index_filter):
         # filter was defined for a column which does not exist
@@ -102,8 +103,8 @@ def filter_table(table, filter_param):
             if not is_match:
                 break
 
-            filter_value = index_filter_neq.get(j)
-            is_match = filter_value is None or str(cell) != filter_value
+            filter_values = index_filter_neq.get(j)
+            is_match = not filter_values or str(cell) not in filter_values
             if not is_match:
                 break
 

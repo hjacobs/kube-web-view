@@ -131,9 +131,8 @@ def test_list_pods_filter_status_notequal(session):
     )
     response.raise_for_status()
     links = response.html.find("html table td a")
-    assert (
-        "/clusters/local/namespaces/default/pods/wrong-container-image-"
-        in " ".join(l.attrs["href"] for l in links)
+    assert "/clusters/local/namespaces/default/pods/wrong-container-image-" in " ".join(
+        l.attrs["href"] for l in links
     )
 
 

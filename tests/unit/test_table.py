@@ -25,8 +25,11 @@ def two_pod_table():
         Pod,
         {
             "kind": "Table",
-            "columnDefinitions": [{"name": "Name"}],
-            "rows": [{"cells": ["pod-a"]}, {"cells": ["pod-b"]}],
+            "columnDefinitions": [{"name": "Name"}, {"name": "Status"}],
+            "rows": [
+                {"cells": ["pod-a", "Running"]},
+                {"cells": ["pod-b", "Completed"]},
+            ],
         },
     )
     return table
@@ -94,6 +97,12 @@ def test_filter_table_not_equal(two_pod_table):
     filter_table(table, "Name!=pod-a")
     assert len(table.rows) == 1
     assert table.rows[0]["cells"][0] == "pod-b"
+
+
+def test_filter_table_not_equal_and(two_pod_table):
+    table = two_pod_table
+    filter_table(table, "Status!=Running,Status!=Completed")
+    assert len(table.rows) == 0
 
 
 def test_sort_table(two_pod_table):
