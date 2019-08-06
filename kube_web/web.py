@@ -24,6 +24,7 @@ from aioauth_client import OAuth2Client
 from cryptography.fernet import Fernet
 
 from .cluster_manager import ClusterNotFound
+from .resource_registry import ResourceTypeNotFound
 
 from pathlib import Path
 
@@ -170,8 +171,6 @@ async def get_cluster_resource_list(request):
         clazz = await _cluster.resource_registry.get_class_by_plural_name(
             plural, namespaced=False
         )
-        if not clazz:
-            raise web.HTTPNotFound(text="Resource type not found")
 
         query = clazz.objects(_cluster.api)
         if params.get("selector"):
@@ -273,8 +272,6 @@ async def get_resource_list(_type, _cluster, namespace, is_all_namespaces, param
         clazz = await _cluster.resource_registry.get_class_by_plural_name(
             _type, namespaced=True
         )
-        if not clazz:
-            raise web.HTTPNotFound(text="Resource type not found")
         query = clazz.objects(_cluster.api).filter(
             namespace=pykube.all if is_all_namespaces else namespace
         )
@@ -338,6 +335,9 @@ async def get_namespaced_resource_list(request):
     errors = []
     for clazz, table, error in await asyncio.gather(*tasks):
         if error:
+            if len(clusters) == 1:
+                # directly re-raise the exception as cluster was given
+                raise error["exception"]
             errors.append(error)
         else:
             tables.append(table)
@@ -371,8 +371,6 @@ async def get_resource_view(request):
     clazz = await cluster.resource_registry.get_class_by_plural_name(
         plural, namespaced=bool(namespace)
     )
-    if not clazz:
-        raise web.HTTPNotFound(text="Resource type not found")
     query = clazz.objects(cluster.api)
     if namespace:
         query = query.filter(namespace=namespace)
@@ -452,8 +450,6 @@ async def get_resource_logs(request):
     clazz = await cluster.resource_registry.get_class_by_plural_name(
         plural, namespaced=True
     )
-    if not clazz:
-        raise web.HTTPNotFound(text="Resource type not found")
     query = clazz.objects(cluster.api)
     if namespace:
         query = query.filter(namespace=namespace)
@@ -517,14 +513,12 @@ async def search(search_query, _type, _cluster, namespace, is_all_namespaces):
     try:
         namespaced = True
         clazz = await _cluster.resource_registry.get_class_by_plural_name(
-            _type, namespaced=True
+            _type, namespaced=True, default=None
         )
         if not clazz:
             clazz = await _cluster.resource_registry.get_class_by_plural_name(
                 _type, namespaced=False
             )
-            if not clazz:
-                raise web.HTTPNotFound(text=f"Resource type '{_type}' not found")
             namespaced = False
         query = clazz.objects(_cluster.api)
         if namespaced:
@@ -734,6 +728,10 @@ async def error_handler(request, handler):
             status = 404
             error_title = "Error: cluster not found"
             error_text = f'Cluster "{e.cluster}" not found'
+        elif isinstance(e, ResourceTypeNotFound):
+            status = 404
+            error_title = "Error: resource type not found"
+            error_text = str(e)
         elif isinstance(e, ObjectDoesNotExist):
             status = 404
             error_title = "Error: object does not exist"

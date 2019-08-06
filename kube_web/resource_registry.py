@@ -5,6 +5,15 @@ from kube_web import kubernetes
 
 logger = logging.getLogger(__name__)
 
+throw_exception = object()
+
+
+class ResourceTypeNotFound(Exception):
+    def __init__(self, resource_type: str, namespaced: bool):
+        super().__init__(
+            f"{'Namespaced' if namespaced else 'Cluster'} resource type '{resource_type}' not found"
+        )
+
 
 async def discover_api_group(api, group_version, pref_version):
     logger.debug(f"Collecting resources for {group_version}..")
@@ -126,7 +135,9 @@ class ResourceRegistry:
             await self.initialize()
         return self._namespaced_resource_types
 
-    async def get_class_by_plural_name(self, plural: str, namespaced: bool):
+    async def get_class_by_plural_name(
+        self, plural: str, namespaced: bool, default=throw_exception
+    ):
         _types = (
             self.namespaced_resource_types
             if namespaced
@@ -137,4 +148,6 @@ class ResourceRegistry:
             if c.endpoint == plural:
                 clazz = c
                 break
+        if not clazz and default is throw_exception:
+            raise ResourceTypeNotFound(plural, namespaced)
         return clazz

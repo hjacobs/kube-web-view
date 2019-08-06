@@ -10,7 +10,10 @@ def test_list_clusters(session):
 def test_list_cluster_resource_type_not_found(session):
     response = session.get("/clusters/local/foobars")
     assert response.status_code == 404
-    assert "Resource type not found" in response.text
+    assert (
+        "Cluster resource type 'foobars' not found"
+        in response.html.find("main", first=True).text
+    )
 
 
 def test_list_cluster_resources(session):
@@ -32,6 +35,23 @@ def test_list_namespaced_resources(session):
     response.raise_for_status()
     assert "application=kube-web-view" in response.text
     assert "kube-web-view-container" in response.text
+
+
+def test_list_namespaced_resource_type_not_found(session):
+    response = session.get("/clusters/local/namespaces/default/foobars")
+    assert response.status_code == 404
+    assert (
+        "Namespaced resource type 'foobars' not found"
+        in response.html.find("main", first=True).text
+    )
+
+
+def test_list_namespaced_resources_in_all_clusters(session):
+    response = session.get("/clusters/_all/namespaces/_all/deployments")
+    response.raise_for_status()
+    assert (
+        "/clusters/local/namespaces/default/deployments/kube-web-view" in response.text
+    )
 
 
 def test_list_multiple_namespaced_resources(session):
