@@ -608,7 +608,7 @@ async def get_search(request):
                 tasks.append(task)
 
         for clazz, _results, _errors in await asyncio.gather(*tasks):
-            if clazz.endpoint not in searchable_resource_types:
+            if clazz and clazz.endpoint not in searchable_resource_types:
                 # search was done with a non-standard resource type (e.g. CRD)
                 searchable_resource_types[clazz.endpoint] = clazz.kind
             results.extend(_results)
