@@ -43,6 +43,8 @@ OAUTH2_CALLBACK_PATH = "/oauth2/callback"
 CLUSTER_MANAGER = "cluster_manager"
 CONFIG = "config"
 
+ALL = "_all"
+
 
 TABLE_CELL_FORMATTING = {
     "events": {"Type": {"Warning": "has-text-warning"}},
@@ -80,7 +82,7 @@ def context():
         async def func_wrapper(request):
             ctx = await func(request)
             if isinstance(ctx, dict) and ctx.get("cluster"):
-                if ctx["cluster"] != "_all":
+                if ctx["cluster"] != ALL:
                     cluster = request.app[CLUSTER_MANAGER].get(ctx["cluster"])
                     namespaces = await kubernetes.get_list(
                         Namespace.objects(cluster.api)
@@ -137,7 +139,7 @@ def get_cell_class(table, column_index, value):
 @context()
 async def get_cluster_resource_types(request):
     cluster = request.match_info["cluster"]
-    is_all_clusters = cluster == "_all"
+    is_all_clusters = cluster == ALL
     if is_all_clusters:
         clusters = request.app[CLUSTER_MANAGER].clusters
     else:
@@ -154,43 +156,35 @@ async def get_cluster_resource_types(request):
     }
 
 
-@routes.get("/clusters/{cluster}/{plural}")
-@aiohttp_jinja2.template("resource-list.html")
-@context()
-async def get_cluster_resource_list(request):
-    cluster = request.match_info["cluster"]
-    is_all_clusters = cluster == "_all"
-    if is_all_clusters:
-        clusters = request.app[CLUSTER_MANAGER].clusters
-    else:
-        clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
-    plural = request.match_info["plural"]
-    params = request.rel_url.query
-    tables = []
-    for _cluster in clusters:
+async def do_get_resource_list(
+    _type: str, _cluster, namespace: str, is_all_namespaces: bool, params: dict
+):
+    """Query cluster resources and return a Table object or error"""
+    clazz = table = error = None
+    try:
         clazz = await _cluster.resource_registry.get_class_by_plural_name(
-            plural, namespaced=False
+            _type, namespaced=namespace is not None
         )
-
         query = clazz.objects(_cluster.api)
+        if is_all_namespaces:
+            query = query.filter(namespace=pykube.all)
+        elif namespace:
+            query = query.filter(namespace=namespace)
+
         if params.get("selector"):
             query = query.filter(selector=params["selector"])
+
         table = await kubernetes.get_table(query)
+    except Exception as e:
+        # just log as DEBUG because the error is shown in the web frontend already
+        logger.debug(f"Failed to list {_type} in {_cluster.name}: {e}")
+        error = {"cluster": _cluster, "resource_type": _type, "exception": e}
+    else:
         add_label_columns(table, params.get("labelcols"))
         filter_table(table, params.get("filter"))
         sort_table(table, params.get("sort"))
         table.obj["cluster"] = _cluster
-        tables.append(table)
-    if params.get("download") == "tsv":
-        return await download_tsv(request, tables[0])
-    return {
-        "cluster": cluster,
-        "is_all_clusters": is_all_clusters,
-        "namespace": None,
-        "plural": plural,
-        "tables": tables,
-        "get_cell_class": get_cell_class,
-    }
+    return clazz, table, error
 
 
 class ResponseWriter:
@@ -248,7 +242,7 @@ async def download_yaml(request, resource):
 @context()
 async def get_namespaced_resource_types(request):
     cluster = request.match_info["cluster"]
-    is_all_clusters = cluster == "_all"
+    is_all_clusters = cluster == ALL
     if is_all_clusters:
         clusters = request.app[CLUSTER_MANAGER].clusters
     else:
@@ -266,47 +260,24 @@ async def get_namespaced_resource_types(request):
     }
 
 
-async def get_resource_list(_type, _cluster, namespace, is_all_namespaces, params):
-    clazz = table = error = None
-    try:
-        clazz = await _cluster.resource_registry.get_class_by_plural_name(
-            _type, namespaced=True
-        )
-        query = clazz.objects(_cluster.api).filter(
-            namespace=pykube.all if is_all_namespaces else namespace
-        )
-        if params.get("selector"):
-            query = query.filter(selector=params["selector"])
-
-        table = await kubernetes.get_table(query)
-    except Exception as e:
-        # just log as DEBUG because the error is shown in the web frontend already
-        logger.debug(f"Failed to list {_type} in {_cluster.name}: {e}")
-        error = {"cluster": _cluster, "resource_type": _type, "exception": e}
-    else:
-        add_label_columns(table, params.get("labelcols"))
-        filter_table(table, params.get("filter"))
-        sort_table(table, params.get("sort"))
-        table.obj["cluster"] = _cluster
-    return clazz, table, error
-
-
+@routes.get("/clusters/{cluster}/{plural}")
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}")
 @aiohttp_jinja2.template("resource-list.html")
 @context()
-async def get_namespaced_resource_list(request):
+async def get_resource_list(request):
     cluster = request.match_info["cluster"]
-    is_all_clusters = cluster == "_all"
+    is_all_clusters = cluster == ALL
     if is_all_clusters:
         clusters = request.app[CLUSTER_MANAGER].clusters
     else:
         clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
-    namespace = request.match_info["namespace"]
+    namespace = request.match_info.get("namespace")
     plural = request.match_info["plural"]
 
-    is_all_namespaces = namespace == "_all"
+    is_all_namespaces = namespace == ALL
 
-    if plural == "all":
+    # "all" resource types only work for namespaced types
+    if plural == "all" and namespace:
         # this list was extracted from kubectl get all --v=9
         resource_types = [
             "pods",
@@ -327,7 +298,9 @@ async def get_namespaced_resource_list(request):
     for _type in resource_types:
         for _cluster in clusters:
             task = asyncio.create_task(
-                get_resource_list(_type, _cluster, namespace, is_all_namespaces, params)
+                do_get_resource_list(
+                    _type, _cluster, namespace, is_all_namespaces, params
+                )
             )
             tasks.append(task)
 
@@ -336,7 +309,7 @@ async def get_namespaced_resource_list(request):
     for clazz, table, error in await asyncio.gather(*tasks):
         if error:
             if len(clusters) == 1:
-                # directly re-raise the exception as cluster was given
+                # directly re-raise the exception as single cluster was given
                 raise error["exception"]
             errors.append(error)
         else:
@@ -597,7 +570,7 @@ async def get_search(request):
     else:
         clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
 
-    is_all_namespaces = not namespace or namespace == "_all"
+    is_all_namespaces = not namespace or namespace == ALL
 
     searchable_resource_types = {
         "namespaces": "Namespace",

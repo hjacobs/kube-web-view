@@ -72,7 +72,7 @@ def test_download_nodes_tsv(session):
 
 def test_download_tsv(session):
     response = session.get(
-        "/clusters/local/namespaces/default/deployments?download=tsv"
+        "/clusters/local/namespaces/default/deployments?download=tsv&selector=application=kube-web-view"
     )
     response.raise_for_status()
     lines = response.text.split("\n")
