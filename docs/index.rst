@@ -15,6 +15,7 @@ Live demo: https://kube-web-view.demo.j-serv.de/
    vision
    features
    oauth2
+   customization
    security
    alternatives
 
