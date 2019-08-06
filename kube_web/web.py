@@ -510,6 +510,8 @@ async def search(search_query, _type, _cluster, namespace, is_all_namespaces):
 
         table = await kubernetes.get_table(query)
     except Exception as e:
+        # just log as DEBUG because the error is shown in the web frontend already
+        logger.debug(f"Failed to search {_type} in {_cluster.name}: {e}")
         errors.append({"cluster": _cluster, "resource_type": _type, "exception": e})
     else:
         add_label_columns(table, "*")

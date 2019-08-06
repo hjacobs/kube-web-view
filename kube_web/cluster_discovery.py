@@ -68,7 +68,8 @@ class ClusterRegistryDiscoverer:
         self._last_cache_refresh = 0
         self._clusters = []
         self._session = requests.Session()
-        self._session.auth = OAuth2BearerTokenAuth(self._oauth2_bearer_token_path)
+        if self._oauth2_bearer_token_path:
+            self._session.auth = OAuth2BearerTokenAuth(self._oauth2_bearer_token_path)
 
     def refresh(self):
         try:

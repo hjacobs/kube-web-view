@@ -94,15 +94,25 @@ async def get_namespaced_resource_types(api):
 class ResourceRegistry:
     def __init__(self, api):
         self.api = api
+        self._lock = asyncio.Lock()
         self._cluster_resource_types = []
         self._namespaced_resource_types = []
 
     async def initialize(self):
-        async for clazz in get_namespaced_resource_types(self.api):
-            if issubclass(clazz, NamespacedAPIObject):
-                self._namespaced_resource_types.append(clazz)
-            else:
-                self._cluster_resource_types.append(clazz)
+        async with self._lock:
+            if self._namespaced_resource_types and self._cluster_resource_types:
+                # already initialized!
+                return
+            logger.info(f"Initializing resource registry for {self.api.url}..")
+            namespaced_resource_types = []
+            cluster_resource_types = []
+            async for clazz in get_namespaced_resource_types(self.api):
+                if issubclass(clazz, NamespacedAPIObject):
+                    namespaced_resource_types.append(clazz)
+                else:
+                    cluster_resource_types.append(clazz)
+            self._namespaced_resource_types = namespaced_resource_types
+            self._cluster_resource_types = cluster_resource_types
 
     @property
     async def cluster_resource_types(self):
