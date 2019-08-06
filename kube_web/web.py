@@ -77,13 +77,26 @@ TABLE_CELL_FORMATTING = {
 routes = web.RouteTableDef()
 
 
+def get_clusters(request, cluster: str):
+    is_all_clusters = not bool(cluster) or cluster == ALL
+    if is_all_clusters:
+        clusters = request.app[CLUSTER_MANAGER].clusters
+    else:
+        parts = cluster.split(",")
+        clusters = list(
+            [request.app[CLUSTER_MANAGER].get(_cluster) for _cluster in parts]
+        )
+    return clusters, is_all_clusters
+
+
 def context():
     def decorator(func):
         async def func_wrapper(request):
             ctx = await func(request)
             if isinstance(ctx, dict) and ctx.get("cluster"):
-                if ctx["cluster"] != ALL:
-                    cluster = request.app[CLUSTER_MANAGER].get(ctx["cluster"])
+                clusters, is_all_clusters = get_clusters(request, ctx["cluster"])
+                if not is_all_clusters and len(clusters) == 1:
+                    cluster = clusters[0]
                     namespaces = await kubernetes.get_list(
                         Namespace.objects(cluster.api)
                     )
@@ -104,7 +117,7 @@ async def get_index(request):
 
 @routes.get("/clusters")
 @aiohttp_jinja2.template("clusters.html")
-async def get_clusters(request):
+async def get_cluster_list(request):
     return {
         "clusters": sorted(request.app[CLUSTER_MANAGER].clusters, key=lambda c: c.name)
     }
@@ -139,11 +152,7 @@ def get_cell_class(table, column_index, value):
 @context()
 async def get_cluster_resource_types(request):
     cluster = request.match_info["cluster"]
-    is_all_clusters = cluster == ALL
-    if is_all_clusters:
-        clusters = request.app[CLUSTER_MANAGER].clusters
-    else:
-        clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
+    clusters, is_all_clusters = get_clusters(request, cluster)
     resource_types = set()
     for _cluster in clusters:
         for clazz in await _cluster.resource_registry.cluster_resource_types:
@@ -242,11 +251,7 @@ async def download_yaml(request, resource):
 @context()
 async def get_namespaced_resource_types(request):
     cluster = request.match_info["cluster"]
-    is_all_clusters = cluster == ALL
-    if is_all_clusters:
-        clusters = request.app[CLUSTER_MANAGER].clusters
-    else:
-        clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
+    clusters, is_all_clusters = get_clusters(request, cluster)
     namespace = request.match_info["namespace"]
     resource_types = set()
     for _cluster in clusters:
@@ -266,11 +271,7 @@ async def get_namespaced_resource_types(request):
 @context()
 async def get_resource_list(request):
     cluster = request.match_info["cluster"]
-    is_all_clusters = cluster == ALL
-    if is_all_clusters:
-        clusters = request.app[CLUSTER_MANAGER].clusters
-    else:
-        clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
+    clusters, is_all_clusters = get_clusters(request, cluster)
     namespace = request.match_info.get("namespace")
     plural = request.match_info["plural"]
 
@@ -579,11 +580,7 @@ async def get_search(request):
             "cronjobs",
         ]
 
-    is_all_clusters = not bool(cluster)
-    if is_all_clusters:
-        clusters = request.app[CLUSTER_MANAGER].clusters
-    else:
-        clusters = [request.app[CLUSTER_MANAGER].get(cluster)]
+    clusters, is_all_clusters = get_clusters(request, cluster)
 
     is_all_namespaces = not namespace or namespace == ALL
 

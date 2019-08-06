@@ -30,6 +30,13 @@ def test_list_cluster_resources_in_all_clusters(session):
     assert "/clusters/local/nodes/kube-web-view-e2e-control-plane" in response.text
 
 
+def test_list_cluster_resources_in_multiple_clusters(session):
+    # this is a bit fake as we only have one cluster in e2e..
+    response = session.get("/clusters/local,local/nodes")
+    response.raise_for_status()
+    assert "/clusters/local/nodes/kube-web-view-e2e-control-plane" in response.text
+
+
 def test_list_namespaced_resources(session):
     response = session.get("/clusters/local/namespaces/default/deployments")
     response.raise_for_status()
