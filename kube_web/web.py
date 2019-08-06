@@ -267,6 +267,33 @@ async def get_namespaced_resource_types(request):
     }
 
 
+async def get_resource_list(_type, _cluster, namespace, is_all_namespaces, params):
+    clazz = table = error = None
+    try:
+        clazz = await _cluster.resource_registry.get_class_by_plural_name(
+            _type, namespaced=True
+        )
+        if not clazz:
+            raise web.HTTPNotFound(text="Resource type not found")
+        query = clazz.objects(_cluster.api).filter(
+            namespace=pykube.all if is_all_namespaces else namespace
+        )
+        if params.get("selector"):
+            query = query.filter(selector=params["selector"])
+
+        table = await kubernetes.get_table(query)
+    except Exception as e:
+        # just log as DEBUG because the error is shown in the web frontend already
+        logger.debug(f"Failed to list {_type} in {_cluster.name}: {e}")
+        error = {"cluster": _cluster, "resource_type": _type, "exception": e}
+    else:
+        add_label_columns(table, params.get("labelcols"))
+        filter_table(table, params.get("filter"))
+        sort_table(table, params.get("sort"))
+        table.obj["cluster"] = _cluster
+    return clazz, table, error
+
+
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}")
 @aiohttp_jinja2.template("resource-list.html")
 @context()
@@ -299,26 +326,22 @@ async def get_namespaced_resource_list(request):
         resource_types = plural.split(",")
 
     params = request.rel_url.query
-    tables = []
+    tasks = []
     for _type in resource_types:
         for _cluster in clusters:
-            clazz = await _cluster.resource_registry.get_class_by_plural_name(
-                _type, namespaced=True
+            task = asyncio.create_task(
+                get_resource_list(_type, _cluster, namespace, is_all_namespaces, params)
             )
-            if not clazz:
-                raise web.HTTPNotFound(text="Resource type not found")
-            query = clazz.objects(_cluster.api).filter(
-                namespace=pykube.all if is_all_namespaces else namespace
-            )
-            if params.get("selector"):
-                query = query.filter(selector=params["selector"])
+            tasks.append(task)
 
-            table = await kubernetes.get_table(query)
-            add_label_columns(table, params.get("labelcols"))
-            filter_table(table, params.get("filter"))
-            sort_table(table, params.get("sort"))
-            table.obj["cluster"] = _cluster
+    tables = []
+    errors = []
+    for clazz, table, error in await asyncio.gather(*tasks):
+        if error:
+            errors.append(error)
+        else:
             tables.append(table)
+
     if params.get("download") == "tsv":
         return await download_tsv(request, tables[0])
 
@@ -330,6 +353,7 @@ async def get_namespaced_resource_list(request):
         "plural": plural,
         "tables": tables,
         "get_cell_class": get_cell_class,
+        "list_errors": errors,
     }
 
 

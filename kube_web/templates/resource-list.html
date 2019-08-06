@@ -149,8 +149,18 @@
 {% endfor %}
 
 {% if namespace and plural != 'namespaces' and not is_all_namespaces: %}
-<a href="/clusters/{{ cluster }}/namespaces/_all/{{ plural }}?{{ rel_url.query_string }}">Show {{ plural }} across all namespaces</a>
+<div class="content">
+    <p><a href="/clusters/{{ cluster }}/namespaces/_all/{{ plural }}?{{ rel_url.query_string }}">Show {{ plural }} across all namespaces</a></p>
+</div>
 {% endif %}
 
+{% for error in list_errors: %}
+<article class="message is-danger">
+    <div class="message-header">
+        <p>Error for cluster {{ error.cluster.name }}</p>
+    </div>
+    <div class="message-body">Failed to list {{ error.resource_type }}: {{ error.exception }}</div>
+</article>
+{% endfor %}
 
 {% endblock %}
