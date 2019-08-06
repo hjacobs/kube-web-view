@@ -37,6 +37,16 @@ def test_list_namespaced_resources(session):
     assert "kube-web-view-container" in response.text
 
 
+def test_list_pods_with_node_links(session):
+    response = session.get("/clusters/local/namespaces/default/pods")
+    response.raise_for_status()
+    links = response.html.find("html table td a")
+    assert (
+        "/clusters/local/nodes/kube-web-view-e2e-control-plane"
+        == links[1].attrs["href"]
+    )
+
+
 def test_list_namespaced_resource_type_not_found(session):
     response = session.get("/clusters/local/namespaces/default/foobars")
     assert response.status_code == 404

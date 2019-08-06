@@ -138,7 +138,13 @@
             {% if table.columns[loop.index0].name in ('Age', 'First Seen'): %}
             style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}"
             {% endif %}
-            >{{ cell if cell is not none}}</td>
+            >
+            {% if table.columns[loop.index0].name == 'Node': %}
+            <a href="/clusters/{{ table.obj.cluster.name }}/nodes/{{ cell }}">{{ cell if cell is not none}}</a>
+            {% else: %}
+            {{ cell if cell is not none}}
+            {% endif %}
+        </td>
         {% endif %}
         {% endfor %}
         <td style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}">{{ row.object.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
