@@ -7,33 +7,49 @@
     </ul>
 </nav>
 
-<h2 class="title">Namespaces</h2>
-<table class="table is-stripped">
-    <tr>
-        <th>Name</th>
-        <th>Labels</th>
-        <th>Created</th>
-    </tr>
-    {% for resource in namespaces: %}
-    <tr>
-        <td><a href="/clusters/{{ cluster }}/{{ resource.endpoint }}/{{ resource.name }}">{{ resource.name }}</a></td>
-        <td>
-            {% for key, val in resource.labels.items()|sort: %}
-            <span class="tag">{{ key }}: {{ val }}</span>
-            {% endfor %}
-        </td>
-        <td style="color:{{ resource.metadata.creationTimestamp|age_color(days=1) }}">{{ resource.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
-    </tr>
-    {% endfor %}
-</table>
+<h1 class="title">{{ cluster }}</h1>
 
-<h2 class="title">Cluster Resource Types</h2>
-<table class="table is-stripped">
-    {% for resource_type in resource_types: %}
-    <tr>
-        <td>{{ resource_type.kind }}</td>
-        <td><a href="/clusters/{{ cluster }}/{{ resource_type.endpoint }}">{{ resource_type.endpoint }}</a></td>
-    </tr>
+<div class="section">
+    {% for key, val in cluster_obj.labels.items()|sort: %}
+    <a href="/clusters?selector={{key}}={{val}}"><span class="tag is-link">{{ key }}: {{ val }}</span></a>
     {% endfor %}
-</table>
+</div>
+
+<div class="section">
+    API URL: {{ cluster_obj.api.url }}
+</div>
+
+<div class="section">
+    <h4 class="title is-5">Namespaces</h4>
+    <table class="table is-stripped">
+        <tr>
+            <th>Name</th>
+            <th>Labels</th>
+            <th>Created</th>
+        </tr>
+        {% for resource in namespaces: %}
+        <tr>
+            <td><a href="/clusters/{{ cluster }}/{{ resource.endpoint }}/{{ resource.name }}">{{ resource.name }}</a></td>
+            <td>
+                {% for key, val in resource.labels.items()|sort: %}
+                <span class="tag">{{ key }}: {{ val }}</span>
+                {% endfor %}
+            </td>
+            <td style="color:{{ resource.metadata.creationTimestamp|age_color(days=1) }}">{{ resource.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div class="section">
+    <h4 class="title is-5">Cluster Resource Types</h4>
+    <table class="table is-stripped">
+        {% for resource_type in resource_types: %}
+        <tr>
+            <td>{{ resource_type.kind }}</td>
+            <td><a href="/clusters/{{ cluster }}/{{ resource_type.endpoint }}">{{ resource_type.endpoint }}</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
 {% endblock %}

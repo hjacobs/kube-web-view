@@ -158,6 +158,7 @@ async def get_cluster(request):
     namespaces = await kubernetes.get_list(Namespace.objects(cluster.api))
     return {
         "cluster": cluster.name,
+        "cluster_obj": cluster,
         "namespace": None,
         "namespaces": namespaces,
         "resource_types": await cluster.resource_registry.cluster_resource_types,
@@ -333,6 +334,7 @@ async def get_resource_list(request):
     else:
         resource_types = plural.split(",")
 
+    start = time.time()
     params = request.rel_url.query
     tasks = []
     for _type in resource_types:
@@ -366,6 +368,10 @@ async def get_resource_list(request):
                 tables_by_resource_type[table.api_obj_class.endpoint] = table
                 tables.append(table)
 
+    total_rows = sum(len(table.rows) for table in tables)
+
+    duration = time.time() - start
+
     if params.get("download") == "tsv":
         return await download_tsv(request, tables[0])
 
@@ -378,6 +384,10 @@ async def get_resource_list(request):
         "tables": tables,
         "get_cell_class": get_cell_class,
         "list_errors": errors,
+        "list_duration": duration,
+        "list_resource_types": resource_types,
+        "list_clusters": clusters,
+        "list_total_rows": total_rows,
     }
 
 
