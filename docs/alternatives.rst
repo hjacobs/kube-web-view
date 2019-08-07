@@ -32,6 +32,24 @@ https://github.com/kubernetes/dashboard, web
 
     "Kubernetes Dashboard is a general purpose, web-based UI for Kubernetes clusters. It allows users to manage applications running in the cluster and troubleshoot them, as well as manage the cluster itself."
 
+Kubernetes Operational View
+===========================
+
+https://github.com/hjacobs/kube-ops-view, web
+
+    "Read-only system dashboard for multiple K8s clusters"
+
+Uses WebGL to render nodes and pods.
+
+Kubernetes Resource Report
+==========================
+
+https://github.com/hjacobs/kube-resource-report/, web
+
+    "Report Kubernetes cluster and pod resource requests vs usage and generate static HTML"
+
+Generates static HTML files for cost reporting.
+
 Kubricks
 ========
 
