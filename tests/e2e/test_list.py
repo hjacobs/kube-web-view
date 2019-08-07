@@ -31,9 +31,12 @@ def test_list_cluster_resources_in_all_clusters(session):
 
 
 def test_list_cluster_resources_in_multiple_clusters(session):
+    # fake multiple clusters by specifying the same cluster twice..
     # this is a bit fake as we only have one cluster in e2e..
     response = session.get("/clusters/local,local/nodes")
     response.raise_for_status()
+    first_col_heading = response.html.find("main th", first=True)
+    assert first_col_heading.text == "Cluster"
     assert "/clusters/local/nodes/kube-web-view-e2e-control-plane" in response.text
 
 
@@ -95,6 +98,18 @@ def test_download_tsv(session):
     lines = response.text.split("\n")
     assert lines[0].startswith("Namespace")
     assert lines[1].startswith("default\tkube-web-view")
+
+
+def test_download_tsv_for_multiple_clusters(session):
+    # this is a bit fake as we only have one e2e cluster..
+    response = session.get(
+        "/clusters/local,local/namespaces/default/deployments?download=tsv&selector=application=kube-web-view"
+    )
+    response.raise_for_status()
+    lines = response.text.split("\n")
+    # the TSV should have a "Cluster" column for multi-cluster TSV
+    assert lines[0].startswith("Cluster")
+    assert lines[1].startswith("local\tdefault\tkube-web-view")
 
 
 def test_list_resources_in_all_namespaces(session):

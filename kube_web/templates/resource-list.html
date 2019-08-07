@@ -22,9 +22,9 @@
     <span class="links">
         <a
           {% if namespace: %}
-          href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ namespace }}/{{ table.api_obj_class.endpoint }}?{{ rel_url.update_query(download='tsv').query_string }}"
+          href="/clusters/{{ table.obj.clusters|map(attribute='name')|join(',') }}/namespaces/{{ namespace }}/{{ table.api_obj_class.endpoint }}?{{ rel_url.update_query(download='tsv').query_string }}"
           {% else: %}
-          href="/clusters/{{ table.obj.cluster.name }}/{{ table.api_obj_class.endpoint }}?{{ rel_url.update_query(download='tsv').query_string }}"
+          href="/clusters/{{ table.obj.clusters|map(attribute='name')|join(',') }}/{{ table.api_obj_class.endpoint }}?{{ rel_url.update_query(download='tsv').query_string }}"
           {% endif %}
           title="Download resource list as Tab-Separated-Values (TSV)"
           class="button is-light">
@@ -36,7 +36,7 @@
             <span class="icon"><i class="fas fa-caret-square-down"></i></span>
         </a>
         <a
-                                  href="/search?cluster={{ table.obj.cluster.name }}&namespace={{ namespace or '' }}&type={{ table.api_obj_class.endpoint }}"
+                                  href="/search?cluster={{ table.obj.clusters|map(attribute='name')|join(',') }}&namespace={{ namespace or '' }}&type={{ table.api_obj_class.endpoint }}"
                                   class="button is-light">
             <span class="icon"><i class="fas fa-search"></i></span>
         </a>
@@ -106,6 +106,9 @@
 
 <table class="table is-striped">
     <tr>
+        {% if table.obj.clusters|length > 1: %}
+        <th>Cluster</th>
+        {% endif %}
         {% if is_all_namespaces: %}
         <th>Namespace</th>
         {% endif %}
@@ -128,15 +131,18 @@
     </tr>
     {% for row in table.rows: %}
     <tr>
+        {% if table.obj.clusters|length > 1: %}
+        <td><a href="/clusters/{{ row.cluster.name }}">{{ row.cluster.name }}</a></td>
+        {% endif %}
         {% if is_all_namespaces: %}
-        <td><a href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}">{{ row.object.metadata.namespace }}</a></td>
+        <td><a href="/clusters/{{ row.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}">{{ row.object.metadata.namespace }}</a></td>
         {% endif %}
         {% for cell in row.cells: %}
         {% if table.columns[loop.index0].name == 'Name': %}
         {% if row.object.metadata.namespace: %}
-        <td><a href="/clusters/{{ table.obj.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
+        <td><a href="/clusters/{{ row.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
         {% else: %}
-        <td><a href="/clusters/{{ table.obj.cluster.name }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
+        <td><a href="/clusters/{{ row.cluster.name }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
         {% endif %}
         {% else: %}
         <td class="{{ get_cell_class(table, loop.index0, cell) }}"
@@ -145,7 +151,7 @@
             {% endif %}
             >
             {% if table.columns[loop.index0].name == 'Node': %}
-            <a href="/clusters/{{ table.obj.cluster.name }}/nodes/{{ cell }}">{{ cell if cell is not none}}</a>
+            <a href="/clusters/{{ row.cluster.name }}/nodes/{{ cell }}">{{ cell if cell is not none}}</a>
             {% else: %}
             {{ cell if cell is not none}}
             {% endif %}

@@ -3,7 +3,12 @@ import pytest
 from pykube import Pod
 from pykube.query import Table
 
-from kube_web.table import add_label_columns, filter_table, sort_table
+from kube_web.table import (
+    add_label_columns,
+    filter_table,
+    sort_table,
+    merge_cluster_tables,
+)
 
 
 @pytest.fixture
@@ -14,6 +19,7 @@ def single_pod_table():
             "kind": "Table",
             "columnDefinitions": [{"name": "Name"}, {"name": "Status"}],
             "rows": [{"cells": ["myname", "ImagePullBackOff"]}],
+            "clusters": ["c1"],
         },
     )
     return table
@@ -30,6 +36,7 @@ def two_pod_table():
                 {"cells": ["pod-a", "Running"]},
                 {"cells": ["pod-b", "Completed"]},
             ],
+            "clusters": ["c2"],
         },
     )
     return table
@@ -117,3 +124,9 @@ def test_sort_table_desc(two_pod_table):
     sort_table(table, "Name:desc")
     assert table.rows[0]["cells"][0] == "pod-b"
     assert table.rows[1]["cells"][0] == "pod-a"
+
+
+def test_merge_cluster_tables(single_pod_table, two_pod_table):
+    table = merge_cluster_tables(single_pod_table, two_pod_table)
+    assert len(table.rows) == 3
+    assert len(table.obj["clusters"]) == 2

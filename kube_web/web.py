@@ -33,7 +33,7 @@ from aiohttp import web
 from kube_web import __version__
 from kube_web import kubernetes
 from kube_web import jinja2_filters
-from .table import add_label_columns, filter_table, sort_table
+from .table import add_label_columns, filter_table, sort_table, merge_cluster_tables
 
 logger = logging.getLogger(__name__)
 
@@ -192,7 +192,9 @@ async def do_get_resource_list(
         add_label_columns(table, params.get("labelcols"))
         filter_table(table, params.get("filter"))
         sort_table(table, params.get("sort"))
-        table.obj["cluster"] = _cluster
+        for row in table.rows:
+            row["cluster"] = _cluster
+        table.obj["clusters"] = [_cluster]
     return clazz, table, error
 
 
@@ -211,15 +213,22 @@ class ResponseWriter:
 
 async def as_tsv(table, fd) -> str:
     writer = csv.writer(fd, delimiter="\t", lineterminator="\n")
+    is_multi_cluster = len(table.obj["clusters"]) > 1
+    columns = []
+    if is_multi_cluster:
+        columns.append("Cluster")
     if issubclass(table.api_obj_class, NamespacedAPIObject):
-        writer.writerow(["Namespace"] + [col["name"] for col in table.columns])
-    else:
-        writer.writerow([col["name"] for col in table.columns])
+        columns.append("Namespace")
+    columns.extend(col["name"] for col in table.columns)
+    writer.writerow(columns)
     for row in table.rows:
+        additional_cells = []
+        cells = row["cells"]
+        if is_multi_cluster:
+            additional_cells.append(row["cluster"].name)
         if issubclass(table.api_obj_class, NamespacedAPIObject):
-            writer.writerow([row["object"]["metadata"]["namespace"]] + row["cells"])
-        else:
-            writer.writerow(row["cells"])
+            additional_cells.append(row["object"]["metadata"]["namespace"])
+        writer.writerow(additional_cells + cells)
         await fd.flush()
 
 
@@ -306,6 +315,7 @@ async def get_resource_list(request):
             tasks.append(task)
 
     tables = []
+    tables_by_resource_type = {}
     errors = []
     for clazz, table, error in await asyncio.gather(*tasks):
         if error:
@@ -314,7 +324,17 @@ async def get_resource_list(request):
                 raise error["exception"]
             errors.append(error)
         else:
-            tables.append(table)
+            previous_table = tables_by_resource_type.get(table.api_obj_class.endpoint)
+            if previous_table:
+                merged = merge_cluster_tables(previous_table, table)
+                if merged:
+                    # sort again after merge
+                    sort_table(merged, params.get("sort"))
+                else:
+                    tables.append(table)
+            else:
+                tables_by_resource_type[table.api_obj_class.endpoint] = table
+                tables.append(table)
 
     if params.get("download") == "tsv":
         return await download_tsv(request, tables[0])

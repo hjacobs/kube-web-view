@@ -116,3 +116,15 @@ def filter_table(table, filter_param):
 
         if not is_match:
             del table.rows[i]
+
+
+def merge_cluster_tables(t1, t2):
+    """Merge two tables with same column from different clusters"""
+    column_names1 = list([col["name"] for col in t1.columns])
+    column_names2 = list([col["name"] for col in t2.columns])
+    if column_names1 == column_names2:
+        t1.rows.extend(t2.rows)
+        t1.obj["clusters"].extend(t2.obj["clusters"])
+        return t1
+    else:
+        return None
