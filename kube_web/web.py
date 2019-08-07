@@ -112,6 +112,26 @@ def context():
     return decorator
 
 
+def parse_selector(param: str):
+    if not param:
+        return None
+    selector = {}
+    conditions = param.split(",")
+    for condition in conditions:
+        key, _, val = condition.partition("=")
+        selector[key.strip()] = val.strip()
+    return selector
+
+
+def selector_matches(selector: dict, labels: dict):
+    if not selector:
+        return True
+    for key, val in selector.items():
+        if labels.get(key) != val:
+            return False
+    return True
+
+
 @routes.get("/")
 async def get_index(request):
     # we don't have anything to present on the homepage, so let's redirect to the cluster list
@@ -121,9 +141,13 @@ async def get_index(request):
 @routes.get("/clusters")
 @aiohttp_jinja2.template("clusters.html")
 async def get_cluster_list(request):
-    return {
-        "clusters": sorted(request.app[CLUSTER_MANAGER].clusters, key=lambda c: c.name)
-    }
+    selector = parse_selector(request.query.get("selector"))
+    clusters = []
+    for cluster in request.app[CLUSTER_MANAGER].clusters:
+        if selector_matches(selector, cluster.labels):
+            clusters.append(cluster)
+    clusters.sort(key=lambda c: c.name)
+    return {"clusters": clusters}
 
 
 @routes.get("/clusters/{cluster}")

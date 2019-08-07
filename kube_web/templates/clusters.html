@@ -14,7 +14,7 @@
         <td>{{ cluster.api.url }}</td>
         <td>
             {% for key, val in cluster.labels.items()|sort: %}
-            <span class="tag">{{ key }}: {{ val }}</span>
+            <a href="/clusters?selector={{ key }}={{ val }}"><span class="tag is-link">{{ key }}: {{ val }}</span></a>
             {% endfor %}
         </td>
     </tr>
