@@ -1,5 +1,23 @@
 import time
 
+# rolebindings cannot be listed
+LINKS_TO_IGNORE = [
+    "/clusters/local/clusterrolebindings",
+    "/clusters/local/clusterroles",
+    "/clusters/local/componentstatuses",
+    "/clusters/local/namespaces/default/rolebindings",
+    "/clusters/local/namespaces/default/roles",
+]
+
+
+def check_links(response, session, ignore=None):
+    for link in response.html.links:
+        if link.startswith("/") and link not in LINKS_TO_IGNORE:
+            if ignore and link in ignore:
+                continue
+            r = session.get(link)
+            r.raise_for_status()
+
 
 def test_list_clusters(session):
     response = session.get("/clusters")
@@ -19,6 +37,7 @@ def test_list_cluster_resource_type_not_found(session):
 def test_list_cluster_resources(session):
     response = session.get("/clusters/local/nodes")
     response.raise_for_status()
+    check_links(response, session)
     title = response.html.find("h1", first=True)
     assert title.text == "Nodes"
     assert "/clusters/local/nodes/kube-web-view-e2e-control-plane" in response.text
@@ -27,6 +46,7 @@ def test_list_cluster_resources(session):
 def test_list_cluster_resources_in_all_clusters(session):
     response = session.get("/clusters/_all/nodes")
     response.raise_for_status()
+    check_links(response, session)
     assert "/clusters/local/nodes/kube-web-view-e2e-control-plane" in response.text
 
 
@@ -35,6 +55,8 @@ def test_list_cluster_resources_in_multiple_clusters(session):
     # this is a bit fake as we only have one cluster in e2e..
     response = session.get("/clusters/local,local/nodes")
     response.raise_for_status()
+    # TODO: fix broken link and remove the ignore option
+    check_links(response, session, ignore=["/clusters/local,local"])
     first_col_heading = response.html.find("main th", first=True)
     assert first_col_heading.text == "Cluster"
     assert "/clusters/local/nodes/kube-web-view-e2e-control-plane" in response.text
@@ -43,6 +65,7 @@ def test_list_cluster_resources_in_multiple_clusters(session):
 def test_list_namespaced_resources(session):
     response = session.get("/clusters/local/namespaces/default/deployments")
     response.raise_for_status()
+    check_links(response, session)
     assert "application=kube-web-view" in response.text
     assert "kube-web-view-container" in response.text
 
@@ -50,6 +73,7 @@ def test_list_namespaced_resources(session):
 def test_list_pods_with_node_links(session):
     response = session.get("/clusters/local/namespaces/default/pods")
     response.raise_for_status()
+    check_links(response, session)
     links = response.html.find("html table td a")
     assert (
         "/clusters/local/nodes/kube-web-view-e2e-control-plane"
@@ -77,6 +101,7 @@ def test_list_namespaced_resources_in_all_clusters(session):
 def test_list_multiple_namespaced_resources(session):
     response = session.get("/clusters/local/namespaces/default/deployments,services")
     response.raise_for_status()
+    check_links(response, session)
     assert "application=kube-web-view" in response.text
     assert "kube-web-view-container" in response.text
     assert "ClusterIP" in response.text
@@ -115,6 +140,7 @@ def test_download_tsv_for_multiple_clusters(session):
 def test_list_resources_in_all_namespaces(session):
     response = session.get("/clusters/local/namespaces/_all/deployments")
     response.raise_for_status()
+    check_links(response, session)
     assert "application=kube-web-view" in response.text
     # deployments in kube-system are also listed:
     assert "/namespaces/kube-system/deployments/coredns" in response.text
@@ -123,6 +149,8 @@ def test_list_resources_in_all_namespaces(session):
 def test_list_resources_in_all_clusters(session):
     response = session.get("/clusters/_all/namespaces/default/deployments")
     response.raise_for_status()
+    # TODO: fix the broken link and remove the ignore
+    check_links(response, session, ignore=["/clusters/_all/namespaces/default"])
     assert "application=kube-web-view" in response.text
 
 
@@ -145,6 +173,7 @@ def test_list_pods_filter_status_notequal(session):
         "/clusters/local/namespaces/default/pods?filter=Status!=Running"
     )
     response.raise_for_status()
+    check_links(response, session)
     links = response.html.find("html table td a")
     assert "/clusters/local/namespaces/default/pods/wrong-container-image-" in " ".join(
         l.attrs["href"] for l in links
@@ -154,6 +183,7 @@ def test_list_pods_filter_status_notequal(session):
 def test_cluster_resource_types(session):
     response = session.get("/clusters/local/_resource-types")
     response.raise_for_status()
+    check_links(response, session)
     assert "APIService" in response.text
     assert "CustomResourceDefinition" in response.text
 
@@ -161,6 +191,7 @@ def test_cluster_resource_types(session):
 def test_namespaced_resource_types(session):
     response = session.get("/clusters/local/namespaces/default/_resource-types")
     response.raise_for_status()
+    check_links(response, session)
     assert "PersistentVolumeClaim" in response.text
 
 
@@ -169,6 +200,7 @@ def test_label_columns(session):
         "/clusters/local/namespaces/default/pods?labelcols=my-pod-label"
     )
     response.raise_for_status()
+    check_links(response, session)
     assert "my-pod-label-value" in response.text
 
 

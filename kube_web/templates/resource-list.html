@@ -4,14 +4,14 @@
 <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
         {% if is_all_clusters: %}
-        <li><a href="/clusters">all</a></li>
+            <li><a href="/clusters">all</a></li>
         {% else: %}
-        <li><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
+            <li><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
         {% endif %}
         {% if is_all_namespaces: %}
-        <li><a href="/clusters/{{ cluster }}/namespaces">all</a></li>
+            <li><a href="/clusters/{{ cluster }}/namespaces">all</a></li>
         {% elif namespace: %}
-        <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}">{{ namespace }}</a></li>
+            <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}">{{ namespace }}</a></li>
         {% endif %}
         <li class="is-active"><a href="#">{{ plural }}</a></li>
     </ul>

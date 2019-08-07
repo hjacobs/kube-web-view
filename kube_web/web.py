@@ -192,6 +192,9 @@ async def do_get_resource_list(
         logger.debug(f"Failed to list {_type} in {_cluster.name}: {e}")
         error = {"cluster": _cluster, "resource_type": _type, "exception": e}
     else:
+        # table.rows might be None, e.g. for "csinodes"
+        if table.rows is None:
+            table.obj["rows"] = []
         add_label_columns(table, params.get("labelcols"))
         filter_table(table, params.get("filter"))
         sort_table(table, params.get("sort"))
