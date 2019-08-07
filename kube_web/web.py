@@ -222,7 +222,7 @@ async def join_metrics(
 
     query = clazz.objects(_cluster.api)
 
-    if isinstance(clazz, NamespacedAPIObject):
+    if issubclass(clazz, NamespacedAPIObject):
         if is_all_namespaces:
             query = query.filter(namespace=pykube.all)
         elif namespace:
