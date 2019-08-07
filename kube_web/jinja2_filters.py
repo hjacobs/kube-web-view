@@ -57,3 +57,16 @@ def age_color(date_time, days=7):
     return (
         f"#{int(round(r * 255)):02x}{int(round(g * 255)):02x}{int(round(b * 255)):02x}"
     )
+
+
+def cpu(value):
+    return "{:,.0f}m".format(value * 1000)
+
+
+def memory(value, fmt):
+    if fmt == "GiB":
+        return "{:,.01f}".format(value / (1024 ** 3))
+    elif fmt == "MiB":
+        return "{:,.0f}".format(value / (1024 ** 2))
+    else:
+        return value

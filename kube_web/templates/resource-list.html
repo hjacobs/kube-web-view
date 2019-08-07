@@ -44,6 +44,7 @@
 </h1>
 
 <form action="#" method="get" id="tools-table-{{ loop.index }}" class="tools-form {% if rel_url.query.labelcols or rel_url.query.selector or rel_url.query.filter: %}is-active{% endif%}">
+    <input type="hidden" name="join" value="{{ rel_url.query.join }}">
     <input type="hidden" name="sort" value="{{ rel_url.query.sort }}">
     <div class="field is-horizontal">
         <div class="field-label is-normal">
@@ -104,6 +105,12 @@
     </div>
 </form>
 
+{% if table.api_obj_class.endpoint in ('pods', 'nodes') and not rel_url.query.join: %}
+<div class="section">
+    <a href="{{ rel_url.update_query(join='metrics') }}">Show CPU/Memory Usage</a>
+</div>
+{% endif %}
+
 <table class="table is-striped">
     <tr>
         {% if table.obj.clusters|length > 1: %}
@@ -152,6 +159,10 @@
             >
             {% if table.columns[loop.index0].name == 'Node': %}
             <a href="/clusters/{{ row.cluster.name }}/nodes/{{ cell }}">{{ cell if cell is not none}}</a>
+            {% elif table.columns[loop.index0].name == 'CPU Usage': %}
+            {{ cell|cpu if cell is not none }}
+            {% elif table.columns[loop.index0].name == 'Memory Usage': %}
+            {{ cell|memory('MiB') if cell is not none }} MiB
             {% else: %}
             {{ cell if cell is not none}}
             {% endif %}

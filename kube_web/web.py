@@ -1,5 +1,6 @@
 import asyncio
 import aiohttp_jinja2
+import collections
 import jinja2
 import csv
 import zlib
@@ -58,6 +59,8 @@ TABLE_CELL_FORMATTING = {
     "namespaces": {"Status": {"Active": "has-text-success"}},
     "deployments": {"Available": {"0": "has-text-danger"}},
     "pods": {
+        "CPU Usage": {"0": "has-text-grey"},
+        "Memory Usage": {"0": "has-text-grey"},
         "Status": {
             "Completed": "has-text-info",
             "ContainerCreating": "has-text-warning",
@@ -72,7 +75,7 @@ TABLE_CELL_FORMATTING = {
             "Pending": "has-text-warning",
             "Running": "has-text-success",
             "Terminating": "has-text-warning",
-        }
+        },
     },
 }
 
@@ -193,6 +196,73 @@ async def get_cluster_resource_types(request):
     }
 
 
+async def join_metrics(
+    _cluster, table, namespace: str, is_all_namespaces: bool, params: dict
+):
+    if not table.rows:
+        # nothing to do
+        return
+
+    table.columns.append({"name": "CPU Usage"})
+    table.columns.append({"name": "Memory Usage"})
+
+    if table.api_obj_class.kind == "Pod":
+        clazz = kubernetes.PodMetrics
+    elif table.api_obj_class.kind == "Node":
+        clazz = kubernetes.NodeMetrics
+
+    row_index_by_namespace_name = {}
+    for i, row in enumerate(table.rows):
+        row_index_by_namespace_name[
+            (
+                row["object"]["metadata"].get("namespace"),
+                row["object"]["metadata"]["name"],
+            )
+        ] = i
+
+    query = clazz.objects(_cluster.api)
+
+    if isinstance(clazz, NamespacedAPIObject):
+        if is_all_namespaces:
+            query = query.filter(namespace=pykube.all)
+        elif namespace:
+            query = query.filter(namespace=namespace)
+
+    if params.get("selector"):
+        query = query.filter(selector=params["selector"])
+
+    rows_joined = set()
+
+    try:
+        metrics_list = await kubernetes.get_list(query)
+    except Exception as e:
+        logger.warning(f"Failed to query {clazz.kind} in cluster {_cluster.name}: {e}")
+    else:
+        for metrics in metrics_list:
+            key = (metrics.namespace, metrics.name)
+            row_index = row_index_by_namespace_name.get(key)
+            if row_index is not None:
+                usage = collections.defaultdict(float)
+                if "containers" in metrics.obj:
+                    for container in metrics.obj["containers"]:
+                        for k, v in container.get("usage", {}).items():
+                            usage[k] += kubernetes.parse_resource(v)
+                else:
+                    for k, v in metrics.obj.get("usage", {}).items():
+                        usage[k] += kubernetes.parse_resource(v)
+
+                table.rows[row_index]["cells"].extend(
+                    [usage.get("cpu", 0), usage.get("memory", 0)]
+                )
+                rows_joined.add(row_index)
+
+    # fill up cells where we have no metrics
+    for i, row in enumerate(table.rows):
+        if i not in rows_joined:
+            # use zero instead of None to allow sorting
+            row["cells"].extend([0, 0])
+
+
 async def do_get_resource_list(
     _type: str, _cluster, namespace: str, is_all_namespaces: bool, params: dict
 ):
@@ -222,6 +292,11 @@ async def do_get_resource_list(
             table.obj["rows"] = []
         add_label_columns(table, params.get("labelcols"))
         filter_table(table, params.get("filter"))
+
+        # note: we join before sorting, so sorting works on the joined columns, too
+        if params.get("join") == "metrics" and _type in ("pods", "nodes"):
+            await join_metrics(_cluster, table, namespace, is_all_namespaces, params)
+
         sort_table(table, params.get("sort"))
         for row in table.rows:
             row["cluster"] = _cluster
@@ -821,6 +896,8 @@ def get_app(cluster_manager, config):
         yaml=jinja2_filters.yaml,
         highlight=jinja2_filters.highlight,
         age_color=jinja2_filters.age_color,
+        cpu=jinja2_filters.cpu,
+        memory=jinja2_filters.memory,
     )
     env.globals["version"] = __version__
 

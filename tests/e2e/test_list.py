@@ -43,6 +43,15 @@ def test_list_cluster_resources(session):
     assert "/clusters/local/nodes/kube-web-view-e2e-control-plane" in response.text
 
 
+def test_list_node_metrics(session):
+    response = session.get("/clusters/local/nodes?join=metrics")
+    response.raise_for_status()
+    check_links(response, session)
+    ths = response.html.find("main table th")
+    assert ths[-3].text == "CPU Usage"
+    assert ths[-2].text == "Memory Usage"
+
+
 def test_list_cluster_resources_in_all_clusters(session):
     response = session.get("/clusters/_all/nodes")
     response.raise_for_status()
@@ -79,6 +88,15 @@ def test_list_pods_with_node_links(session):
         "/clusters/local/nodes/kube-web-view-e2e-control-plane"
         == links[1].attrs["href"]
     )
+
+
+def test_list_pods_with_metrics(session):
+    response = session.get("/clusters/local/namespaces/default/pods?join=metrics")
+    response.raise_for_status()
+    check_links(response, session)
+    ths = response.html.find("main table th")
+    assert ths[-3].text == "CPU Usage"
+    assert ths[-2].text == "Memory Usage"
 
 
 def test_list_namespaced_resource_type_not_found(session):
