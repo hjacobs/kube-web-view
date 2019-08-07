@@ -60,15 +60,18 @@ TABLE_CELL_FORMATTING = {
     "pods": {
         "Status": {
             "Completed": "has-text-info",
-            "Evicted": "has-text-danger",
-            "OutOfcpu": "has-text-danger",
+            "ContainerCreating": "has-text-warning",
             "CrashLoopBackOff": "has-text-danger",
             "CreateContainerConfigError": "has-text-danger",
-            "Error": "has-text-danger",
             "ErrImagePull": "has-text-danger",
+            "Error": "has-text-danger",
+            "Evicted": "has-text-danger",
             "ImagePullBackOff": "has-text-danger",
+            "OOMKilled": "has-text-danger",
+            "OutOfcpu": "has-text-danger",
             "Pending": "has-text-warning",
             "Running": "has-text-success",
+            "Terminating": "has-text-warning",
         }
     },
 }
