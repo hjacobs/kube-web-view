@@ -11,7 +11,10 @@ import time
 import os
 import pykube
 import logging
+import requests.exceptions
+import pykube.exceptions
 from yarl import URL
+from http import HTTPStatus
 import yaml
 
 from functools import partial
@@ -899,6 +902,7 @@ async def error_handler(request, handler):
         # handling of redirection (3xx) is done by aiohttp itself
         raise
     except Exception as e:
+        logger.debug(f"Exception on {request.rel_url}: {e}")
         if isinstance(e, web.HTTPError):
             status = e.status
             error_title = "Error"
@@ -915,6 +919,27 @@ async def error_handler(request, handler):
             status = 404
             error_title = "Error: object does not exist"
             error_text = "The requested Kubernetes object does not exist"
+        elif isinstance(e, requests.exceptions.HTTPError):
+            if e.response is not None and e.response.status_code in (401, 403):
+                status = e.response.status_code
+                error_title = HTTPStatus(status).phrase
+                error_text = str(e)
+            else:
+                status = 500
+                error_title = "Server Error"
+                error_text = str(e)
+                logger.exception(f"{error_title}: {error_text}")
+        elif isinstance(e, pykube.exceptions.HTTPError):
+            # Pykube exception is raised on get_by_name
+            if e.code in (401, 403):
+                status = e.code
+                error_title = HTTPStatus(status).phrase
+                error_text = str(e)
+            else:
+                status = 500
+                error_title = "Server Error"
+                error_text = str(e)
+                logger.exception(f"{error_title}: {error_text}")
         else:
             status = 500
             error_title = "Server Error"
