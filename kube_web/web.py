@@ -91,6 +91,7 @@ class HTTPClientWithAccessToken(HTTPClient):
         self.config.user["token"] = None
 
     def get(self, *args, **kwargs):
+        kwargs["auth"] = None
         if "headers" not in kwargs:
             kwargs["headers"] = {}
         kwargs["headers"]["Authorization"] = f"Bearer {self._access_token}"
@@ -118,12 +119,12 @@ def get_clusters(request, cluster: str):
 def context():
     def decorator(func):
         async def func_wrapper(request):
-            ctx = await func(request)
+            session = await get_session(request)
+            ctx = await func(request, session)
             if isinstance(ctx, dict) and ctx.get("cluster"):
                 clusters, is_all_clusters = get_clusters(request, ctx["cluster"])
                 if not is_all_clusters and len(clusters) == 1:
                     cluster = clusters[0]
-                    session = await get_session(request)
                     namespaces = await kubernetes.get_list(
                         wrap_query(Namespace.objects(cluster.api), request, session)
                     )
@@ -177,9 +178,11 @@ async def get_cluster_list(request):
 @routes.get("/clusters/{cluster}")
 @aiohttp_jinja2.template("cluster.html")
 @context()
-async def get_cluster(request):
+async def get_cluster(request, session):
     cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
-    namespaces = await kubernetes.get_list(Namespace.objects(cluster.api))
+    namespaces = await kubernetes.get_list(
+        wrap_query(Namespace.objects(cluster.api), request, session)
+    )
     return {
         "cluster": cluster.name,
         "cluster_obj": cluster,
@@ -202,7 +205,7 @@ def get_cell_class(table, column_index, value):
 @routes.get("/clusters/{cluster}/_resource-types")
 @aiohttp_jinja2.template("resource-types.html")
 @context()
-async def get_cluster_resource_types(request):
+async def get_cluster_resource_types(request, session):
     cluster = request.match_info["cluster"]
     clusters, is_all_clusters = get_clusters(request, cluster)
     resource_types = set()
@@ -218,7 +221,13 @@ async def get_cluster_resource_types(request):
 
 
 async def join_metrics(
-    _cluster, table, namespace: str, is_all_namespaces: bool, params: dict
+    request,
+    session,
+    _cluster,
+    table,
+    namespace: str,
+    is_all_namespaces: bool,
+    params: dict,
 ):
     if not table.rows:
         # nothing to do
@@ -241,7 +250,7 @@ async def join_metrics(
             )
         ] = i
 
-    query = clazz.objects(_cluster.api)
+    query = wrap_query(clazz.objects(_cluster.api), request, session)
 
     if issubclass(clazz, NamespacedAPIObject):
         if is_all_namespaces:
@@ -285,7 +294,13 @@ async def join_metrics(
 
 
 async def do_get_resource_list(
-    _type: str, _cluster, namespace: str, is_all_namespaces: bool, params: dict
+    request,
+    session,
+    _type: str,
+    _cluster,
+    namespace: str,
+    is_all_namespaces: bool,
+    params: dict,
 ):
     """Query cluster resources and return a Table object or error"""
     clazz = table = error = None
@@ -293,7 +308,7 @@ async def do_get_resource_list(
         clazz = await _cluster.resource_registry.get_class_by_plural_name(
             _type, namespaced=namespace is not None
         )
-        query = clazz.objects(_cluster.api)
+        query = wrap_query(clazz.objects(_cluster.api), request, session)
         if is_all_namespaces:
             query = query.filter(namespace=pykube.all)
         elif namespace:
@@ -316,7 +331,9 @@ async def do_get_resource_list(
 
         # note: we join before sorting, so sorting works on the joined columns, too
         if params.get("join") == "metrics" and _type in ("pods", "nodes"):
-            await join_metrics(_cluster, table, namespace, is_all_namespaces, params)
+            await join_metrics(
+                request, session, _cluster, table, namespace, is_all_namespaces, params
+            )
 
         sort_table(table, params.get("sort"))
         for row in table.rows:
@@ -385,7 +402,7 @@ async def download_yaml(request, resource):
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/_resource-types")
 @aiohttp_jinja2.template("resource-types.html")
 @context()
-async def get_namespaced_resource_types(request):
+async def get_namespaced_resource_types(request, session):
     cluster = request.match_info["cluster"]
     clusters, is_all_clusters = get_clusters(request, cluster)
     namespace = request.match_info["namespace"]
@@ -405,7 +422,7 @@ async def get_namespaced_resource_types(request):
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}")
 @aiohttp_jinja2.template("resource-list.html")
 @context()
-async def get_resource_list(request):
+async def get_resource_list(request, session):
     cluster = request.match_info["cluster"]
     clusters, is_all_clusters = get_clusters(request, cluster)
     namespace = request.match_info.get("namespace")
@@ -437,7 +454,13 @@ async def get_resource_list(request):
         for _cluster in clusters:
             task = asyncio.create_task(
                 do_get_resource_list(
-                    _type, _cluster, namespace, is_all_namespaces, params
+                    request,
+                    session,
+                    _type,
+                    _cluster,
+                    namespace,
+                    is_all_namespaces,
+                    params,
                 )
             )
             tasks.append(task)
@@ -491,7 +514,7 @@ async def get_resource_list(request):
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}/{name}")
 @aiohttp_jinja2.template("resource-view.html")
 @context()
-async def get_resource_view(request):
+async def get_resource_view(request, session):
     cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
     namespace = request.match_info.get("namespace")
     plural = request.match_info["plural"]
@@ -501,7 +524,7 @@ async def get_resource_view(request):
     clazz = await cluster.resource_registry.get_class_by_plural_name(
         plural, namespaced=bool(namespace)
     )
-    query = clazz.objects(cluster.api)
+    query = wrap_query(clazz.objects(cluster.api), request, session)
     if namespace:
         query = query.filter(namespace=namespace)
     resource = await kubernetes.get_by_name(query, name)
@@ -528,7 +551,9 @@ async def get_resource_view(request):
         selector = resource.obj["spec"]["selector"]
 
     if selector or field_selector:
-        query = Pod.objects(cluster.api).filter(namespace=namespace or pykube.all)
+        query = wrap_query(Pod.objects(cluster.api), request, session).filter(
+            namespace=namespace or pykube.all
+        )
 
         if selector:
             query = query.filter(selector=selector)
@@ -548,8 +573,12 @@ async def get_resource_view(request):
         "involvedObject.uid": resource.metadata["uid"],
     }
     events = await kubernetes.get_list(
-        Event.objects(cluster.api).filter(
-            namespace=namespace or pykube.all, field_selector=field_selector
+        wrap_query(
+            Event.objects(cluster.api).filter(
+                namespace=namespace or pykube.all, field_selector=field_selector
+            ),
+            request,
+            session,
         )
     )
 
@@ -584,7 +613,7 @@ def pod_color(name):
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}/{name}/logs")
 @aiohttp_jinja2.template("resource-logs.html")
 @context()
-async def get_resource_logs(request):
+async def get_resource_logs(request, session):
     cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
     namespace = request.match_info.get("namespace")
     plural = request.match_info["plural"]
@@ -593,7 +622,7 @@ async def get_resource_logs(request):
     clazz = await cluster.resource_registry.get_class_by_plural_name(
         plural, namespaced=True
     )
-    query = clazz.objects(cluster.api)
+    query = wrap_query(clazz.objects(cluster.api), request, session)
     if namespace:
         query = query.filter(namespace=namespace)
     resource = await kubernetes.get_by_name(query, name)
@@ -601,7 +630,7 @@ async def get_resource_logs(request):
     if resource.kind == "Pod":
         pods = [resource]
     elif resource.obj.get("spec", {}).get("selector", {}).get("matchLabels"):
-        query = Pod.objects(cluster.api).filter(
+        query = wrap_query(Pod.objects(cluster.api), request, session).filter(
             namespace=namespace,
             selector=resource.obj["spec"]["selector"]["matchLabels"],
         )
@@ -649,7 +678,9 @@ async def get_resource_logs(request):
     }
 
 
-async def search(search_query, _type, _cluster, namespace, is_all_namespaces):
+async def search(
+    request, session, search_query, _type, _cluster, namespace, is_all_namespaces
+):
     clazz = None
     results = []
     errors = []
@@ -666,7 +697,7 @@ async def search(search_query, _type, _cluster, namespace, is_all_namespaces):
 
         # without a search query, only return the clazz
         if search_query:
-            query = clazz.objects(_cluster.api)
+            query = wrap_query(clazz.objects(_cluster.api), request, session)
             if namespaced:
                 query = query.filter(
                     namespace=pykube.all if is_all_namespaces else namespace
@@ -717,7 +748,7 @@ def sort_rank(result, search_query_lower):
 @routes.get("/search")
 @aiohttp_jinja2.template("search.html")
 @context()
-async def get_search(request):
+async def get_search(request, session):
     params = request.rel_url.query
     cluster = params.get("cluster")
     namespace = params.get("namespace")
@@ -763,7 +794,15 @@ async def get_search(request):
     for _type in resource_types:
         for _cluster in clusters:
             task = asyncio.create_task(
-                search(search_query, _type, _cluster, namespace, is_all_namespaces)
+                search(
+                    request,
+                    session,
+                    search_query,
+                    _type,
+                    _cluster,
+                    namespace,
+                    is_all_namespaces,
+                )
             )
             tasks.append(task)
 
@@ -936,6 +975,9 @@ def get_app(cluster_manager, config):
     access_token_url = os.getenv("OAUTH2_ACCESS_TOKEN_URL")
 
     if authorize_url and access_token_url:
+        logger.info(
+            f"Using OAuth2 middleware with authorization endpoint {authorize_url}"
+        )
         app.middlewares.append(auth)
 
     app.middlewares.append(error_handler)
