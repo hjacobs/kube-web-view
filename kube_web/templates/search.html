@@ -64,7 +64,9 @@
 <div class="search-result">
     <h3 class="title is-6"><a href="{{ result.link }}">{{ result.title }} ({{ result.kind }})</a></h3>
     <p><a href="{{ result.link }}">{{ result.link }}</a></p>
+    {% if result.created: %}
     <p>Created: {{ result.created.replace('T', ' ').replace('Z', '') }}</p>
+    {% endif %}
     <p>
     {% for key, val in result.labels.items()|sort: %}
     <span class="tag">{{ key }}: {{ val }}</span>

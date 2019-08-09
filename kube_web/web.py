@@ -736,8 +736,13 @@ async def search(
 
 def sort_rank(result, search_query_lower):
     score = 0
+
     if search_query_lower in result["title"].lower():
-        score += 2
+        if len(search_query_lower) == len(result["title"]):
+            # equal
+            score += 10
+        else:
+            score += 2
 
     if search_query_lower in result["labels"].values():
         score += 1
@@ -755,14 +760,13 @@ async def get_search(request, session):
     search_query = params.get("q", "").strip()
     resource_types = params.getall("type", None)
     if not resource_types:
-        # note that ReplicaSet, Pod, and Node are not included by default
+        # note that ReplicaSet, DaemonSet, Pod, and Node are not included by default
         # as they are usually less relevant for search queries
         resource_types = [
             "namespaces",
             "deployments",
             "services",
             "ingresses",
-            "daemonsets",
             "statefulsets",
             "cronjobs",
         ]
@@ -791,6 +795,8 @@ async def get_search(request, session):
 
     tasks = []
 
+    search_query_lower = search_query.lower()
+
     for _type in resource_types:
         for _cluster in clusters:
             task = asyncio.create_task(
@@ -806,6 +812,24 @@ async def get_search(request, session):
             )
             tasks.append(task)
 
+    for _cluster in request.app[CLUSTER_MANAGER].clusters:
+        is_match = search_query_lower in _cluster.name.lower()
+        if not is_match:
+            for key, val in _cluster.labels.items():
+                if search_query_lower in val.lower():
+                    is_match = True
+                    break
+        if is_match:
+            results.append(
+                {
+                    "title": _cluster.name,
+                    "kind": "Cluster",
+                    "link": f"/clusters/{_cluster.name}",
+                    "labels": _cluster.labels,
+                    "created": None,
+                }
+            )
+
     for clazz, _results, _errors in await asyncio.gather(*tasks):
         if clazz and clazz.endpoint not in searchable_resource_types:
             # search was done with a non-standard resource type (e.g. CRD)
@@ -813,7 +837,7 @@ async def get_search(request, session):
         results.extend(_results)
         errors.extend(_errors)
 
-    results.sort(key=partial(sort_rank, search_query_lower=search_query.lower()))
+    results.sort(key=partial(sort_rank, search_query_lower=search_query_lower))
 
     duration = time.time() - start
 

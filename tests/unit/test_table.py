@@ -63,6 +63,12 @@ def test_filter_table_no_match(single_pod_table):
     assert len(table.rows) == 0
 
 
+def test_filter_table_empty(single_pod_table):
+    table = single_pod_table
+    filter_table(table, "")
+    assert len(table.rows) == 1
+
+
 def test_filter_table_column_match(single_pod_table):
     table = single_pod_table
     filter_table(table, "Name=myname")
