@@ -31,7 +31,7 @@
                 <form method="get" action="/search">
                     <div class="field">
                         <p class="control has-icons-right">
-                        <input type="hidden" name="cluster" value="{{ cluster }}" >
+                        <input type="hidden" name="cluster" value="{{ cluster or '' }}" >
                         <input type="hidden" name="namespace" value="{{ namespace if cluster and namespace else '' }}" >
                         <input class="input" type="text" placeholder="Search Kubernetes objects.." name="q">
                         <span class="icon is-small is-right">

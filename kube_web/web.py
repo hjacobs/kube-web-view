@@ -133,7 +133,7 @@ def context():
                         wrap_query(Namespace.objects(cluster.api), request, session)
                     )
                     ctx["namespaces"] = namespaces
-                ctx["rel_url"] = request.rel_url
+            ctx["rel_url"] = request.rel_url
             return ctx
 
         return func_wrapper
@@ -679,7 +679,14 @@ async def get_resource_logs(request, session):
 
 
 async def search(
-    request, session, search_query, _type, _cluster, namespace, is_all_namespaces
+    request,
+    session,
+    selector,
+    filter_query,
+    _type,
+    _cluster,
+    namespace,
+    is_all_namespaces,
 ):
     clazz = None
     results = []
@@ -696,16 +703,19 @@ async def search(
             namespaced = False
 
         # without a search query, only return the clazz
-        if search_query:
+        if selector or filter_query:
             query = wrap_query(clazz.objects(_cluster.api), request, session)
             if namespaced:
                 query = query.filter(
                     namespace=pykube.all if is_all_namespaces else namespace
                 )
+            if selector:
+                query = query.filter(selector=selector)
 
             table = await kubernetes.get_table(query)
-            add_label_columns(table, "*")
-            filter_table(table, search_query)
+            if filter_query:
+                add_label_columns(table, "*")
+                filter_table(table, filter_query)
             name_column = 0
             for i, col in enumerate(table.columns):
                 if col["name"] == "Name":
@@ -757,7 +767,21 @@ async def get_search(request, session):
     params = request.rel_url.query
     cluster = params.get("cluster")
     namespace = params.get("namespace")
+    selector = params.get("selector", "").strip()
     search_query = params.get("q", "").strip()
+
+    # k=v pairs in query will be changed to selector automatically
+    selector_words = []
+    filter_words = []
+    for word in search_query.split():
+        if "=" in word:
+            selector_words.append(word)
+        else:
+            filter_words.append(word)
+
+    selector += ",".join(selector_words)
+    filter_query = " ".join(filter_words)
+
     resource_types = params.getall("type", None)
     if not resource_types:
         # note that ReplicaSet, DaemonSet, Pod, and Node are not included by default
@@ -803,7 +827,8 @@ async def get_search(request, session):
                 search(
                     request,
                     session,
-                    search_query,
+                    selector,
+                    filter_query,
                     _type,
                     _cluster,
                     namespace,
@@ -812,23 +837,24 @@ async def get_search(request, session):
             )
             tasks.append(task)
 
-    for _cluster in request.app[CLUSTER_MANAGER].clusters:
-        is_match = search_query_lower in _cluster.name.lower()
-        if not is_match:
-            for key, val in _cluster.labels.items():
-                if search_query_lower in val.lower():
-                    is_match = True
-                    break
-        if is_match:
-            results.append(
-                {
-                    "title": _cluster.name,
-                    "kind": "Cluster",
-                    "link": f"/clusters/{_cluster.name}",
-                    "labels": _cluster.labels,
-                    "created": None,
-                }
-            )
+    if search_query and is_all_clusters:
+        for _cluster in request.app[CLUSTER_MANAGER].clusters:
+            is_match = search_query_lower in _cluster.name.lower()
+            if not is_match:
+                for key, val in _cluster.labels.items():
+                    if search_query_lower in val.lower():
+                        is_match = True
+                        break
+            if is_match:
+                results.append(
+                    {
+                        "title": _cluster.name,
+                        "kind": "Cluster",
+                        "link": f"/clusters/{_cluster.name}",
+                        "labels": _cluster.labels,
+                        "created": None,
+                    }
+                )
 
     for clazz, _results, _errors in await asyncio.gather(*tasks):
         if clazz and clazz.endpoint not in searchable_resource_types:

@@ -6,11 +6,25 @@ def test_search_form(session):
     assert "No results found for " not in response.text
 
 
+def test_search_cluster(session):
+    response = session.get("/search?q=local")
+    response.raise_for_status()
+    title = response.html.find(".search-result h3", first=True)
+    assert title.text == "local (Cluster)"
+
+
 def test_search_namespace(session):
     response = session.get("/search?q=default")
     response.raise_for_status()
     title = response.html.find(".search-result h3", first=True)
     assert title.text == "default (Namespace)"
+
+
+def test_search_by_label(session):
+    response = session.get("/search?q=application=kube-web-view")
+    response.raise_for_status()
+    title = response.html.find(".search-result h3", first=True)
+    assert title.text == "kube-web-view (Deployment)"
 
 
 def test_no_results_found(session):

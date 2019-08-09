@@ -69,7 +69,7 @@
     {% endif %}
     <p>
     {% for key, val in result.labels.items()|sort: %}
-    <span class="tag">{{ key }}: {{ val }}</span>
+    <a href="{{ rel_url.update_query(q=key+'='+val) }}"><span class="tag is-link">{{ key }}: {{ val }}</span></a>
     {% endfor %}
     </p>
 </div>
@@ -93,7 +93,7 @@
     <p><a href="{{ rel_url.update_query(namespace='') }}">Repeat search across all namespaces</a></p>
     {% endif %}
 
-    <p class="has-text-grey">Searched {{ resource_types|length }} resource types in {{ search_clusters|length }} cluster{{ 's' if search_clusters|length > 1 }} in {{ '%.3f'|format(search_duration) }} seconds.</p>
+    <p class="has-text-grey">{{ search_results|length }} result{{ 's' if search_results|length != 1 }} found. Searched {{ resource_types|length }} resource types in {{ search_clusters|length }} cluster{{ 's' if search_clusters|length > 1 }} in {{ '%.3f'|format(search_duration) }} seconds.</p>
 
 </div>
 {% endif %}
