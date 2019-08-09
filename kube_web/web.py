@@ -102,6 +102,7 @@ class HTTPClientWithAccessToken(HTTPClient):
 
 
 def wrap_query(query: Query, request, session):
+    """Wrap a pykube Query object to inject the OAuth2 session token (if configured)"""
     if request.app[CONFIG].cluster_auth_use_session_token:
         query.api = HTTPClientWithAccessToken(query.api, session["access_token"])
     return query
@@ -576,12 +577,8 @@ async def get_resource_view(request, session):
         "involvedObject.uid": resource.metadata["uid"],
     }
     events = await kubernetes.get_list(
-        wrap_query(
-            Event.objects(cluster.api).filter(
-                namespace=namespace or pykube.all, field_selector=field_selector
-            ),
-            request,
-            session,
+        wrap_query(Event.objects(cluster.api), request, session).filter(
+            namespace=namespace or pykube.all, field_selector=field_selector
         )
     )
 
