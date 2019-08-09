@@ -53,7 +53,7 @@ def add_label_columns(table, label_columns_param):
                     )
                 )
             else:
-                contents = row["object"]["metadata"]["labels"].get(label, "")
+                contents = row["object"]["metadata"].get("labels", {}).get(label, "")
             row["cells"].insert(i + 1, contents)
 
 
