@@ -20,6 +20,9 @@ class OAuth2BearerTokenAuth(AuthBase):
         self.token_path = token_path
 
     def __call__(self, request):
+        if "Authorization" in request.headers:
+            # do not overwrite any existing Authorization header
+            return request
         with self.token_path.open() as fd:
             token = fd.read().strip()
         request.headers["Authorization"] = f"Bearer {token}"

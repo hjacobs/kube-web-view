@@ -11,13 +11,17 @@ import time
 import os
 import pykube
 import logging
+import requests.exceptions
+import pykube.exceptions
 from yarl import URL
+from http import HTTPStatus
 import yaml
 
 from functools import partial
 
-from pykube import ObjectDoesNotExist
+from pykube import ObjectDoesNotExist, HTTPClient
 from pykube.objects import NamespacedAPIObject, Namespace, Event, Pod
+from pykube.query import Query
 from aiohttp_session import get_session, setup as session_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from aiohttp_remotes import XForwardedRelaxed
@@ -83,6 +87,27 @@ TABLE_CELL_FORMATTING = {
 routes = web.RouteTableDef()
 
 
+class HTTPClientWithAccessToken(HTTPClient):
+    def __init__(self, base, access_token):
+        self.__dict__ = base.__dict__
+        self._access_token = access_token
+        self.config.user["token"] = None
+
+    def get(self, *args, **kwargs):
+        kwargs["auth"] = None
+        if "headers" not in kwargs:
+            kwargs["headers"] = {}
+        kwargs["headers"]["Authorization"] = f"Bearer {self._access_token}"
+        return super().get(*args, **kwargs)
+
+
+def wrap_query(query: Query, request, session):
+    """Wrap a pykube Query object to inject the OAuth2 session token (if configured)"""
+    if request.app[CONFIG].cluster_auth_use_session_token:
+        query.api = HTTPClientWithAccessToken(query.api, session["access_token"])
+    return query
+
+
 def get_clusters(request, cluster: str):
     is_all_clusters = not bool(cluster) or cluster == ALL
     if is_all_clusters:
@@ -98,13 +123,14 @@ def get_clusters(request, cluster: str):
 def context():
     def decorator(func):
         async def func_wrapper(request):
-            ctx = await func(request)
+            session = await get_session(request)
+            ctx = await func(request, session)
             if isinstance(ctx, dict) and ctx.get("cluster"):
                 clusters, is_all_clusters = get_clusters(request, ctx["cluster"])
                 if not is_all_clusters and len(clusters) == 1:
                     cluster = clusters[0]
                     namespaces = await kubernetes.get_list(
-                        Namespace.objects(cluster.api)
+                        wrap_query(Namespace.objects(cluster.api), request, session)
                     )
                     ctx["namespaces"] = namespaces
                 ctx["rel_url"] = request.rel_url
@@ -156,9 +182,11 @@ async def get_cluster_list(request):
 @routes.get("/clusters/{cluster}")
 @aiohttp_jinja2.template("cluster.html")
 @context()
-async def get_cluster(request):
+async def get_cluster(request, session):
     cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
-    namespaces = await kubernetes.get_list(Namespace.objects(cluster.api))
+    namespaces = await kubernetes.get_list(
+        wrap_query(Namespace.objects(cluster.api), request, session)
+    )
     return {
         "cluster": cluster.name,
         "cluster_obj": cluster,
@@ -181,7 +209,7 @@ def get_cell_class(table, column_index, value):
 @routes.get("/clusters/{cluster}/_resource-types")
 @aiohttp_jinja2.template("resource-types.html")
 @context()
-async def get_cluster_resource_types(request):
+async def get_cluster_resource_types(request, session):
     cluster = request.match_info["cluster"]
     clusters, is_all_clusters = get_clusters(request, cluster)
     resource_types = set()
@@ -197,7 +225,13 @@ async def get_cluster_resource_types(request):
 
 
 async def join_metrics(
-    _cluster, table, namespace: str, is_all_namespaces: bool, params: dict
+    request,
+    session,
+    _cluster,
+    table,
+    namespace: str,
+    is_all_namespaces: bool,
+    params: dict,
 ):
     if not table.rows:
         # nothing to do
@@ -220,7 +254,7 @@ async def join_metrics(
             )
         ] = i
 
-    query = clazz.objects(_cluster.api)
+    query = wrap_query(clazz.objects(_cluster.api), request, session)
 
     if issubclass(clazz, NamespacedAPIObject):
         if is_all_namespaces:
@@ -264,7 +298,13 @@ async def join_metrics(
 
 
 async def do_get_resource_list(
-    _type: str, _cluster, namespace: str, is_all_namespaces: bool, params: dict
+    request,
+    session,
+    _type: str,
+    _cluster,
+    namespace: str,
+    is_all_namespaces: bool,
+    params: dict,
 ):
     """Query cluster resources and return a Table object or error"""
     clazz = table = error = None
@@ -272,7 +312,7 @@ async def do_get_resource_list(
         clazz = await _cluster.resource_registry.get_class_by_plural_name(
             _type, namespaced=namespace is not None
         )
-        query = clazz.objects(_cluster.api)
+        query = wrap_query(clazz.objects(_cluster.api), request, session)
         if is_all_namespaces:
             query = query.filter(namespace=pykube.all)
         elif namespace:
@@ -295,7 +335,9 @@ async def do_get_resource_list(
 
         # note: we join before sorting, so sorting works on the joined columns, too
         if params.get("join") == "metrics" and _type in ("pods", "nodes"):
-            await join_metrics(_cluster, table, namespace, is_all_namespaces, params)
+            await join_metrics(
+                request, session, _cluster, table, namespace, is_all_namespaces, params
+            )
 
         sort_table(table, params.get("sort"))
         for row in table.rows:
@@ -364,7 +406,7 @@ async def download_yaml(request, resource):
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/_resource-types")
 @aiohttp_jinja2.template("resource-types.html")
 @context()
-async def get_namespaced_resource_types(request):
+async def get_namespaced_resource_types(request, session):
     cluster = request.match_info["cluster"]
     clusters, is_all_clusters = get_clusters(request, cluster)
     namespace = request.match_info["namespace"]
@@ -384,7 +426,7 @@ async def get_namespaced_resource_types(request):
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}")
 @aiohttp_jinja2.template("resource-list.html")
 @context()
-async def get_resource_list(request):
+async def get_resource_list(request, session):
     cluster = request.match_info["cluster"]
     clusters, is_all_clusters = get_clusters(request, cluster)
     namespace = request.match_info.get("namespace")
@@ -416,7 +458,13 @@ async def get_resource_list(request):
         for _cluster in clusters:
             task = asyncio.create_task(
                 do_get_resource_list(
-                    _type, _cluster, namespace, is_all_namespaces, params
+                    request,
+                    session,
+                    _type,
+                    _cluster,
+                    namespace,
+                    is_all_namespaces,
+                    params,
                 )
             )
             tasks.append(task)
@@ -470,7 +518,7 @@ async def get_resource_list(request):
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}/{name}")
 @aiohttp_jinja2.template("resource-view.html")
 @context()
-async def get_resource_view(request):
+async def get_resource_view(request, session):
     cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
     namespace = request.match_info.get("namespace")
     plural = request.match_info["plural"]
@@ -480,7 +528,7 @@ async def get_resource_view(request):
     clazz = await cluster.resource_registry.get_class_by_plural_name(
         plural, namespaced=bool(namespace)
     )
-    query = clazz.objects(cluster.api)
+    query = wrap_query(clazz.objects(cluster.api), request, session)
     if namespace:
         query = query.filter(namespace=namespace)
     resource = await kubernetes.get_by_name(query, name)
@@ -507,7 +555,9 @@ async def get_resource_view(request):
         selector = resource.obj["spec"]["selector"]
 
     if selector or field_selector:
-        query = Pod.objects(cluster.api).filter(namespace=namespace or pykube.all)
+        query = wrap_query(Pod.objects(cluster.api), request, session).filter(
+            namespace=namespace or pykube.all
+        )
 
         if selector:
             query = query.filter(selector=selector)
@@ -527,7 +577,7 @@ async def get_resource_view(request):
         "involvedObject.uid": resource.metadata["uid"],
     }
     events = await kubernetes.get_list(
-        Event.objects(cluster.api).filter(
+        wrap_query(Event.objects(cluster.api), request, session).filter(
             namespace=namespace or pykube.all, field_selector=field_selector
         )
     )
@@ -563,7 +613,7 @@ def pod_color(name):
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}/{name}/logs")
 @aiohttp_jinja2.template("resource-logs.html")
 @context()
-async def get_resource_logs(request):
+async def get_resource_logs(request, session):
     cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
     namespace = request.match_info.get("namespace")
     plural = request.match_info["plural"]
@@ -572,7 +622,7 @@ async def get_resource_logs(request):
     clazz = await cluster.resource_registry.get_class_by_plural_name(
         plural, namespaced=True
     )
-    query = clazz.objects(cluster.api)
+    query = wrap_query(clazz.objects(cluster.api), request, session)
     if namespace:
         query = query.filter(namespace=namespace)
     resource = await kubernetes.get_by_name(query, name)
@@ -580,7 +630,7 @@ async def get_resource_logs(request):
     if resource.kind == "Pod":
         pods = [resource]
     elif resource.obj.get("spec", {}).get("selector", {}).get("matchLabels"):
-        query = Pod.objects(cluster.api).filter(
+        query = wrap_query(Pod.objects(cluster.api), request, session).filter(
             namespace=namespace,
             selector=resource.obj["spec"]["selector"]["matchLabels"],
         )
@@ -628,7 +678,9 @@ async def get_resource_logs(request):
     }
 
 
-async def search(search_query, _type, _cluster, namespace, is_all_namespaces):
+async def search(
+    request, session, search_query, _type, _cluster, namespace, is_all_namespaces
+):
     clazz = None
     results = []
     errors = []
@@ -645,7 +697,7 @@ async def search(search_query, _type, _cluster, namespace, is_all_namespaces):
 
         # without a search query, only return the clazz
         if search_query:
-            query = clazz.objects(_cluster.api)
+            query = wrap_query(clazz.objects(_cluster.api), request, session)
             if namespaced:
                 query = query.filter(
                     namespace=pykube.all if is_all_namespaces else namespace
@@ -696,7 +748,7 @@ def sort_rank(result, search_query_lower):
 @routes.get("/search")
 @aiohttp_jinja2.template("search.html")
 @context()
-async def get_search(request):
+async def get_search(request, session):
     params = request.rel_url.query
     cluster = params.get("cluster")
     namespace = params.get("namespace")
@@ -742,7 +794,15 @@ async def get_search(request):
     for _type in resource_types:
         for _cluster in clusters:
             task = asyncio.create_task(
-                search(search_query, _type, _cluster, namespace, is_all_namespaces)
+                search(
+                    request,
+                    session,
+                    search_query,
+                    _type,
+                    _cluster,
+                    namespace,
+                    is_all_namespaces,
+                )
             )
             tasks.append(task)
 
@@ -839,6 +899,7 @@ async def error_handler(request, handler):
         # handling of redirection (3xx) is done by aiohttp itself
         raise
     except Exception as e:
+        logger.debug(f"Exception on {request.rel_url}: {e}")
         if isinstance(e, web.HTTPError):
             status = e.status
             error_title = "Error"
@@ -855,6 +916,27 @@ async def error_handler(request, handler):
             status = 404
             error_title = "Error: object does not exist"
             error_text = "The requested Kubernetes object does not exist"
+        elif isinstance(e, requests.exceptions.HTTPError):
+            if e.response is not None and e.response.status_code in (401, 403):
+                status = e.response.status_code
+                error_title = HTTPStatus(status).phrase
+                error_text = str(e)
+            else:
+                status = 500
+                error_title = "Server Error"
+                error_text = str(e)
+                logger.exception(f"{error_title}: {error_text}")
+        elif isinstance(e, pykube.exceptions.HTTPError):
+            # Pykube exception is raised on get_by_name
+            if e.code in (401, 403):
+                status = e.code
+                error_title = HTTPStatus(status).phrase
+                error_text = str(e)
+            else:
+                status = 500
+                error_title = "Server Error"
+                error_text = str(e)
+                logger.exception(f"{error_title}: {error_text}")
         else:
             status = 500
             error_title = "Server Error"
@@ -915,6 +997,9 @@ def get_app(cluster_manager, config):
     access_token_url = os.getenv("OAUTH2_ACCESS_TOKEN_URL")
 
     if authorize_url and access_token_url:
+        logger.info(
+            f"Using OAuth2 middleware with authorization endpoint {authorize_url}"
+        )
         app.middlewares.append(auth)
 
     app.middlewares.append(error_handler)
