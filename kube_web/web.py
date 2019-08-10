@@ -1028,7 +1028,23 @@ def get_app(cluster_manager, config):
         for link_def in config.object_links.split(","):
             resource_type, sep, url_template = link_def.partition("=")
             object_links[resource_type].append(
-                {"href": url_template, "icon": "external-link-alt"}
+                {
+                    "href": url_template,
+                    "title": "External link for object {name}",
+                    "icon": "external-link-alt",
+                }
+            )
+
+    label_links = collections.defaultdict(list)
+    if config.label_links:
+        for link_def in config.label_links.split(","):
+            label, sep, url_template = link_def.partition("=")
+            label_links[label].append(
+                {
+                    "href": url_template,
+                    "title": "External link for {label} label with value '{label_value}'",
+                    "icon": "external-link-alt",
+                }
             )
 
     app = web.Application()
@@ -1049,6 +1065,7 @@ def get_app(cluster_manager, config):
     )
     env.globals["version"] = __version__
     env.globals["object_links"] = object_links
+    env.globals["label_links"] = label_links
 
     app.add_routes(routes)
     app.router.add_static("/assets", static_assets_path)
