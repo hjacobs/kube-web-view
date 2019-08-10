@@ -1,5 +1,7 @@
 import yaml
 
+from .utils import check_links
+
 
 def test_view_namespace(session):
     response = session.get("/clusters/local/namespaces/default")
@@ -85,4 +87,28 @@ def test_node_shows_pods(session):
     # check that our kube-web-view pod (dynamic name) is linked from the node page
     assert "/clusters/local/namespaces/default/pods/kube-web-view-" in " ".join(
         l.attrs["href"] for l in links
+    )
+
+
+def test_owner_links(session):
+    response = session.get(
+        "/clusters/local/namespaces/default/pods?selector=application=kube-web-view"
+    )
+    response.raise_for_status()
+    pod_link = response.html.find("main table td a", first=True)
+    url = pod_link.attrs["href"]
+    assert url.startswith("/clusters/local/namespaces/default/pods/kube-web-view-")
+    response = session.get(url)
+    response.raise_for_status()
+    check_links(response, session)
+
+    links = response.html.find("main a")
+    found_link = None
+    for link in links:
+        if link.text.endswith(" (ReplicaSet)"):
+            found_link = link
+            break
+    assert found_link is not None
+    assert found_link.attrs["href"].startswith(
+        "/clusters/local/namespaces/default/replicasets/kube-web-view-"
     )
