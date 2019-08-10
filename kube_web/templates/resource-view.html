@@ -26,6 +26,22 @@
           class="button is-light">
             <span class="icon"><i class="fas fa-file-download"></i></span>
         </a>
+        {% for link in object_links[resource.endpoint]: %}
+        <a href="{{ link.href.format(cluster=cluster, namespace=namespace, name=resource.name) }}"
+           class="button is-primary"
+           title="{{ link.title.format(cluster=cluster, namespace=namespace, name=resource.name) }}">
+            <span class="icon"><i class="fas fa-{{ link.icon }}"></i></span>
+        </a>
+        {% endfor %}
+        {% for label, label_value in resource.labels.items()|sort: %}
+        {% for link in label_links[label]: %}
+        <a href="{{ link.href.format(cluster=cluster, namespace=namespace, name=resource.name, label=label, label_value=label_value) }}"
+           class="button is-info"
+           title="{{ link.title.format(cluster=cluster, namespace=namespace, name=resource.name, label=label, label_value=label_value) }}">
+            <span class="icon"><i class="fas fa-{{ link.icon }}"></i></span>
+        </a>
+        {% endfor %}
+        {% endfor %}
     </span>
 </h1>
 <div class="tabs is-small">
