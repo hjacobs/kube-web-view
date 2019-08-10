@@ -57,6 +57,16 @@
     {% endfor %}
 </div>
 
+{% if owners: %}
+<div class="section">
+    Owners:
+    {% for owner in owners: %}
+    <a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ owner.class.endpoint }}/{{ owner.name }}">{{ owner.name }} ({{ owner.class.kind }})</a>
+
+    {% endfor %}
+</div>
+{% endif %}
+
 {% for key, val in resource.obj.items()|sort: %}
 {% if key not in ('metadata', 'apiVersion', 'kind'): %}
 

@@ -544,6 +544,13 @@ async def get_resource_view(request, session):
     if params.get("download") == "yaml":
         return await download_yaml(request, resource)
 
+    owners = []
+    for ref in resource.metadata.get("ownerReferences", []):
+        owner_class = await cluster.resource_registry.get_class_by_api_version_kind(
+            ref["apiVersion"], ref["kind"], namespaced=bool(namespace)
+        )
+        owners.append({"name": ref["name"], "class": owner_class})
+
     selector = field_selector = None
     if resource.kind == "Node":
         field_selector = {"spec.nodeName": resource.name}
@@ -590,6 +597,7 @@ async def get_resource_view(request, session):
         "namespace": namespace,
         "plural": plural,
         "resource": resource,
+        "owners": owners,
         "view": view,
         "table": table,
         "events": events,

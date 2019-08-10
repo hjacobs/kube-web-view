@@ -151,3 +151,20 @@ class ResourceRegistry:
         if not clazz and default is throw_exception:
             raise ResourceTypeNotFound(plural, namespaced)
         return clazz
+
+    async def get_class_by_api_version_kind(
+        self, api_version: str, kind: str, namespaced: bool, default=throw_exception
+    ):
+        _types = (
+            self.namespaced_resource_types
+            if namespaced
+            else self.cluster_resource_types
+        )
+        clazz = None
+        for c in await _types:
+            if c.version == api_version and c.kind == kind:
+                clazz = c
+                break
+        if not clazz and default is throw_exception:
+            raise ResourceTypeNotFound(kind, namespaced)
+        return clazz
