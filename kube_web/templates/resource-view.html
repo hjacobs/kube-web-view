@@ -59,7 +59,7 @@
 
 {% if owners: %}
 <div class="section">
-    Owners:
+    Owner{{ 's' if owners|length > 1 }}:
     {% for owner in owners: %}
     <a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ owner.class.endpoint }}/{{ owner.name }}">{{ owner.name }} ({{ owner.class.kind }})</a>
 
