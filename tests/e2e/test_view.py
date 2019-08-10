@@ -112,3 +112,21 @@ def test_owner_links(session):
     assert found_link.attrs["href"].startswith(
         "/clusters/local/namespaces/default/replicasets/kube-web-view-"
     )
+
+
+def test_object_links(session):
+    response = session.get(
+        "/clusters/local/namespaces/default/pods?selector=application=kube-web-view"
+    )
+    response.raise_for_status()
+    pod_link = response.html.find("main table td a", first=True)
+    url = pod_link.attrs["href"]
+    assert url.startswith("/clusters/local/namespaces/default/pods/kube-web-view-")
+    response = session.get(url)
+    response.raise_for_status()
+    check_links(response, session)
+
+    link = response.html.find("main h1 a.is-primary", first=True)
+    assert link.attrs["href"].startswith(
+        "#cluster=local;namespace=default;name=kube-web-view-"
+    )

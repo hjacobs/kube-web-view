@@ -67,7 +67,7 @@ docs:
 
 .PHONY: run
 run:
-	poetry run python3 -m kube_web --show-container-logs --debug
+	poetry run python3 -m kube_web --show-container-logs --debug "--object-links=ingresses=javascript:alert('{name}')"
 
 .PHONY: run.kind
 run.kind:

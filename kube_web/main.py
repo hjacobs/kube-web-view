@@ -72,6 +72,10 @@ def main(argv=None):
         "--static-assets-path",
         help="Path to custom JS/CSS assets (will be mounted as /assets HTTP path)",
     )
+    parser.add_argument(
+        "--object-links",
+        help="Comma-separated list of URL templates per resource type to link to external tools, e.g. 'pods=https://mymonitoringtool/{cluster}/{namespace}/{name}'",
+    )
 
     args = parser.parse_args(argv)
 

@@ -79,8 +79,9 @@ def test_list_pods_with_metrics(session):
     response.raise_for_status()
     check_links(response, session)
     ths = response.html.find("main table th")
-    assert ths[-3].text == "CPU Usage"
-    assert ths[-2].text == "Memory Usage"
+    # note: pods have an extra "Links" column (--object-links)
+    assert ths[-4].text == "CPU Usage"
+    assert ths[-3].text == "Memory Usage"
 
 
 def test_list_namespaced_resource_type_not_found(session):
@@ -214,3 +215,10 @@ def test_download_sort_link(session):
         "/clusters/local/namespaces/default/pods?sort=Status&download=tsv"
         == link.attrs["href"]
     )
+
+
+def test_object_links(session):
+    response = session.get("/clusters/local/namespaces/default/pods")
+    response.raise_for_status()
+    link = response.html.find("main table a.button", first=True)
+    assert link.attrs["href"].startswith("#cluster=local;namespace=default;name=")

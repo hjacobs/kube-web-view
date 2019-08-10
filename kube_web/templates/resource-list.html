@@ -135,6 +135,9 @@
                     <span class="icon"><i class="fas fa-sort-up"></i></span>
                     {% endif %}
                 </a></th>
+                {% if object_links[table.api_obj_class.endpoint]: %}
+                <th></th>
+                {% endif %}
     </tr>
     {% for row in table.rows: %}
     <tr>
@@ -170,6 +173,15 @@
         {% endif %}
         {% endfor %}
         <td style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}">{{ row.object.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
+        {% if object_links[table.api_obj_class.endpoint]: %}
+        <td>
+            {% for link in object_links[table.api_obj_class.endpoint]: %}
+            <a href="{{ link.href.format(cluster=row.cluster.name, namespace=row.object.metadata.namespace, name=row.object.metadata.name) }}" class="button is-primary">
+                <span class="icon"><i class="fas fa-{{ link.icon }}"></i></span>
+            </a>
+            {% endfor %}
+        </td>
+        {% endif %}
     </tr>
     {% else: %}
     <tr>
