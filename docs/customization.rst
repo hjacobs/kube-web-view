@@ -5,6 +5,42 @@ Customization
 Kubernetes Web View's behavior and appearance can be customized
 for the needs of your organization.
 
+External Links
+==============
+
+You can configure external links per resource type or based on certain labels with these two command line options:
+
+``--object-links``
+    Define URL templates per resource type (e.g. to link all pods to a monitoring dashboard per pod)
+``--label-links``
+    Define URL templates per label, e.g. to link to an application registry for the "app" label, team overview for a "team" label, etc
+
+The URL templates are Python string format strings and receive the following variables for replacement:
+
+``{cluster}``
+    The cluster name.
+``{namespace}``
+    The namespace name of the object.
+``{name}``
+    The object name.
+``{label}``
+    Only for label links: the label name.
+``{label_value}``
+    Only for label links: the label value.
+
+Example command line argument to add links to a monitoring dashboard per pod:
+
+.. code-block:: bash
+
+    --object-links=pods=https://mymonitoringsystem/pod-dashboard?cluster={cluster};namespace={namespace};name={name}
+
+Example command line argument to link resources with an "application" label to Kubernetes Resource Report:
+
+.. code-block:: bash
+
+    --label-links=application=https://myresourcereport/application-{label_value}.html
+
+
 HTML Templates
 ==============
 
