@@ -215,12 +215,13 @@ async def get_cluster(request, session):
     namespaces = await kubernetes.get_list(
         wrap_query(Namespace.objects(cluster.api), request, session)
     )
+    resource_types = await cluster.resource_registry.cluster_resource_types
     return {
         "cluster": cluster.name,
         "cluster_obj": cluster,
         "namespace": None,
         "namespaces": namespaces,
-        "resource_types": await cluster.resource_registry.cluster_resource_types,
+        "resource_types": sorted(resource_types, key=lambda t: (t.kind, t.version)),
     }
 
 

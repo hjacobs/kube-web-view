@@ -44,10 +44,16 @@
 <div class="section">
     <h4 class="title is-5">Cluster Resource Types</h4>
     <table class="table is-stripped">
+        <tr>
+            <th>Kind</th>
+            <th>Plural</th>
+            <th>Version</th>
+        </tr>
         {% for resource_type in resource_types: %}
         <tr>
             <td>{{ resource_type.kind }}</td>
             <td><a href="/clusters/{{ cluster }}/{{ resource_type.endpoint }}">{{ resource_type.endpoint }}</a></td>
+            <td>{{ resource_type.version }}</td>
         </tr>
         {% endfor %}
     </table>
