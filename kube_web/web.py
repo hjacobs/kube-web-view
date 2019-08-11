@@ -164,7 +164,13 @@ def selector_matches(selector: dict, labels: dict):
 @routes.get("/")
 async def get_index(request):
     # we don't have anything to present on the homepage, so let's redirect to the cluster list
-    raise web.HTTPFound(location="/clusters")
+    # or the cluster detail page (if we only have one cluster)
+    clusters = request.app[CLUSTER_MANAGER].clusters
+    if len(clusters) == 1:
+        target = f"/clusters/{clusters[0].name}"
+    else:
+        target = "/clusters"
+    raise web.HTTPFound(location=target)
 
 
 @routes.get("/clusters")
