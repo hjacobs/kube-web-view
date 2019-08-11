@@ -50,6 +50,28 @@ CONFIG = "config"
 
 ALL = "_all"
 
+SEARCH_DEFAULT_RESOURCE_TYPES = [
+    "namespaces",
+    "deployments",
+    "services",
+    "ingresses",
+    "statefulsets",
+    "cronjobs",
+]
+
+SEARCH_OFFERED_RESOURCE_TYPES = [
+    "namespaces",
+    "deployments",
+    "replicasets",
+    "services",
+    "ingresses",
+    "daemonsets",
+    "statefulsets",
+    "cronjobs",
+    "pods",
+    "nodes",
+]
+
 
 TABLE_CELL_FORMATTING = {
     "events": {"Type": {"Warning": "has-text-warning"}},
@@ -796,35 +818,26 @@ async def get_search(request, session):
     selector += ",".join(selector_words)
     filter_query = " ".join(filter_words)
 
+    default_resource_types = (
+        request.app[CONFIG].search_default_resource_types
+        or SEARCH_DEFAULT_RESOURCE_TYPES
+    )
+
     resource_types = params.getall("type", None)
     if not resource_types:
         # note that ReplicaSet, DaemonSet, Pod, and Node are not included by default
         # as they are usually less relevant for search queries
-        resource_types = [
-            "namespaces",
-            "deployments",
-            "services",
-            "ingresses",
-            "statefulsets",
-            "cronjobs",
-        ]
+        resource_types = default_resource_types
 
     clusters, is_all_clusters = get_clusters(request, cluster)
 
     is_all_namespaces = not namespace or namespace == ALL
 
-    searchable_resource_types = {
-        "namespaces": "Namespace",
-        "deployments": "Deployment",
-        "replicasets": "ReplicaSet",
-        "services": "Service",
-        "ingresses": "Ingress",
-        "daemonsets": "DaemonSet",
-        "statefulsets": "StatefulSet",
-        "cronjobs": "CronJob",
-        "pods": "Pod",
-        "nodes": "Node",
-    }
+    offered_resource_types = (
+        request.app[CONFIG].search_offered_resource_types
+        or SEARCH_OFFERED_RESOURCE_TYPES
+    )
+    searchable_resource_types = {}
 
     results = []
     errors = []
@@ -877,6 +890,29 @@ async def get_search(request, session):
         results.extend(_results)
         errors.extend(_errors)
 
+    for resource_type in offered_resource_types:
+        if resource_type not in searchable_resource_types:
+            try:
+                for i, _cluster in enumerate(clusters):
+                    try:
+                        clazz = await _cluster.resource_registry.get_class_by_plural_name(
+                            resource_type, True, default=None
+                        )
+                        if not clazz:
+                            clazz = await _cluster.resource_registry.get_class_by_plural_name(
+                                resource_type, False
+                            )
+                    except:
+                        if i >= len(clusters) - 1:
+                            raise
+                    else:
+                        searchable_resource_types[clazz.endpoint] = clazz.kind
+                        break
+            except Exception as e:
+                logger.warning(
+                    f"Could not find resource type {resource_type} in one of the clusters: {e}"
+                )
+
     results.sort(key=partial(sort_rank, search_query_lower=search_query_lower))
 
     duration = time.time() - start
@@ -891,6 +927,7 @@ async def get_search(request, session):
         "search_duration": duration,
         "resource_types": resource_types,
         "searchable_resource_types": searchable_resource_types,
+        "is_all_clusters": is_all_clusters,
         "is_all_namespaces": is_all_namespaces,
     }
 

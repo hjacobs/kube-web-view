@@ -80,6 +80,16 @@ def main(argv=None):
         "--label-links",
         help="Comma-separated list of URL templates per label to link to external tools, e.g. 'application=https://myui/apps/{application}'",
     )
+    parser.add_argument(
+        "--search-default-resource-types",
+        type=comma_separated_values,
+        help="Comma-separated list of resource types to use for navbar search by default, e.g. 'deployments,pods'",
+    )
+    parser.add_argument(
+        "--search-offered-resource-types",
+        type=comma_separated_values,
+        help="Comma-separated list of resource types to offer on search page, e.g. 'deployments,pods,nodes'",
+    )
 
     args = parser.parse_args(argv)
 

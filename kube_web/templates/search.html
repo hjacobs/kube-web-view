@@ -3,10 +3,16 @@
 {% block content %}
 <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
+        {% if is_all_clusters: %}
+        <li><a href="/clusters">all</a></li>
+        {% else: %}
         {% if cluster: %}
         <li><a href="/clusters/{{ cluster }}">{{ cluster }}</a></li>
-        {% if namespace: %}
+        {% if is_all_namespaces: %}
+        <li><a href="/clusters/{{ cluster }}/namespaces">all</a></li>
+        {% elif namespace: %}
         <li><a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}">{{ namespace }}</a></li>
+        {% endif %}
         {% endif %}
         {% endif %}
         <li class="is-active"><a href="#">search</a></li>
