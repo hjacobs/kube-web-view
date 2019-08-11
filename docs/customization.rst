@@ -3,7 +3,15 @@ Customization
 =============
 
 Kubernetes Web View's behavior and appearance can be customized
-for the needs of your organization.
+for the needs of your organization:
+
+* :ref:`external-links` can be added to link objects to monitoring tools, internal application registries, custom UIs, etc
+* the :ref:`customize-search` can be customized to search in CRDs, or to cover frequent search cases
+* :ref:`html-templates` can be customized to match your branding, to add static links, and to inject custom JS/CSS
+* :ref:`static-assets` can be included to add images, JS, or CSS files
+
+
+.. _external-links:
 
 External Links
 ==============
@@ -40,6 +48,8 @@ Example command line argument to link resources with an "application" label to `
 
     --label-links=application=https://myresourcereport/application-{label_value}.html
 
+.. _customize-search:
+
 Search
 ======
 
@@ -53,6 +63,7 @@ Pass comma-separated lists of resource types (plural name) to the following two 
 
 Note that all resource types can be searched by using a deep-link, i.e. these options will only restrict what is shown in the HTML UI, but they will not prohibit searching for other resource types.
 
+.. _html-templates:
 
 HTML Templates
 ==============
@@ -123,6 +134,7 @@ Example pod spec with a custom footer:
           sizeLimit: 50Mi
 
 
+.. _static-assets:
 
 Static Assets
 =============
