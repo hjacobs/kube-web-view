@@ -46,9 +46,15 @@ def test_add_label_columns():
     table = Table(Pod, {"kind": "Table", "columnDefinitions": [], "rows": []})
     add_label_columns(table, "foo, bar")
     assert table.columns == [
-        {"name": "Foo", "description": "foo label"},
-        {"name": "Bar", "description": "bar label"},
+        {"name": "Foo", "description": "foo label", "label": "foo"},
+        {"name": "Bar", "description": "bar label", "label": "bar"},
     ]
+
+
+def test_add_label_columns_empty():
+    table = Table(Pod, {"kind": "Table", "columnDefinitions": [], "rows": []})
+    add_label_columns(table, ", ")
+    assert table.columns == []
 
 
 def test_filter_table_wrong_column_name(single_pod_table):

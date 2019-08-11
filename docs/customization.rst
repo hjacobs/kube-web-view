@@ -5,10 +5,29 @@ Customization
 Kubernetes Web View's behavior and appearance can be customized
 for the needs of your organization:
 
+* default :ref:`label-columns` can be defined to show values of standardized object labels (e.g. "app", "version", etc)
 * :ref:`external-links` can be added to link objects to monitoring tools, internal application registries, custom UIs, etc
 * the :ref:`customize-search` can be customized to search in CRDs, or to cover frequent search cases
 * :ref:`html-templates` can be customized to match your branding, to add static links, and to inject custom JS/CSS
 * :ref:`static-assets` can be included to add images, JS, or CSS files
+
+.. _label-columns:
+
+Label Columns
+=============
+
+Most organizations have a standard set of labels for Kubernetes resources, e.g. all pods might have "app" and "version" labels.
+You can instruct Kubernetes Web View to show these labels as columns for the respective resource types via the ``--default-label-columns`` command line option.
+
+Example command line argument to show the "application" and "version" labels for pods and the "team" label for deployments:
+
+.. code-block:: bash
+
+    --default-label-columns=pods=application,version;deployments=team
+
+Note that the label names are separated by comma (",") whereas multiple different entries for different resource types are separated by semicolon (";").
+
+Users of the web UI can remove the pre-configured label columns by passing a single comma as the ``labelcols`` query parameter: ``/clusters/../namespaces/_all/pods?labelcols=,``.
 
 
 .. _external-links:

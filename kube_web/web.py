@@ -359,7 +359,10 @@ async def do_get_resource_list(
         # table.rows might be None, e.g. for "csinodes"
         if table.rows is None:
             table.obj["rows"] = []
-        add_label_columns(table, params.get("labelcols"))
+        label_columns = params.get("labelcols") or request.app[
+            CONFIG
+        ].default_label_columns.get(_type)
+        add_label_columns(table, label_columns)
         filter_table(table, params.get("filter"))
 
         # note: we join before sorting, so sorting works on the joined columns, too

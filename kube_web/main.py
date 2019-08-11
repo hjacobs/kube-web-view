@@ -22,6 +22,14 @@ def comma_separated_values(value):
     return list(filter(None, value.split(",")))
 
 
+def key_value_pairs(value):
+    data = {}
+    for kv_pair in value.split(";"):
+        key, sep, value = kv_pair.partition("=")
+        data[key] = value
+    return data
+
+
 def main(argv=None):
 
     parser = argparse.ArgumentParser(description=f"Kubernetes Web View v{__version__}")
@@ -89,6 +97,12 @@ def main(argv=None):
         "--search-offered-resource-types",
         type=comma_separated_values,
         help="Comma-separated list of resource types to offer on search page, e.g. 'deployments,pods,nodes'",
+    )
+    parser.add_argument(
+        "--default-label-columns",
+        type=key_value_pairs,
+        help="Comma-separated list of label columns per resource type; multiple entries separated by semicolon, e.g. 'pods=app,version;deployments=team'",
+        default={},
     )
 
     args = parser.parse_args(argv)

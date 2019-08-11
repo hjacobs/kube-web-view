@@ -160,7 +160,9 @@
             style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}"
             {% endif %}
             >
-            {% if table.columns[loop.index0].name == 'Node': %}
+            {% if table.columns[loop.index0].label and table.columns[loop.index0].label != '*': %}
+            <a href="{{ rel_url.update_query(selector=table.columns[loop.index0].label+'='+cell) }}">{{ cell if cell is not none}}</a>
+            {% elif table.columns[loop.index0].name == 'Node': %}
             <a href="/clusters/{{ row.cluster.name }}/nodes/{{ cell }}">{{ cell if cell is not none}}</a>
             {% elif table.columns[loop.index0].name == 'CPU Usage': %}
             {{ cell|cpu if cell is not none }}

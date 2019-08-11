@@ -34,14 +34,21 @@ def sort_table(table, sort_param):
 def add_label_columns(table, label_columns_param):
     if not label_columns_param:
         return
-    label_columns = list(l.strip() for l in label_columns_param.split(","))
+    label_columns = list(
+        filter(None, [l.strip() for l in label_columns_param.split(",")])
+    )
     for i, label_column in enumerate(label_columns):
         if label_column == "*":
             name = "Labels"
         else:
             name = label_column.capitalize()
         table.columns.insert(
-            i + 1, {"name": name, "description": f"{label_column} label"}
+            i + 1,
+            {
+                "name": name,
+                "description": f"{label_column} label",
+                "label": label_column,
+            },
         )
     for row in table.rows:
         for i, label in enumerate(label_columns):
