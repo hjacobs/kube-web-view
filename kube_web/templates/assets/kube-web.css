@@ -43,7 +43,16 @@ main { flex-grow: 1; flex-shrink: 1; }
 
 h1 .links,
 h2 .links {
-    margin-left: 1rem;
+    margin: 0 1rem;
+}
+h1 { display: flex; }
+h1 .meta,
+h2 .meta {
+    margin-left: auto;
+    font-size: 1rem;
+    font-weight: normal;
+    color: #7a7a7a;
+    padding-top: 0.5rem;
 }
 
 table th a { color: #363636; }

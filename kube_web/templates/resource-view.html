@@ -43,6 +43,10 @@
         {% endfor %}
         {% endfor %}
     </span>
+    <span class="meta">
+        created {{ resource.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }},
+        version {{ resource.metadata.resourceVersion }}
+    </span>
 </h1>
 <div class="tabs is-small">
     <ul>
