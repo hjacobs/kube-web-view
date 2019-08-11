@@ -40,6 +40,19 @@ Example command line argument to link resources with an "application" label to K
 
     --label-links=application=https://myresourcereport/application-{label_value}.html
 
+Search
+======
+
+The default search resource types can be customized, e.g. to include Custom Resource Definitions (CRDs) or to optimize for frequent search patterns.
+Pass comma-separated lists of resource types (plural name) to the following two command line options:
+
+``--search-default-resource-types``
+    Set the resource types to search by default (when using the navbar search box). Must be a comma-separated list of resource types, e.g. "deployments,pods".
+``--search-offered-resource-types``
+    Customize the list of resource types shown on the search page (``/search``). Must be a comma-separated list of resource types, e.g. "deployments,pods,nodes".
+
+Note that all resource types can be searched by using a deep-link, i.e. these options will only restrict what is shown in the HTML UI, but they will not prohibit searching for other resource types.
+
 
 HTML Templates
 ==============
