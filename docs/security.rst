@@ -9,7 +9,7 @@ There are a number of security precautions to make:
 
 * Do not expose Kubernetes Web View to the public without **authorization** (e.g. OAuth2 redirect flow or some authorizing web proxy).
 * The default **RBAC** role for kube-web-view (provided in the  ``deploy`` folder) provides **full read-only access** to the cluster --- modify it accordingly to limit the scope.
-* Design and **understand your access control**: decide whether you use kube-web-view only locally (with personal credentials), have a central deployment (with service credentials) to multiple clusters, or deployed per cluster with limited access.
+* Design and **understand your access control**: decide whether you use kube-web-view only locally (with personal credentials), have a central deployment (with service credentials) to multiple clusters, use :ref:`oauth2` for cluster access via ``--cluster-auth-use-session-token``, or have it deployed per cluster with limited access.
 * Understand the security risks of exposing your cluster details to Kubernetes Web View users --- you should only **trust users** who you would also give full read-only access to the Kubernetes API.
 * Check your Kubernetes objects for **potential sensitive information**, e.g. application developers might have used container environment variables (``env``) to contain passwords (instead of using secrets or other methods), mitigate accordingly!
 
