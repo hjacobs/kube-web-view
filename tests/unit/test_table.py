@@ -1,4 +1,6 @@
+import os
 import pytest
+import timeit
 
 from pykube import Pod
 from pykube.query import Table
@@ -142,3 +144,90 @@ def test_merge_cluster_tables(single_pod_table, two_pod_table):
     table = merge_cluster_tables(single_pod_table, two_pod_table)
     assert len(table.rows) == 3
     assert len(table.obj["clusters"]) == 2
+
+
+def test_merge_cluster_tables_new_columns():
+    table1 = Table(
+        Pod,
+        {
+            "kind": "Table",
+            "columnDefinitions": [{"name": "Name"}, {"name": "Status"}],
+            "rows": [{"cells": ["myname", "ImagePullBackOff"]}],
+            "clusters": ["c1"],
+        },
+    )
+    table2 = Table(
+        Pod,
+        {
+            "kind": "Table",
+            "columnDefinitions": [
+                {"name": "Name"},
+                {"name": "FooCol"},
+                {"name": "Status"},
+            ],
+            "rows": [{"cells": ["myname", "foo", "ImagePullBackOff"]}],
+            "clusters": ["c1"],
+        },
+    )
+    table = merge_cluster_tables(table1, table2)
+    assert len(table.obj["clusters"]) == 2
+    assert table.columns == [{"name": "Name"}, {"name": "Status"}, {"name": "FooCol"}]
+    assert table.rows == [
+        {"cells": ["myname", "ImagePullBackOff", None]},
+        {"cells": ["myname", "ImagePullBackOff", "foo"]},
+    ]
+
+
+def test_merge_cluster_tables_completely_different():
+    table1 = Table(
+        Pod,
+        {
+            "kind": "Table",
+            "columnDefinitions": [{"name": "A"}],
+            "rows": [{"cells": ["a"]}],
+            "clusters": ["c1"],
+        },
+    )
+    table2 = Table(
+        Pod,
+        {
+            "kind": "Table",
+            "columnDefinitions": [{"name": "B"}],
+            "rows": [{"cells": ["b"]}],
+            "clusters": ["c1"],
+        },
+    )
+    table = merge_cluster_tables(table1, table2)
+    assert len(table.obj["clusters"]) == 2
+    assert table.columns == [{"name": "A"}, {"name": "B"}]
+    assert table.rows == [{"cells": ["a", None]}, {"cells": [None, "b"]}]
+
+
+@pytest.mark.skipif(
+    os.getenv("PERF_TEST") is None,
+    reason="Performance tests only run when PERF_TEST is set",
+)
+def test_marge_cluster_tables_performance(capsys):
+    def merge_tables():
+        table1 = Table(
+            Pod,
+            {
+                "kind": "Table",
+                "columnDefinitions": [{"name": "A"}, {"name": "C"}, {"name": "E"}],
+                "rows": [{"cells": ["a", "c", "e"]}] * 100,
+                "clusters": ["c1"],
+            },
+        )
+        table2 = Table(
+            Pod,
+            {
+                "kind": "Table",
+                "columnDefinitions": [{"name": "B"}, {"name": "D"}],
+                "rows": [{"cells": ["b", "d"]}] * 100,
+                "clusters": ["c1"],
+            },
+        )
+        merge_cluster_tables(table1, table2)
+
+    with capsys.disabled():
+        print(timeit.timeit(merge_tables, number=1000))

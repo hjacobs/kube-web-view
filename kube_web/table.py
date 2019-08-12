@@ -134,4 +134,24 @@ def merge_cluster_tables(t1, t2):
         t1.obj["clusters"].extend(t2.obj["clusters"])
         return t1
     else:
-        return None
+        added = 0
+        for column in t2.columns:
+            if column["name"] not in column_names1:
+                t1.columns.append(column)
+                added += 1
+        column_indicies = {}
+        for i, column in enumerate(t1.columns):
+            column_indicies[column["name"]] = i
+        for row in t1.rows:
+            for i in range(added):
+                row["cells"].append(None)
+        for row in t2.rows:
+            new_row_cells = [None] * len(t1.columns)
+            for name, cell in zip(column_names2, row["cells"]):
+                idx = column_indicies[name]
+                new_row_cells[idx] = cell
+            row["cells"] = new_row_cells
+            t1.rows.append(row)
+
+        t1.obj["clusters"].extend(t2.obj["clusters"])
+        return t1
