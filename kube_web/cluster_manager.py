@@ -1,4 +1,5 @@
 from .resource_registry import ResourceRegistry
+from .selector import selector_matches
 
 
 class Cluster:
@@ -15,15 +16,19 @@ class ClusterNotFound(Exception):
 
 
 class ClusterManager:
-    def __init__(self, discoverer):
+    def __init__(self, discoverer, selector: dict):
         self._clusters = {}
         self.discoverer = discoverer
+        self.selector = selector
         self.reload()
 
     def reload(self):
         _clusters = {}
         for cluster in self.discoverer.get_clusters():
-            _clusters[cluster.name] = Cluster(cluster.name, cluster.api, cluster.labels)
+            if selector_matches(self.selector, cluster.labels):
+                _clusters[cluster.name] = Cluster(
+                    cluster.name, cluster.api, cluster.labels
+                )
 
         self._clusters = _clusters
 

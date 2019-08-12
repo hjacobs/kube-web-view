@@ -6,6 +6,7 @@ from pathlib import Path
 
 from kube_web import __version__
 from .web import get_app
+from .selector import parse_selector
 from .cluster_discovery import (
     ClusterRegistryDiscoverer,
     ServiceAccountClusterDiscoverer,
@@ -55,6 +56,11 @@ def main(argv=None):
         help="Path to OAuth2 Bearer token for Cluster Registry authentication",
     )
     parser.add_argument(
+        "--cluster-label-selector",
+        type=parse_selector,
+        help="Optional label selector to filter clusters, e.g. 'region=eu-central-1' would only load clusters with label 'region' equal 'eu-central-1'",
+    )
+    parser.add_argument(
         "--cluster-auth-use-session-token",
         action="store_true",
         help="Use OAuth2 access token from frontend session for cluster authentication",
@@ -99,6 +105,12 @@ def main(argv=None):
         help="Comma-separated list of resource types to offer on search page, e.g. 'deployments,pods,nodes'",
     )
     parser.add_argument(
+        "--search-max-concurrency",
+        type=int,
+        help="Maximum number of current searches (across clusters/resource types), this allows limiting memory consumption and Kubernetes API calls (default: 100)",
+        default=100,
+    )
+    parser.add_argument(
         "--default-label-columns",
         type=key_value_pairs,
         help="Comma-separated list of label columns per resource type; multiple entries separated by semicolon, e.g. 'pods=app,version;deployments=team'",
@@ -123,6 +135,6 @@ def main(argv=None):
             cluster_discoverer = KubeconfigDiscoverer(
                 args.kubeconfig_path, args.kubeconfig_contexts
             )
-    cluster_manager = ClusterManager(cluster_discoverer)
+    cluster_manager = ClusterManager(cluster_discoverer, args.cluster_label_selector)
     app = get_app(cluster_manager, args)
     aiohttp.web.run_app(app, port=args.port)

@@ -30,6 +30,7 @@ from cryptography.fernet import Fernet
 
 from .cluster_manager import ClusterNotFound
 from .resource_registry import ResourceTypeNotFound
+from .selector import parse_selector, selector_matches
 
 from pathlib import Path
 
@@ -39,6 +40,9 @@ from kube_web import __version__
 from kube_web import kubernetes
 from kube_web import jinja2_filters
 from .table import add_label_columns, filter_table, sort_table, merge_cluster_tables
+
+# import tracemalloc
+# tracemalloc.start()
 
 logger = logging.getLogger(__name__)
 
@@ -161,26 +165,6 @@ def context():
         return func_wrapper
 
     return decorator
-
-
-def parse_selector(param: str):
-    if not param:
-        return None
-    selector = {}
-    conditions = param.split(",")
-    for condition in conditions:
-        key, _, val = condition.partition("=")
-        selector[key.strip()] = val.strip()
-    return selector
-
-
-def selector_matches(selector: dict, labels: dict):
-    if not selector:
-        return True
-    for key, val in selector.items():
-        if labels.get(key) != val:
-            return False
-    return True
 
 
 @routes.get("/")
@@ -781,7 +765,32 @@ async def search(
         # just log as DEBUG because the error is shown in the web frontend already
         logger.debug(f"Failed to search {_type} in {_cluster.name}: {e}")
         errors.append({"cluster": _cluster, "resource_type": _type, "exception": e})
+
     return clazz, results, errors
+
+
+async def bounded_search(
+    semaphore,
+    request,
+    session,
+    selector,
+    filter_query,
+    _type,
+    _cluster,
+    namespace,
+    is_all_namespaces,
+):
+    async with semaphore:
+        return await search(
+            request,
+            session,
+            selector,
+            filter_query,
+            _type,
+            _cluster,
+            namespace,
+            is_all_namespaces,
+        )
 
 
 def sort_rank(result, search_query_lower):
@@ -848,6 +857,11 @@ async def get_search(request, session):
 
     start = time.time()
 
+    # limit concurrency in case we have many clusters and search many resource types
+    semaphore = asyncio.Semaphore(request.app[CONFIG].search_max_concurrency)
+
+    # snapshot1 = tracemalloc.take_snapshot()
+
     tasks = []
 
     search_query_lower = search_query.lower()
@@ -855,7 +869,8 @@ async def get_search(request, session):
     for _type in resource_types:
         for _cluster in clusters:
             task = asyncio.create_task(
-                search(
+                bounded_search(
+                    semaphore,
                     request,
                     session,
                     selector,
@@ -918,6 +933,13 @@ async def get_search(request, session):
                 )
 
     results.sort(key=partial(sort_rank, search_query_lower=search_query_lower))
+
+    # snapshot2 = tracemalloc.take_snapshot()
+    # top_stats = snapshot2.compare_to(snapshot1, "lineno")
+
+    # print("[ Top 10 differences ]")
+    # for stat in top_stats[:10]:
+    #    print(stat)
 
     duration = time.time() - start
 

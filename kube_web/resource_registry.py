@@ -87,6 +87,7 @@ def namespaced_object_factory(kind: str, name: str, api_version: str):
 
 
 async def get_namespaced_resource_types(api):
+    logger.debug(f"Getting resource types for {api.url}..")
     async for namespaced, api_version, resource in discover_api_resources(api):
         if namespaced:
             clazz = namespaced_object_factory(
