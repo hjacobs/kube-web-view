@@ -18,6 +18,20 @@ aside.menu { padding: 1.5rem; margin-top: -1.5rem; background: #fafafa; }
 
 main { flex-grow: 1; flex-shrink: 1; }
 
+h1 .links,
+h2 .links {
+    margin: 0 1rem;
+}
+h1 { display: flex; }
+h1 .meta,
+h2 .meta {
+    margin-left: auto;
+    font-size: 1rem;
+    font-weight: normal;
+    color: #7a7a7a;
+    padding-top: 0.5rem;
+}
+
 /* desktop+ */
 @media screen and (min-width: 1024px) {
     aside.menu { flex-grow: 0; flex-shrink: 0; flex-basis: 12rem; padding: 1.5rem; margin-right: 1.5rem; margin-top: -1.5rem; }
@@ -39,20 +53,14 @@ main { flex-grow: 1; flex-shrink: 1; }
     #aside-menu.is-active { display: block; }
 
     main { padding: 0 1.5rem; }
-}
 
-h1 .links,
-h2 .links {
-    margin: 0 1rem;
-}
-h1 { display: flex; }
-h1 .meta,
-h2 .meta {
-    margin-left: auto;
-    font-size: 1rem;
-    font-weight: normal;
-    color: #7a7a7a;
-    padding-top: 0.5rem;
+    /* show meta created below title */
+    h1 { display: block; }
+    h1 .meta,
+    h2 .meta {
+        margin-left: 0;
+        display: block;
+    }
 }
 
 table th a { color: #363636; }
