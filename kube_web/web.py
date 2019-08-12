@@ -54,6 +54,9 @@ CONFIG = "config"
 
 ALL = "_all"
 
+ONE_WEEK = 7 * 24 * 60 * 60
+FIVE_MINUTES = 5 * 60
+
 SEARCH_DEFAULT_RESOURCE_TYPES = [
     "namespaces",
     "deployments",
@@ -1004,12 +1007,20 @@ async def auth(request, handler):
         access_token, data = await client.get_access_token(
             code, redirect_uri=redirect_uri
         )
+        expires_in = data.get("expires_in", ONE_WEEK)
+        expires = time.time() + expires_in
         session = await get_session(request)
         session["access_token"] = access_token
+        session["expires"] = expires
         raise web.HTTPFound(location=original_url)
     elif path != HEALTH_PATH:
         session = await get_session(request)
-        if not session.get("access_token"):
+        # already expire session 5 minutes before actual expiry date
+        # to make sure the access token is still valid during the request
+        if (
+            not session.get("access_token")
+            or session.get("expires", 0) < time.time() + FIVE_MINUTES
+        ):
             client, params = await get_oauth2_client()
             params["state"] = json.dumps({"url": str(request.rel_url)})
             raise web.HTTPFound(location=client.get_authorize_url(**params))
