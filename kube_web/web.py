@@ -1022,6 +1022,8 @@ async def auth(request, handler):
             or session.get("expires", 0) < time.time() + FIVE_MINUTES
         ):
             client, params = await get_oauth2_client()
+            # note that Google OAuth provider requires the redirect_uri here
+            # (it's optional according to https://tools.ietf.org/html/rfc6749#section-4.1.1)
             redirect_uri = str(request.url.with_path(OAUTH2_CALLBACK_PATH))
             params["redirect_uri"] = redirect_uri
             params["state"] = json.dumps({"url": str(request.rel_url)})
