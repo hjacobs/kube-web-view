@@ -36,3 +36,15 @@ This section explains how to use the Google OAuth 2.0 provider with Kubernetes W
 * use "https://oauth2.googleapis.com/token" for ``OAUTH2_ACCESS_TOKEN_URL``
 * pass the obtained client ID in the ``OAUTH2_CLIENT_ID`` environment variable
 * pass the obtained client secret in the ``OAUTH2_CLIENT_SECRET`` environment variable
+
+GitHub OAuth Provider
+=====================
+
+How to use GitHub as the OAuth provider with Kubernetes Web View:
+
+* create a new OAuth app in the GitHub UI
+* use ``https://{my-kube-web-view-host}/oauth2/callback`` as the **Authorization callback URL** in the GitHub UI
+* use "https://github.com/login/oauth/authorize" for ``OAUTH2_AUTHORIZE_URL``
+* use "https://github.com/login/oauth/access_token" for the ``OAUTH2_ACCESS_TOKEN_URL``
+* pass the obtained client ID in the ``OAUTH2_CLIENT_ID`` environment variable
+* pass the obtained client secret in the ``OAUTH2_CLIENT_SECRET`` environment variable
