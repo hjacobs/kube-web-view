@@ -490,13 +490,13 @@ async def get_resource_list(request, session):
 
     tables = []
     tables_by_resource_type = {}
-    errors = []
+    errors_by_cluster = collections.defaultdict(list)
     for clazz, table, error in await asyncio.gather(*tasks):
         if error:
             if len(clusters) == 1:
                 # directly re-raise the exception as single cluster was given
                 raise error["exception"]
-            errors.append(error)
+            errors_by_cluster[error["cluster"].name].append(error)
         else:
             previous_table = tables_by_resource_type.get(table.api_obj_class.endpoint)
             if previous_table:
@@ -525,7 +525,7 @@ async def get_resource_list(request, session):
         "plural": plural,
         "tables": tables,
         "get_cell_class": get_cell_class,
-        "list_errors": errors,
+        "list_errors": errors_by_cluster,
         "list_duration": duration,
         "list_resource_types": resource_types,
         "list_clusters": clusters,
@@ -856,7 +856,7 @@ async def get_search(request, session):
     searchable_resource_types = {}
 
     results = []
-    errors = []
+    errors_by_cluster = collections.defaultdict(list)
 
     start = time.time()
 
@@ -910,7 +910,8 @@ async def get_search(request, session):
             # search was done with a non-standard resource type (e.g. CRD)
             searchable_resource_types[clazz.endpoint] = clazz.kind
         results.extend(_results)
-        errors.extend(_errors)
+        for error in _errors:
+            errors_by_cluster[error["cluster"].name].append(error)
 
     for resource_type in offered_resource_types:
         if resource_type not in searchable_resource_types:
@@ -950,7 +951,7 @@ async def get_search(request, session):
         "cluster": cluster,
         "namespace": namespace,
         "search_results": results,
-        "search_errors": errors,
+        "search_errors": errors_by_cluster,
         "search_query": search_query,
         "search_clusters": clusters,
         "search_duration": duration,

@@ -202,12 +202,16 @@
     <p class="has-text-grey">Found {{ list_total_rows }} row{{ 's' if list_total_rows != 1 }} for  {{ list_resource_types|length }} resource type{{ 's' if list_resource_types|length != 1}} in {{ list_clusters|length }} cluster{{ 's' if list_clusters|length != 1 }} in {{ '%.3f'|format(list_duration) }} seconds.</p>
 </div>
 
-{% for error in list_errors: %}
+{% for cluster_name, errors in list_errors.items(): %}
 <article class="message is-danger">
     <div class="message-header">
-        <p>Error for cluster {{ error.cluster.name }}</p>
+        <p>Error{{ 's' if errors|length > 1 }} for cluster {{ cluster_name }}</p>
     </div>
-    <div class="message-body">Failed to list {{ error.resource_type }}: {{ error.exception }}</div>
+    <div class="message-body">
+        {% for error in errors: %}
+        <p>Failed to search {{ error.resource_type }}: {{ error.exception }}</p>
+        {% endfor %}
+    </div>
 </article>
 {% endfor %}
 
