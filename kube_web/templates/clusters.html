@@ -34,7 +34,7 @@
     }
 </script>
 <form action="/search" method="get">
-    <table class="table is-stripped is-fullwidth">
+    <table class="table is-stripped is-fullwidth has-bottom-controls">
         <tr>
             <th></th>
             <th>Name</th>
@@ -58,14 +58,12 @@
         </tr>
         {% endfor %}
     </table>
-    <div class="field">
-        <div class="control">
-            <button class="button is-primary" type="submit" id="search-clusters-button" disabled>
-                <span class="icon">
-                    <i class="fas fa-search"></i>
-                </span>
-                <span>Search in selected clusters</span></button>
-        </div>
+    <div class="control bottom-controls">
+        <button class="button is-primary" type="submit" id="search-clusters-button" disabled>
+            <span class="icon">
+                <i class="fas fa-search"></i>
+            </span>
+            <span>Search in selected clusters</span></button>
     </div>
 </form>
 {% endblock %}

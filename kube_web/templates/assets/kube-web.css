@@ -66,6 +66,9 @@ h2 .meta {
 table th a { color: #363636; }
 table th a:hover { color: #3273dc; }
 
+table.table.has-bottom-controls { margin-bottom: 0.5rem; }
+.bottom-controls { margin-bottom: 1.5rem; }
+
 div.section { margin: 0 0 1rem 0; padding: 0; }
 div.section h4.title { margin-bottom: 1rem; }
 

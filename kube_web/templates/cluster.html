@@ -19,26 +19,51 @@
     API URL: {{ cluster_obj.api.url }}
 </div>
 
+<script>
+    function toggleSearchButton() {
+        const $checked = document.querySelectorAll('input[name=namespace]:checked');
+        const $button = document.getElementById("search-namespaces-button");
+
+        if ($checked.length > 0) {
+            $button.disabled = false;
+        } else {
+            $button.disabled = true;
+        }
+    }
+</script>
+
 <div class="section">
     <h4 class="title is-5">Namespaces</h4>
-    <table class="table is-stripped">
-        <tr>
-            <th>Name</th>
-            <th>Labels</th>
-            <th>Created</th>
-        </tr>
-        {% for resource in namespaces: %}
-        <tr>
-            <td><a href="/clusters/{{ cluster }}/{{ resource.endpoint }}/{{ resource.name }}">{{ resource.name }}</a></td>
-            <td>
-                {% for key, val in resource.labels.items()|sort: %}
-                <span class="tag">{{ key }}: {{ val }}</span>
-                {% endfor %}
-            </td>
-            <td style="color:{{ resource.metadata.creationTimestamp|age_color(days=1) }}">{{ resource.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+    <form action="/search" method="get">
+        <input type="hidden" name="cluster" value="{{ cluster }}">
+        <table class="table is-stripped has-bottom-controls">
+            <tr>
+                <th></th>
+                <th>Name</th>
+                <th>Labels</th>
+                <th>Created</th>
+            </tr>
+            {% for resource in namespaces: %}
+            <tr>
+                <td><input type="checkbox" name="namespace" value="{{ resource.name }}" onclick="toggleSearchButton()"></td>
+                <td><a href="/clusters/{{ cluster }}/{{ resource.endpoint }}/{{ resource.name }}">{{ resource.name }}</a></td>
+                <td>
+                    {% for key, val in resource.labels.items()|sort: %}
+                    <span class="tag">{{ key }}: {{ val }}</span>
+                    {% endfor %}
+                </td>
+                <td style="color:{{ resource.metadata.creationTimestamp|age_color(days=1) }}">{{ resource.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <div class="control bottom-controls">
+            <button class="button is-primary" type="submit" id="search-namespaces-button" disabled>
+                <span class="icon">
+                    <i class="fas fa-search"></i>
+                </span>
+                <span>Search in selected namespaces</span></button>
+        </div>
+    </form>
 </div>
 
 <div class="section">
