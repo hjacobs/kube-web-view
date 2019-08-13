@@ -42,3 +42,13 @@ def test_search_non_standard_resource_type(session):
     # check that the type was added as checkbox
     labels = response.html.find("label.checkbox")
     assert "PodSecurityPolicy" in [label.text for label in labels]
+
+
+def test_search_container_image_match_highlight(session):
+    response = session.get("/search?q=hjacobs/wrong-container-image:&type=deployments")
+    response.raise_for_status()
+    match = response.html.find(".search-result .match", first=True)
+    assert (
+        '<span class="match"><em>hjacobs/wrong-container-image:</em>0.1</span>'
+        == match.html
+    )

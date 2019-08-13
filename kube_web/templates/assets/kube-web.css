@@ -83,6 +83,8 @@ form .checkboxes label { margin-right: 0.5rem; padding-top: 0.375em; }
 .search-result p { font-size: 0.75rem; }
 .search-result h3.title { margin: 0 0 0.5rem 0; }
 .search-result { margin-bottom: 1.5rem; }
+.search-result p { margin-bottom: 0.25rem; }
+.search-result em { font-style: normal; background: hsl(48, 100%, 67%) }
 
 /* Pygments CSS
  * print(HtmlFormatter(style='friendly').get_style_defs('.highlight'))

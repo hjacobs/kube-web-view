@@ -79,6 +79,8 @@ SEARCH_OFFERED_RESOURCE_TYPES = [
     "nodes",
 ]
 
+SEARCH_MATCH_CONTEXT_LENGTH = 20
+
 
 TABLE_CELL_FORMATTING = {
     "events": {"Type": {"Warning": "has-text-warning"}},
@@ -760,6 +762,7 @@ async def search(
                 if col["name"] == "Name":
                     name_column = i
                     break
+            filter_query_lower = filter_query.lower()
             for row in table.rows:
                 name = row["cells"][name_column]
                 if namespaced:
@@ -767,11 +770,30 @@ async def search(
                     link = f"/clusters/{_cluster.name}/namespaces/{ns}/{_type}/{name}"
                 else:
                     link = f"/clusters/{_cluster.name}/{_type}/{name}"
+                matches = []
+                if filter_query:
+                    for cell in row["cells"]:
+                        idx = str(cell).lower().find(filter_query_lower)
+                        if idx > -1:
+                            pre_start = max(idx - SEARCH_MATCH_CONTEXT_LENGTH, 0)
+                            end = idx + len(filter_query_lower)
+                            post_end = min(
+                                idx
+                                + len(filter_query_lower)
+                                + SEARCH_MATCH_CONTEXT_LENGTH,
+                                len(cell),
+                            )
+                            matches.append(
+                                (cell[pre_start:idx], cell[idx:end], cell[end:post_end])
+                            )
+                            if len(matches) >= 3:
+                                break
                 results.append(
                     {
                         "title": name,
                         "kind": clazz.kind,
                         "link": link,
+                        "matches": matches,
                         "labels": row["object"]["metadata"].get("labels", {}),
                         "created": row["object"]["metadata"]["creationTimestamp"],
                     }
