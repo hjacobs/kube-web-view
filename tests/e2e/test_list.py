@@ -9,6 +9,13 @@ def test_list_clusters(session):
     assert "/clusters/local" in response.text
 
 
+def test_list_clusters_filter(session):
+    response = session.get("/clusters?filter=no-such-cluster")
+    response.raise_for_status()
+    assert "/clusters/local" not in response.text
+    assert "No clusters found." in response.text
+
+
 def test_list_cluster_resource_type_not_found(session):
     response = session.get("/clusters/local/foobars")
     assert response.status_code == 404

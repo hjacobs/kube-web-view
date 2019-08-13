@@ -2,7 +2,26 @@
 {% block title %}Clusters{% endblock %}
 {% block content %}
 <h1 class="title">Clusters</h1>
-<table class="table is-stripped">
+<form action="#" method="get" class="tools-form is-active">
+    <input type="hidden" name="selector" value="{{ rel_url.query.selector }}">
+
+    <div class="field is-horizontal">
+        <div class="field-body">
+            <div class="field has-addons">
+                <p class="control is-expanded has-icons-left">
+                <input class="input" type="text" placeholder="Filter clusters" name="filter" value="{{ rel_url.query.filter }}">
+                <span class="icon is-small is-left">
+                    <i class="fas fa-filter"></i>
+                </span>
+                </p>
+                <div class="control">
+                    <button class="button is-primary" type="submit">Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<table class="table is-stripped is-fullwidth">
     <tr>
         <th>Name</th>
         <th>API URL</th>
@@ -17,6 +36,10 @@
             <a href="/clusters?selector={{ key }}={{ val }}"><span class="tag is-link">{{ key }}: {{ val }}</span></a>
             {% endfor %}
         </td>
+    </tr>
+    {% else: %}
+    <tr>
+        <td colspan="4">No clusters found.</td>
     </tr>
     {% endfor %}
 </table>

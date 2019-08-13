@@ -182,13 +182,25 @@ async def get_index(request):
     raise web.HTTPFound(location=target)
 
 
+def filter_matches(_filter_lower, cluster):
+    if not _filter_lower:
+        return True
+    return _filter_lower in cluster.name.lower() or _filter_lower in " ".join(
+        cluster.labels.values()
+    )
+
+
 @routes.get("/clusters")
 @aiohttp_jinja2.template("clusters.html")
-async def get_cluster_list(request):
+@context()
+async def get_cluster_list(request, session):
     selector = parse_selector(request.query.get("selector"))
+    _filter_lower = request.query.get("filter", "").lower()
     clusters = []
     for cluster in request.app[CLUSTER_MANAGER].clusters:
-        if selector_matches(selector, cluster.labels):
+        if selector_matches(selector, cluster.labels) and filter_matches(
+            _filter_lower, cluster
+        ):
             clusters.append(cluster)
     clusters.sort(key=lambda c: c.name)
     return {"clusters": clusters}
