@@ -15,32 +15,57 @@
                 </span>
                 </p>
                 <div class="control">
-                    <button class="button is-primary" type="submit">Filter</button>
+                    <button class="button is-primary" type="submit">Filter!</button>
                 </div>
             </div>
         </div>
     </div>
 </form>
-<table class="table is-stripped is-fullwidth">
-    <tr>
-        <th>Name</th>
-        <th>API URL</th>
-        <th>Labels</th>
-    </tr>
-    {% for cluster in clusters: %}
-    <tr>
-        <td><a href="/clusters/{{ cluster.name }}">{{ cluster.name }}</a></td>
-        <td>{{ cluster.api.url }}</td>
-        <td>
-            {% for key, val in cluster.labels.items()|sort: %}
-            <a href="/clusters?selector={{ key }}={{ val }}"><span class="tag is-link">{{ key }}: {{ val }}</span></a>
-            {% endfor %}
-        </td>
-    </tr>
-    {% else: %}
-    <tr>
-        <td colspan="4">No clusters found.</td>
-    </tr>
-    {% endfor %}
-</table>
+<script>
+    function toggleSearchButton() {
+        const $checked = document.querySelectorAll('input[name=cluster]:checked');
+        const $button = document.getElementById("search-clusters-button");
+
+        if ($checked.length > 0) {
+            $button.disabled = false;
+        } else {
+            $button.disabled = true;
+        }
+    }
+</script>
+<form action="/search" method="get">
+    <table class="table is-stripped is-fullwidth">
+        <tr>
+            <th></th>
+            <th>Name</th>
+            <th>API URL</th>
+            <th>Labels</th>
+        </tr>
+        {% for cluster in clusters: %}
+        <tr>
+            <td><input type="checkbox" name="cluster" value="{{ cluster.name }}" onclick="toggleSearchButton()"></td>
+            <td><a href="/clusters/{{ cluster.name }}">{{ cluster.name }}</a></td>
+            <td>{{ cluster.api.url }}</td>
+            <td>
+                {% for key, val in cluster.labels.items()|sort: %}
+                <a href="/clusters?selector={{ key }}={{ val }}"><span class="tag is-link">{{ key }}: {{ val }}</span></a>
+                {% endfor %}
+            </td>
+        </tr>
+        {% else: %}
+        <tr>
+            <td colspan="4">No clusters found.</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <div class="field">
+        <div class="control">
+            <button class="button is-primary" type="submit" id="search-clusters-button" disabled>
+                <span class="icon">
+                    <i class="fas fa-search"></i>
+                </span>
+                <span>Search in selected clusters</span></button>
+        </div>
+    </div>
+</form>
 {% endblock %}

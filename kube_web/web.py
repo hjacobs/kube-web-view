@@ -829,8 +829,8 @@ def sort_rank(result, search_query_lower):
 @context()
 async def get_search(request, session):
     params = request.rel_url.query
-    cluster = params.get("cluster")
-    namespace = params.get("namespace")
+    cluster = ",".join(params.getall("cluster", []))
+    namespace = ",".join(params.getall("namespace", []))
     selector = params.get("selector", "").strip()
     search_query = params.get("q", "").strip()
 
