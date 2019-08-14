@@ -28,7 +28,20 @@ Enable this operation mode via ``--cluster-auth-use-session-token``.
 The OAuth redirect flow will not do any extra authorization by default, i.e. everybody who can login with your OAuth provider can use Kubernetes Web View!
 You can plug in a custom Python hook function (coroutine) via the ``--oauth2-authorized-hook`` to validate the login or do any extra work (store extra info in the session, deny access, log user ID, etc).
 Note that the hook needs to be a coroutine function with signature like ``async def authorized(data, session)``. The result should be boolean true if the login is successful, and false otherwise.
-Examples of such hooks are provided in the `examples directory <https://codeberg.org/hjacobs/kube-web-view/src/branch/master/examples>`_ of the git repository.
+Examples of such hooks are provided in the `examples directory <https://codeberg.org/hjacobs/kube-web-view/src/branch/master/examples>`_. A minimal ``hooks.py`` would look like:
+
+.. code-block:: python
+
+    import logging
+
+    async def oauth2_authorized(data: dict, session):
+        access_token = data["access_token"]
+        # TODO: do something with the access token, e.g. look up user info
+        logging.info("New OAuth login!")
+        # TODO: validate whether login is allowed or not
+        return True  # allow all OAuth logins
+
+This file would need to be in the Python search path, e.g. as ``hooks.py`` in the root ("/") of the Docker image. Pass the hook function as ``--oauth2-authorized-hook=hooks.oauth2_authorized`` to Kubernetes Web View.
 
 Google OAuth Provider
 =====================
