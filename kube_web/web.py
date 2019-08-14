@@ -568,7 +568,7 @@ async def get_resource_view(request, session):
 
     if resource.kind == "Secret" and not request.app[CONFIG].show_secrets:
         # mask out all secret values, but still show keys
-        for key in resource.obj["data"].keys():
+        for key in resource.obj.get("data", {}).keys():
             resource.obj["data"][key] = "**SECRET-CONTENT-HIDDEN-BY-KUBE-WEB-VIEW**"
         # the secret data is also leaked in annotations ("last-applied-configuration")
         # => hide annotations
