@@ -5,6 +5,7 @@
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/hjacobs/kube-web-view)
 ![Docker Pulls](https://img.shields.io/docker/pulls/hjacobs/kube-web-view.svg)
 ![License](https://img.shields.io/github/license/hjacobs/kube-web-view)
+![CalVer](https://img.shields.io/badge/calver-YY.MM.MICRO-22bfda.svg)
 
 Kubernetes Web View allows to list and view all Kubernetes resources (incl. CRDs) with permalink-friendly URLs in a plain-HTML frontend.
 This tool was mainly developed to provide a web-version of `kubectl` for troubleshooting and supporting colleagues.
