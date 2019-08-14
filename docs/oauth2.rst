@@ -25,6 +25,11 @@ The OAuth2 login flow will (by default) just protect the web frontend, the confi
 This behavior can be changed and the session's OAuth2 access token can be used for cluster authentication instead of using configured credentials.
 Enable this operation mode via ``--cluster-auth-use-session-token``.
 
+The OAuth redirect flow will not do any extra authorization by default, i.e. everybody who can login with your OAuth provider can use Kubernetes Web View!
+You can plug in a custom Python hook function (coroutine) via the ``--oauth2-authorized-hook`` to validate the login or do any extra work (store extra info in the session, deny access, log user ID, etc).
+Note that the hook needs to be a coroutine function with signature like ``async def authorized(data, session)``. The result should be boolean true if the login is successful, and false otherwise.
+Examples of such hooks are provided in the `examples directory <https://codeberg.org/hjacobs/kube-web-view/src/branch/master/examples>`_ of the git repository.
+
 Google OAuth Provider
 =====================
 
@@ -48,3 +53,13 @@ How to use GitHub as the OAuth provider with Kubernetes Web View:
 * use "https://github.com/login/oauth/access_token" for the ``OAUTH2_ACCESS_TOKEN_URL``
 * pass the obtained client ID in the ``OAUTH2_CLIENT_ID`` environment variable
 * pass the obtained client secret in the ``OAUTH2_CLIENT_SECRET`` environment variable
+
+Note that any GitHub user can now login to your deployment of Kubernetes Web View! You have to configure a ``--oauth2-authorized-hook`` function to validate the GitHub login and only allow certain usernames:
+
+* copy ``hooks.py`` from ``examples/oauth2-validate-github-token/hooks.py`` (see `examples dir <https://codeberg.org/hjacobs/kube-web-view/src/branch/master/examples>`_) to a new folder
+* customize the username in ``hooks.py`` to match your allowed GitHub user logins
+* create a new ``Dockerfile`` in the same folder
+* edit the ``Dockerfile`` to have two lines: 1) ``FROM hjacobs/kube-web-view:{version}`` (replace "{version}"!) as the first line, and 2) ``COPY hooks.py /`` to copy our OAuth validation function
+* build the Docker image
+* configure your kube-web-view deployment and add ``--oauth2-authorized-hook=hooks.oauth2_authorized`` as argument
+* deploy kube-web-view with the new Docker image and CLI option
