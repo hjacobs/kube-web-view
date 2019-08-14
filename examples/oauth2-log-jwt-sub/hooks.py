@@ -2,6 +2,8 @@
 Example hook to parse a JWT access token and log the "sub" claim.
 
 To be used with --oauth2-authorized-hook option
+
+See also https://kube-web-view.readthedocs.io/en/latest/oauth2.html
 """
 import base64
 import json

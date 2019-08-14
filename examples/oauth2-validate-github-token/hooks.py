@@ -2,6 +2,8 @@
 Example hook to validate GitHub user login.
 
 To be used with --oauth2-authorized-hook option
+
+See also https://kube-web-view.readthedocs.io/en/latest/oauth2.html
 """
 import aiohttp
 import logging
