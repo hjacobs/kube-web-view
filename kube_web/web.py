@@ -1045,6 +1045,12 @@ async def auth(request, handler):
         expires_in = data.get("expires_in", ONE_WEEK)
         expires = time.time() + expires_in
         session = await get_session(request)
+        hook = request.app[CONFIG].oauth2_authorized_hook
+        if hook:
+            # the hook can store additional stuff in the session,
+            # deny access (raise exception), etc
+            if not await hook(data, session):
+                raise web.HTTPForbidden(text="Access Denied")
         session["access_token"] = access_token
         session["expires"] = expires
         raise web.HTTPFound(location=original_url)

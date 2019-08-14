@@ -1,5 +1,7 @@
+import asyncio
 import aiohttp.web
 import argparse
+import importlib
 import logging
 
 from pathlib import Path
@@ -29,6 +31,15 @@ def key_value_pairs(value):
         key, sep, value = kv_pair.partition("=")
         data[key] = value
     return data
+
+
+def coroutine_function(value):
+    module_name, attr_path = value.rsplit(".", 1)
+    module = importlib.import_module(module_name)
+    function = getattr(module, attr_path)
+    if not asyncio.iscoroutinefunction(function):
+        raise ValueError(f"Not a coroutine (async) function: {value}")
+    return function
 
 
 def main(argv=None):
@@ -115,6 +126,11 @@ def main(argv=None):
         type=key_value_pairs,
         help="Comma-separated list of label columns per resource type; multiple entries separated by semicolon, e.g. 'pods=app,version;deployments=team'",
         default={},
+    )
+    parser.add_argument(
+        "--oauth2-authorized-hook",
+        type=coroutine_function,
+        help="Optional hook (name of a coroutine like 'mymodule.myfunc') to process OAuth access token response (validate, log, ..)",
     )
 
     args = parser.parse_args(argv)
