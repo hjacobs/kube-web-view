@@ -26,7 +26,7 @@ This behavior can be changed and the session's OAuth2 access token can be used f
 Enable this operation mode via ``--cluster-auth-use-session-token``.
 
 The OAuth redirect flow will not do any extra authorization by default, i.e. everybody who can login with your OAuth provider can use Kubernetes Web View!
-You can plug in a custom Python hook function (coroutine) via the ``--oauth2-authorized-hook`` to validate the login or do any extra work (store extra info in the session, deny access, log user ID, etc).
+You can plug in a custom Python hook function (coroutine) via ``--oauth2-authorized-hook`` to validate the login or do any extra work (store extra info in the session, deny access, log user ID, etc).
 Note that the hook needs to be a coroutine function with signature like ``async def authorized(data, session)``. The result should be boolean true if the login is successful, and false otherwise.
 Examples of such hooks are provided in the `examples directory <https://codeberg.org/hjacobs/kube-web-view/src/branch/master/examples>`_. A minimal ``hooks.py`` would look like:
 
