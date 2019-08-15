@@ -2,6 +2,10 @@
 Alternative UIs
 ===============
 
+.. tip::
+
+    Also check out the `blog post about Kubernetes web UIs in 2019 <https://srcco.de/posts/kubernetes-web-uis-in-2019.html>`_ for a look at some different web UIs and why Kubernetes Web View was created.
+
 This page lists a number of alternative, open source UIs for Kubernetes.
 
 K8Dash
