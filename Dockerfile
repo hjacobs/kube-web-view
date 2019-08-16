@@ -1,4 +1,4 @@
-FROM python:3.7-alpine3.10
+FROM python:3.7-slim
 
 WORKDIR /
 
@@ -10,16 +10,10 @@ COPY pyproject.toml /
 # fake package to make Poetry happy (we will install the actual contents in the later stage)
 RUN mkdir /kube_web && touch /kube_web/__init__.py && touch /README.md
 
-RUN apk update && \
-    apk add python3-dev gcc musl-dev zlib-dev libffi-dev openssl-dev && \
-    poetry config settings.virtualenvs.create false && \
-    poetry install --no-interaction --no-dev --no-ansi && \
-    rm -fr /usr/local/lib/python3.7/site-packages/pip && \
-    rm -fr /usr/local/lib/python3.7/site-packages/setuptools && \
-    apk del python3-dev gcc musl-dev zlib-dev libffi-dev openssl-dev && \
-    rm -rf /var/cache/apk/* /root/.cache /tmp/* 
+RUN poetry config settings.virtualenvs.create false && \
+    poetry install --no-interaction --no-dev --no-ansi
 
-FROM python:3.7-alpine3.10
+FROM python:3.7-slim
 
 WORKDIR /
 
