@@ -17,8 +17,6 @@ from .cluster_discovery import (
 )
 from .cluster_manager import ClusterManager
 
-SHUTDOWN_WAIT = 5
-
 
 logger = logging.getLogger(__name__)
 
@@ -42,12 +40,6 @@ def coroutine_function(value):
     if not asyncio.iscoroutinefunction(function):
         raise ValueError(f"Not a coroutine (async) function: {value}")
     return function
-
-
-async def on_shutdown(app):
-    logger.info(f"Shutting down after {SHUTDOWN_WAIT} seconds..")
-    # wait some time to give Kubernetes the chance to remove endpoints
-    await asyncio.sleep(SHUTDOWN_WAIT)
 
 
 def main(argv=None):
@@ -161,5 +153,4 @@ def main(argv=None):
             )
     cluster_manager = ClusterManager(cluster_discoverer, args.cluster_label_selector)
     app = get_app(cluster_manager, args)
-    app.on_shutdown.append(on_shutdown)
     aiohttp.web.run_app(app, port=args.port)
