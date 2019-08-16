@@ -117,9 +117,11 @@ def filter_table(table, filter_param):
 
         if is_match:
             for text in text_filters:
-                if text not in " ".join(str(cell).lower() for cell in row["cells"]):
-                    is_match = False
-                    break
+                is_match = False
+                for cell in row["cells"]:
+                    if text in str(cell).lower():
+                        is_match = True
+                        break
 
         if not is_match:
             del table.rows[i]

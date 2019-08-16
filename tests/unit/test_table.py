@@ -95,6 +95,20 @@ def test_filter_table_text_match(single_pod_table):
     assert len(table.rows) == 1
 
 
+def test_filter_table_text_match_multi(single_pod_table):
+    table = single_pod_table
+    # letters "m" and "a" are in both cells
+    filter_table(table, "m, a")
+    assert len(table.rows) == 1
+
+
+def test_filter_table_text_no_match_multi(single_pod_table):
+    table = single_pod_table
+    # "my" matches first column, but "xxx" does not match
+    filter_table(table, "my, xxx")
+    assert len(table.rows) == 0
+
+
 def test_filter_table_text_match_case_insensitive(single_pod_table):
     table = single_pod_table
     filter_table(table, " MyName")
@@ -201,6 +215,27 @@ def test_merge_cluster_tables_completely_different():
     assert len(table.obj["clusters"]) == 2
     assert table.columns == [{"name": "A"}, {"name": "B"}]
     assert table.rows == [{"cells": ["a", None]}, {"cells": [None, "b"]}]
+
+
+@pytest.mark.skipif(
+    os.getenv("PERF_TEST") is None,
+    reason="Performance tests only run when PERF_TEST is set",
+)
+def test_filter_table_performance(capsys):
+    def _filter_table():
+        table = Table(
+            Pod,
+            {
+                "kind": "Table",
+                "columnDefinitions": [{"name": "A"}, {"name": "C"}, {"name": "E"}],
+                "rows": [{"cells": ["a", "c", "e"]}] * 100,
+                "clusters": ["c1"],
+            },
+        )
+        filter_table(table, "c")
+
+    with capsys.disabled():
+        print(timeit.timeit(_filter_table, number=1000))
 
 
 @pytest.mark.skipif(
