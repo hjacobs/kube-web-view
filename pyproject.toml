@@ -1,9 +1,10 @@
 [tool.poetry]
 name = "kube-web-view"
-version = "0.1.0"
-description = "Kubernetes Web UI"
+version = "19.8.0"
+description = "Kubernetes Web View allows to list and view all Kubernetes resources (incl. CRDs) with permalink-friendly URLs in a plain-HTML frontend"
 authors = ["Henning Jacobs <henning@zalando.de>"]
 license = "GPL-3.0+"
+readme = "README.md"
 homepage = "https://kube-web-view.readthedocs.io/"
 documentation = "https://kube-web-view.readthedocs.io/"
 repository = "https://codeberg.org/hjacobs/kube-web-view"

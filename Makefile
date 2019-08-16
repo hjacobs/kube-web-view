@@ -76,3 +76,9 @@ run.kind:
 .PHONY: mirror
 mirror:
 	git push --mirror git@github.com:hjacobs/kube-web-view.git
+
+.PHONY: version
+version:
+	sed -i "s/version = .*/version = \"${VERSION}\"/" pyproject.toml
+	sed -i "s/__version__ = .*/__version__ = '${VERSION}'/" kube_web/__init__.py
+	sed -i "s/BUILD_VERSION/${VERSION}/g" kube_web/templates/base.html
