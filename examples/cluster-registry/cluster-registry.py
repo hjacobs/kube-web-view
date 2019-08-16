@@ -20,10 +20,10 @@ KUBERNETES_CLUSTERS = [
     },
     {
         "id": "123",
-        "alias": "foo",
+        "alias": "bar",
         "api_server_url": "https://cluster-456.example.org",
-        "channel": "stable",
-        "environment": "production",
+        "channel": "beta",
+        "environment": "test",
         "infrastructure_account": "aws:123456789012",
         "region": "eu-central-1",
         "lifecycle_status": "ready",
