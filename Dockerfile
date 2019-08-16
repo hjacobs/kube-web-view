@@ -7,6 +7,9 @@ RUN pip3 install poetry
 COPY poetry.lock /
 COPY pyproject.toml /
 
+# fake package to make Poetry happy (we will install the actual contents in the later stage)
+RUN mkdir /kube_web && touch /kube_web/__init__.py && touch /README.md
+
 RUN apk update && \
     apk add python3-dev gcc musl-dev zlib-dev libffi-dev openssl-dev && \
     poetry config settings.virtualenvs.create false && \
@@ -20,8 +23,10 @@ FROM python:3.7-alpine3.10
 
 WORKDIR /
 
+# copy pre-built packages to this image
 COPY --from=0 /usr/local/lib/python3.7/site-packages /usr/local/lib/python3.7/site-packages
 
+# now copy the actual code we will execute (poetry install above was just for dependencies)
 COPY kube_web /kube_web
 
 ARG VERSION=dev
