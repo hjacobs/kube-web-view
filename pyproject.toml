@@ -3,6 +3,16 @@ name = "kube-web-view"
 version = "0.1.0"
 description = "Kubernetes Web UI"
 authors = ["Henning Jacobs <henning@zalando.de>"]
+license = "GPL-3.0+"
+homepage = "https://kube-web-view.readthedocs.io/"
+documentation = "https://kube-web-view.readthedocs.io/"
+repository = "https://codeberg.org/hjacobs/kube-web-view"
+packages = [
+    { include = "kube_web" }
+]
+
+[tool.poetry.scripts]
+kube-web-view = 'kube_web:main.main'
 
 [tool.poetry.dependencies]
 python = "^3.7"
