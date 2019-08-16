@@ -64,7 +64,7 @@ def add_label_columns(table, label_columns_param):
             row["cells"].insert(i + 1, contents)
 
 
-def filter_table(table, filter_param):
+def filter_table(table, filter_param, match_labels=False):
     if not filter_param:
         return
 
@@ -122,6 +122,14 @@ def filter_table(table, filter_param):
                     if text in str(cell).lower():
                         is_match = True
                         break
+
+                if not is_match and match_labels:
+                    for label_value in (
+                        row["object"]["metadata"].get("labels", {}).values()
+                    ):
+                        if text in label_value.lower():
+                            is_match = True
+                            break
 
         if not is_match:
             del table.rows[i]

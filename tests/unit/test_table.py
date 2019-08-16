@@ -28,6 +28,25 @@ def single_pod_table():
 
 
 @pytest.fixture
+def single_pod_table_with_labels():
+    table = Table(
+        Pod,
+        {
+            "kind": "Table",
+            "columnDefinitions": [{"name": "Name"}, {"name": "Status"}],
+            "rows": [
+                {
+                    "cells": ["myname", "ImagePullBackOff"],
+                    "object": {"metadata": {"labels": {"label1": "labelval1"}}},
+                }
+            ],
+            "clusters": ["c1"],
+        },
+    )
+    return table
+
+
+@pytest.fixture
 def two_pod_table():
     table = Table(
         Pod,
@@ -92,6 +111,18 @@ def test_filter_table_whitespace_ignore(single_pod_table):
 def test_filter_table_text_match(single_pod_table):
     table = single_pod_table
     filter_table(table, "myname")
+    assert len(table.rows) == 1
+
+
+def test_filter_table_text_match_label(single_pod_table_with_labels):
+    table = single_pod_table_with_labels
+    filter_table(table, "labelval1")
+    assert len(table.rows) == 0
+
+
+def test_filter_table_text_match_label2(single_pod_table_with_labels):
+    table = single_pod_table_with_labels
+    filter_table(table, "labelval1", match_labels=True)
     assert len(table.rows) == 1
 
 
@@ -221,6 +252,33 @@ def test_merge_cluster_tables_completely_different():
     os.getenv("PERF_TEST") is None,
     reason="Performance tests only run when PERF_TEST is set",
 )
+def test_add_label_columns_performance(capsys):
+    def _add_label_cols():
+        table = Table(
+            Pod,
+            {
+                "kind": "Table",
+                "columnDefinitions": [{"name": "A"}, {"name": "C"}, {"name": "E"}],
+                "rows": [
+                    {
+                        "cells": ["a", "c", "e"],
+                        "object": {"metadata": {"labels": {"foo": "bar"}}},
+                    }
+                ]
+                * 100,
+                "clusters": ["c1"],
+            },
+        )
+        add_label_columns(table, "*")
+
+    with capsys.disabled():
+        print("add_label_columns", timeit.timeit(_add_label_cols, number=1000))
+
+
+@pytest.mark.skipif(
+    os.getenv("PERF_TEST") is None,
+    reason="Performance tests only run when PERF_TEST is set",
+)
 def test_filter_table_performance(capsys):
     def _filter_table():
         table = Table(
@@ -235,7 +293,7 @@ def test_filter_table_performance(capsys):
         filter_table(table, "c")
 
     with capsys.disabled():
-        print(timeit.timeit(_filter_table, number=1000))
+        print("filter_table", timeit.timeit(_filter_table, number=1000))
 
 
 @pytest.mark.skipif(
@@ -265,4 +323,4 @@ def test_marge_cluster_tables_performance(capsys):
         merge_cluster_tables(table1, table2)
 
     with capsys.disabled():
-        print(timeit.timeit(merge_tables, number=1000))
+        print("merge_cluster_tables", timeit.timeit(merge_tables, number=1000))

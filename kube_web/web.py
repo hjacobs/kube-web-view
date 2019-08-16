@@ -754,8 +754,9 @@ async def search(
 
             table = await kubernetes.get_table(query)
             if filter_query:
+                filter_table(table, filter_query, match_labels=True)
+                # add label columns AFTER filtering, so there is less to do
                 add_label_columns(table, "*")
-                filter_table(table, filter_query)
             name_column = 0
             for i, col in enumerate(table.columns):
                 if col["name"] == "Name":
