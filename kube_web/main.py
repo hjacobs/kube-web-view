@@ -3,6 +3,9 @@ import aiohttp.web
 import argparse
 import importlib
 import logging
+import signal
+import sys
+import time
 
 from pathlib import Path
 
@@ -16,6 +19,8 @@ from .cluster_discovery import (
     KubeconfigDiscoverer,
 )
 from .cluster_manager import ClusterManager
+
+SIGTERM_SHUTDOWN_WAIT = 10
 
 
 logger = logging.getLogger(__name__)
@@ -40,6 +45,14 @@ def coroutine_function(value):
     if not asyncio.iscoroutinefunction(function):
         raise ValueError(f"Not a coroutine (async) function: {value}")
     return function
+
+
+def sigterm_handler(_signo, _stack_frame):
+    logger.info(f"Received SIGTERM, exiting after {SIGTERM_SHUTDOWN_WAIT} seconds..")
+    # wait some time to give Kubernetes the chance to remove endpoints
+    time.sleep(SIGTERM_SHUTDOWN_WAIT)
+    # raises SystemExit
+    sys.exit(0)
 
 
 def main(argv=None):
@@ -153,4 +166,5 @@ def main(argv=None):
             )
     cluster_manager = ClusterManager(cluster_discoverer, args.cluster_label_selector)
     app = get_app(cluster_manager, args)
+    signal.signal(signal.SIGTERM, sigterm_handler)
     aiohttp.web.run_app(app, port=args.port)
