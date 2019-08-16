@@ -120,16 +120,15 @@ routes = web.RouteTableDef()
 
 class HTTPClientWithAccessToken(HTTPClient):
     def __init__(self, base, access_token):
-        self.__dict__ = base.__dict__
+        self._base_api = base
         self._access_token = access_token
-        self.config.user["token"] = None
 
     def get(self, *args, **kwargs):
         kwargs["auth"] = None
         if "headers" not in kwargs:
             kwargs["headers"] = {}
         kwargs["headers"]["Authorization"] = f"Bearer {self._access_token}"
-        return super().get(*args, **kwargs)
+        return self._base_api.get(*args, **kwargs)
 
 
 def wrap_query(query: Query, request, session):

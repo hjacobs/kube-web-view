@@ -17,7 +17,7 @@ kube-web-view = 'kube_web:main.main'
 
 [tool.poetry.dependencies]
 python = "^3.7"
-pykube-ng = "^0.28.0"
+pykube-ng = "^0.30.0"
 Jinja2 = "^2.10"
 aiohttp-jinja2 = "^1.1"
 Pygments = "^2.4"
