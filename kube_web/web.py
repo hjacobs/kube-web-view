@@ -165,10 +165,15 @@ def context():
                 clusters, is_all_clusters = get_clusters(request, ctx["cluster"])
                 if not is_all_clusters and len(clusters) == 1:
                     cluster = clusters[0]
-                    namespaces = await kubernetes.get_list(
-                        wrap_query(Namespace.objects(cluster.api), request, session)
-                    )
-                    ctx["namespaces"] = namespaces
+                    try:
+                        namespaces = await kubernetes.get_list(
+                            wrap_query(Namespace.objects(cluster.api), request, session)
+                        )
+                    except Exception as e:
+                        # access might be restricted to selected namespaces
+                        logger.warning(f"Could not list namespaces: {e}")
+                    else:
+                        ctx["namespaces"] = namespaces
             ctx["rel_url"] = request.rel_url
             return ctx
 
