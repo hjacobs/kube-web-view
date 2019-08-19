@@ -27,6 +27,9 @@ metadata:
 data:
   my-secret-key: c2VjcmV0LWNvbnRlbnQK
 ---
+# deploy some unavailable APIService
+# this is to test that kube-web-view does not crash
+# see https://codeberg.org/hjacobs/kube-web-view/issues/64
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
