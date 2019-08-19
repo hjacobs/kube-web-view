@@ -153,4 +153,4 @@ def main(argv=None):
             )
     cluster_manager = ClusterManager(cluster_discoverer, args.cluster_label_selector)
     app = get_app(cluster_manager, args)
-    aiohttp.web.run_app(app, port=args.port)
+    aiohttp.web.run_app(app, port=args.port, handle_signals=False)

@@ -57,8 +57,6 @@ ALL = "_all"
 ONE_WEEK = 7 * 24 * 60 * 60
 FIVE_MINUTES = 5 * 60
 
-SHUTDOWN_WAIT = 30
-
 SEARCH_DEFAULT_RESOURCE_TYPES = [
     "namespaces",
     "deployments",
@@ -1009,10 +1007,7 @@ async def get_search(request, session):
 
 @routes.get(HEALTH_PATH)
 async def get_health(request):
-    if request.app["status"]["healthy"]:
-        return web.Response(text="OK")
-    else:
-        return web.Response(status=502, text="UNHEALTHY")
+    return web.Response(text="OK")
 
 
 async def get_oauth2_client():
@@ -1151,13 +1146,6 @@ async def error_handler(request, handler):
         return response
 
 
-async def on_shutdown(app):
-    app["status"]["healthy"] = False
-    logger.info(f"Shutting down after {SHUTDOWN_WAIT} seconds..")
-    # wait some time to give Kubernetes the chance to remove endpoints
-    await asyncio.sleep(SHUTDOWN_WAIT)
-
-
 def get_app(cluster_manager, config):
     templates_paths = [str(Path(__file__).parent / "templates")]
     if config.templates_path:
@@ -1236,8 +1224,5 @@ def get_app(cluster_manager, config):
 
     app[CLUSTER_MANAGER] = cluster_manager
     app[CONFIG] = config
-    app["status"] = {"healthy": True}
-
-    app.on_shutdown.append(on_shutdown)
 
     return app
