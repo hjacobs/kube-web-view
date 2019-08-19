@@ -50,7 +50,13 @@ async def discover_api_resources(api):
 
     yielded = set()
     non_preferred = []
-    for group_version, pref_version, resources in await asyncio.gather(*tasks):
+    for result_or_exception in await asyncio.gather(*tasks, return_exceptions=True):
+        if isinstance(result_or_exception, Exception):
+            # do not crash if one API group is not available
+            # see https://codeberg.org/hjacobs/kube-web-view/issues/64
+            logger.warning(f"Failed to discover API group: {result_or_exception}")
+            continue
+        group_version, pref_version, resources = result_or_exception
         for resource in resources:
             if (
                 "/" not in resource["name"]
