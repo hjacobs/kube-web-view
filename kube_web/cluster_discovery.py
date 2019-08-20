@@ -36,6 +36,20 @@ class Cluster:
         self.labels = labels or {}
 
 
+class StaticClusterDiscoverer:
+    def __init__(self, clusters: dict):
+        self._clusters = []
+
+        for cluster_name, url in clusters.items():
+            config = KubeConfig.from_url(url)
+            client = HTTPClient(config)
+            cluster = Cluster(cluster_name, client)
+            self._clusters.append(cluster)
+
+    def get_clusters(self):
+        return self._clusters
+
+
 class ServiceAccountNotFound(Exception):
     pass
 

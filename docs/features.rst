@@ -8,8 +8,9 @@ Multiple Clusters
 Kubernetes Web View can access one or more clusters via different methods:
 
 * In-cluster authorization via ServiceAccount: this is the default mode when deploying kube-web-view to a single cluster
+* Static list of cluster API URLs passed via the ``--clusters`` CLI option, e.g. ``--clusters=myprodcluster=https://kube-prod.example.org;mytestcluster=https://kube-test.example.org``
 * Clusters defined in kubeconfig file: kube-web-view will pick up all contexts defined in the kubeconfig file (``~/.kube/config`` or path given via ``--kubeconfig-path``). To only show some clusters, limit the kubeconfig contexts via the ``--kubeconfig-contexts`` command line option.
-* Clusters defined in a cluster registry REST API: kube-web-view supports a custom REST API to discover clusters. Pass the URL via ``--cluster-registry-url`` and create a file with the OAuth2 Bearer token (``--cluster-registry-oauth2-bearer-token-path``).
+* Clusters defined in a cluster registry REST API: kube-web-view supports a custom REST API to discover clusters. Pass the URL via ``--cluster-registry-url`` and create a file with the OAuth2 Bearer token (``--cluster-registry-oauth2-bearer-token-path``). See the `example Cluster Registry REST API <https://codeberg.org/hjacobs/kube-web-view/src/branch/master/examples/cluster-registry>`_.
 
 Listing Resources
 =================

@@ -10,6 +10,7 @@ from kube_web import __version__
 from .web import get_app
 from .selector import parse_selector
 from .cluster_discovery import (
+    StaticClusterDiscoverer,
     ClusterRegistryDiscoverer,
     ServiceAccountClusterDiscoverer,
     ServiceAccountNotFound,
@@ -53,6 +54,11 @@ def main(argv=None):
     )
     parser.add_argument(
         "--version", action="version", version=f"kube-web-view {__version__}"
+    )
+    parser.add_argument(
+        "--clusters",
+        type=key_value_pairs,
+        help="Cluster NAME=URL pairs separated by semicolon, e.g. 'foo=https://foo-api.example.org;bar=https://localhost:6443'",
     )
     parser.add_argument("--kubeconfig-path", help="Path to ~/.kube/config file")
     parser.add_argument(
@@ -146,7 +152,9 @@ def main(argv=None):
     config_str = ", ".join(f"{k}={v}" for k, v in sorted(vars(args).items()))
     logger.info(f"Kubernetes Web View v{__version__} started with {config_str}")
 
-    if args.cluster_registry_url:
+    if args.clusters:
+        cluster_discoverer = StaticClusterDiscoverer(args.clusters)
+    elif args.cluster_registry_url:
         cluster_discoverer = ClusterRegistryDiscoverer(
             args.cluster_registry_url, args.cluster_registry_oauth2_bearer_token_path
         )

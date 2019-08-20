@@ -82,6 +82,19 @@ Pass comma-separated lists of resource types (plural name) to the following two 
 
 Note that all resource types can be searched by using a deep-link, i.e. these options will only restrict what is shown in the HTML UI, but they will not prohibit searching for other resource types.
 
+Preferred API Versions
+======================
+
+You might want to change the default preferred API version returned by the Kubernetes API server.
+This is useful to force using a later/newer API version for some resources, e.g. the Kubernetes HorizontalPodAutoscaler has a different spec for later versions.
+
+Here the example CLI option to force using new API versions for Deployment and HPA (the default is ``autoscaling/v1`` as of Kubernetes 1.14):
+
+.. code-block:: bash
+
+    --preferred-api-versions=horizontalpodautoscalers=autoscaling/v2beta2;deployments=apps/v1
+
+
 .. _html-templates:
 
 HTML Templates
