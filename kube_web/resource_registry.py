@@ -143,7 +143,11 @@ class ResourceRegistry:
         return self._namespaced_resource_types
 
     async def get_class_by_plural_name(
-        self, plural: str, namespaced: bool, default=throw_exception
+        self,
+        plural: str,
+        namespaced: bool,
+        default=throw_exception,
+        api_version: str = None,
     ):
         _types = (
             self.namespaced_resource_types
@@ -152,7 +156,7 @@ class ResourceRegistry:
         )
         clazz = None
         for c in await _types:
-            if c.endpoint == plural:
+            if c.endpoint == plural and (c.version == api_version or not api_version):
                 clazz = c
                 break
         if not clazz and default is throw_exception:

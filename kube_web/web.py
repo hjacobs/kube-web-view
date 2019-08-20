@@ -567,7 +567,7 @@ async def get_resource_view(request, session):
     params = request.rel_url.query
     view = params.get("view")
     clazz = await cluster.resource_registry.get_class_by_plural_name(
-        plural, namespaced=bool(namespace)
+        plural, namespaced=bool(namespace), api_version=params.get("api_version")
     )
     query = wrap_query(clazz.objects(cluster.api), request, session)
     if namespace:
