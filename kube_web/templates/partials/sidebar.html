@@ -11,7 +11,7 @@
             </p>
             <ul class="menu-list">
                 {% for link in links: %}
-                <li><a href="{{ link.href }}">{{ link.text|pluralize }}</a></li>
+                <li><a href="{{ link.href }}">{{ link.text }}</a></li>
                 {% endfor %}
             </ul>
             {% endfor %}

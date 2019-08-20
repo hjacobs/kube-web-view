@@ -188,7 +188,9 @@ async def build_sidebar_menu(
                     )
                 else:
                     path = f"/clusters/{cluster}/{clazz.endpoint}"
-                links.append({"href": path, "text": clazz.kind})
+                links.append(
+                    {"href": path, "text": jinja2_filters.pluralize(clazz.kind)}
+                )
         if links:
             menu[category] = links
     return menu
