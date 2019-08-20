@@ -27,6 +27,8 @@ Example command line argument to show the "StackSet" CRD in the "Controllers" se
 
     --sidebar-resource-types=Controllers=stacksets,deployments,cronjobs;Pod Management=ingresses,services,pods,secrets
 
+You can use :ref:`html-templates` for further customization of the sidebar (e.g. to add non-resource links).
+
 
 .. _label-columns:
 
@@ -131,7 +133,7 @@ Here some of the common templates you might want to customize:
 ``partials/navbar.html``
     The top navigation bar.
 ``partials/sidebar.html``
-    Template for the left sidebar, customize this to add your own links.
+    Template for the left sidebar, customize this to add your own links. Note that you can change the list of resource types without touching HTML via ``--sidebar-resource-types``, see :ref:`the sidebar section <sidebar>`.
 ``partials/footer.html``
     Footer element at the end of the HTML ``<body>``.
 
