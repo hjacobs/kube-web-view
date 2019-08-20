@@ -5,11 +5,28 @@ Customization
 Kubernetes Web View's behavior and appearance can be customized
 for the needs of your organization:
 
+* resource type links shown in the :ref:`sidebar` can be customized to add CRDs, or to optimize for frequent access
 * default :ref:`label-columns` can be defined to show values of standardized object labels (e.g. "app", "version", etc)
 * :ref:`external-links` can be added to link objects to monitoring tools, internal application registries, custom UIs, etc
 * the :ref:`customize-search` can be customized to search in CRDs, or to cover frequent search cases
+* setting :ref:`preferred-api-versions` allows forcing the use of specific/newer Kubernetes API versions
 * :ref:`html-templates` can be customized to match your branding, to add static links, and to inject custom JS/CSS
 * :ref:`static-assets` can be included to add images, JS, or CSS files
+
+
+.. _sidebar:
+
+Sidebar
+=======
+
+The resource types linked in the left sidebar can be customized, e.g. to include CRDs or to remove resource types which are not frequently accessed.
+
+Example command line argument to show the "StackSet" CRD in the "Controllers" section and to add secrets to "Pod Management":
+
+.. code-block:: bash
+
+    --sidebar-resource-types=Controllers=stacksets,deployments,cronjobs;Pod Management=ingresses,services,pods,secrets
+
 
 .. _label-columns:
 
@@ -82,6 +99,8 @@ Pass comma-separated lists of resource types (plural name) to the following two 
 
 Note that all resource types can be searched by using a deep-link, i.e. these options will only restrict what is shown in the HTML UI, but they will not prohibit searching for other resource types.
 
+.. _preferred-api-versions:
+
 Preferred API Versions
 ======================
 
@@ -111,7 +130,7 @@ Here some of the common templates you might want to customize:
     Optional extra content for the ``<head>`` HTML part. Use this template to add any custom JS/CSS.
 ``partials/navbar.html``
     The top navigation bar.
-``partials/aside-menu.html``
+``partials/sidebar.html``
     Template for the left sidebar, customize this to add your own links.
 ``partials/footer.html``
     Footer element at the end of the HTML ``<body>``.

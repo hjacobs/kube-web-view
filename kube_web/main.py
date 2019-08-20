@@ -112,6 +112,11 @@ def main(argv=None):
         help="Comma-separated list of URL templates per label to link to external tools, e.g. 'application=https://myui/apps/{application}'",
     )
     parser.add_argument(
+        "--sidebar-resource-types",
+        type=key_value_pairs,
+        help="Comma-separated list of resource types per category, e.g. 'Controllers=deployments,cronjobs;Pod Management=ingresses,pods'",
+    )
+    parser.add_argument(
         "--search-default-resource-types",
         type=comma_separated_values,
         help="Comma-separated list of resource types to use for navbar search by default, e.g. 'deployments,pods'",
