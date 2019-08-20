@@ -26,6 +26,7 @@
         <th>Kind</th>
         <th>Plural</th>
         <th>Version</th>
+        <th>Preferred?</th>
     </tr>
     {% for _type in resource_types: %}
     <tr>
@@ -36,6 +37,7 @@
         <td><a href="/clusters/{{ cluster }}/{{ _type.endpoint }}">{{ _type.endpoint }}</a></td>
         {% endif %}
         <td>{{ _type.version }}</td>
+        <td>{{ "Yes" if preferred_api_versions.get(_type.endpoint) == _type.version }}</td>
     </tr>
     {% endfor %}
 </table>

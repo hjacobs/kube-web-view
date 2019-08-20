@@ -3,11 +3,11 @@ from .selector import selector_matches
 
 
 class Cluster:
-    def __init__(self, name: str, api, labels: dict = None):
+    def __init__(self, name: str, api, labels: dict, preferred_api_versions: dict):
         self.name = name
         self.api = api
         self.labels = labels or {}
-        self.resource_registry = ResourceRegistry(api)
+        self.resource_registry = ResourceRegistry(api, preferred_api_versions)
 
 
 class ClusterNotFound(Exception):
@@ -16,10 +16,11 @@ class ClusterNotFound(Exception):
 
 
 class ClusterManager:
-    def __init__(self, discoverer, selector: dict):
+    def __init__(self, discoverer, selector: dict, preferred_api_versions: dict):
         self._clusters = {}
         self.discoverer = discoverer
         self.selector = selector
+        self.preferred_api_versions = preferred_api_versions
         self.reload()
 
     def reload(self):
@@ -27,7 +28,10 @@ class ClusterManager:
         for cluster in self.discoverer.get_clusters():
             if selector_matches(self.selector, cluster.labels):
                 _clusters[cluster.name] = Cluster(
-                    cluster.name, cluster.api, cluster.labels
+                    cluster.name,
+                    cluster.api,
+                    cluster.labels,
+                    self.preferred_api_versions,
                 )
 
         self._clusters = _clusters

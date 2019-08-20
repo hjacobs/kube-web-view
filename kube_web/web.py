@@ -251,14 +251,17 @@ async def get_cluster_resource_types(request, session):
     cluster = request.match_info["cluster"]
     clusters, is_all_clusters = get_clusters(request, cluster)
     resource_types = set()
+    preferred_api_versions = {}
     for _cluster in clusters:
         for clazz in await _cluster.resource_registry.cluster_resource_types:
             resource_types.add(clazz)
+        preferred_api_versions.update(_cluster.resource_registry.preferred_api_versions)
     return {
         "cluster": cluster,
         "is_all_clusters": is_all_clusters,
         "namespace": None,
         "resource_types": sorted(resource_types, key=lambda t: (t.kind, t.version)),
+        "preferred_api_versions": preferred_api_versions,
     }
 
 
@@ -452,14 +455,17 @@ async def get_namespaced_resource_types(request, session):
     clusters, is_all_clusters = get_clusters(request, cluster)
     namespace = request.match_info["namespace"]
     resource_types = set()
+    preferred_api_versions = {}
     for _cluster in clusters:
         for clazz in await _cluster.resource_registry.namespaced_resource_types:
             resource_types.add(clazz)
+        preferred_api_versions.update(_cluster.resource_registry.preferred_api_versions)
     return {
         "cluster": cluster,
         "is_all_clusters": is_all_clusters,
         "namespace": namespace,
         "resource_types": sorted(resource_types, key=lambda t: (t.kind, t.version)),
+        "preferred_api_versions": preferred_api_versions,
     }
 
 

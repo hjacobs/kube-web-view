@@ -108,8 +108,9 @@ async def get_namespaced_resource_types(api):
 
 
 class ResourceRegistry:
-    def __init__(self, api):
+    def __init__(self, api, preferred_api_versions: dict):
         self.api = api
+        self.preferred_api_versions = preferred_api_versions
         self._lock = asyncio.Lock()
         self._cluster_resource_types = []
         self._namespaced_resource_types = []
@@ -127,6 +128,19 @@ class ResourceRegistry:
                     namespaced_resource_types.append(clazz)
                 else:
                     cluster_resource_types.append(clazz)
+                # the first entry is the preferred API version
+                if clazz.endpoint not in self.preferred_api_versions:
+                    self.preferred_api_versions[clazz.endpoint] = clazz.version
+            namespaced_resource_types.sort(
+                key=lambda c: 0
+                if c.version == self.preferred_api_versions.get(c.endpoint)
+                else 1
+            )
+            cluster_resource_types.sort(
+                key=lambda c: 0
+                if c.version == self.preferred_api_versions.get(c.endpoint)
+                else 1
+            )
             self._namespaced_resource_types = namespaced_resource_types
             self._cluster_resource_types = cluster_resource_types
 

@@ -132,6 +132,12 @@ def main(argv=None):
         type=coroutine_function,
         help="Optional hook (name of a coroutine like 'mymodule.myfunc') to process OAuth access token response (validate, log, ..)",
     )
+    parser.add_argument(
+        "--preferred-api-versions",
+        type=key_value_pairs,
+        help="Preferred Kubernetes apiVersion per resource type, e.g. 'horizontalpodautoscalers=autoscaling/v2beta2;deployments=apps/v1'",
+        default={},
+    )
 
     args = parser.parse_args(argv)
 
@@ -151,6 +157,8 @@ def main(argv=None):
             cluster_discoverer = KubeconfigDiscoverer(
                 args.kubeconfig_path, args.kubeconfig_contexts
             )
-    cluster_manager = ClusterManager(cluster_discoverer, args.cluster_label_selector)
+    cluster_manager = ClusterManager(
+        cluster_discoverer, args.cluster_label_selector, args.preferred_api_versions
+    )
     app = get_app(cluster_manager, args)
     aiohttp.web.run_app(app, port=args.port, handle_signals=False)
