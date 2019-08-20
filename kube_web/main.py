@@ -34,6 +34,14 @@ def key_value_pairs(value):
     return data
 
 
+def key_value_list_pairs(value):
+    data = {}
+    for kv_pair in value.split(";"):
+        key, sep, value = kv_pair.partition("=")
+        data[key] = comma_separated_values(value)
+    return data
+
+
 def coroutine_function(value):
     module_name, attr_path = value.rsplit(".", 1)
     module = importlib.import_module(module_name)
@@ -113,7 +121,7 @@ def main(argv=None):
     )
     parser.add_argument(
         "--sidebar-resource-types",
-        type=key_value_pairs,
+        type=key_value_list_pairs,
         help="Comma-separated list of resource types per category, e.g. 'Controllers=deployments,cronjobs;Pod Management=ingresses,pods'",
     )
     parser.add_argument(

@@ -57,6 +57,12 @@ ALL = "_all"
 ONE_WEEK = 7 * 24 * 60 * 60
 FIVE_MINUTES = 5 * 60
 
+DEFAULT_SIDEBAR_RESOURCE_TYPES = {
+    "Cluster Resources": ["namespaces", "nodes", "persistentvolumes"],
+    "Controllers": ["deployments", "cronjobs", "jobs", "daemonsets", "statefulsets"],
+    "Pod Management": ["ingresses", "services", "pods", "configmaps"],
+}
+
 SEARCH_DEFAULT_RESOURCE_TYPES = [
     "namespaces",
     "deployments",
@@ -154,6 +160,40 @@ def get_clusters(request, cluster: str):
     return clusters, is_all_clusters
 
 
+async def build_sidebar_menu(
+    cluster: str, clusters, namespace: str, sidebar_resource_types: dict
+):
+    menu = {}
+    resource_types_by_category = (
+        sidebar_resource_types or DEFAULT_SIDEBAR_RESOURCE_TYPES
+    )
+    for category, resource_types in resource_types_by_category.items():
+        links = []
+        for resource_type in resource_types:
+            _cluster = clusters[0]
+            if namespace:
+                clazz = await _cluster.resource_registry.get_class_by_plural_name(
+                    resource_type, namespaced=True, default=None
+                )
+            else:
+                clazz = None
+            if not clazz:
+                clazz = await _cluster.resource_registry.get_class_by_plural_name(
+                    resource_type, namespaced=False, default=None
+                )
+            if clazz:
+                if issubclass(clazz, NamespacedAPIObject):
+                    path = (
+                        f"/clusters/{cluster}/namespaces/{namespace}/{clazz.endpoint}"
+                    )
+                else:
+                    path = f"/clusters/{cluster}/{clazz.endpoint}"
+                links.append({"href": path, "text": clazz.kind})
+        if links:
+            menu[category] = links
+    return menu
+
+
 def context():
     def decorator(func):
         async def func_wrapper(request):
@@ -161,6 +201,14 @@ def context():
             ctx = await func(request, session)
             if isinstance(ctx, dict) and ctx.get("cluster"):
                 clusters, is_all_clusters = get_clusters(request, ctx["cluster"])
+
+                ctx["sidebar_menu"] = await build_sidebar_menu(
+                    ctx["cluster"],
+                    clusters,
+                    ctx.get("namespace"),
+                    request.app[CONFIG].sidebar_resource_types,
+                )
+
                 if not is_all_clusters and len(clusters) == 1:
                     cluster = clusters[0]
                     try:
