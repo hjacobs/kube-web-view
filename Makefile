@@ -13,7 +13,7 @@ clean:
 	rm -f ./kind ./kubectl
 
 kind:
-	curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.4.0/kind-$(OSNAME)-amd64
+	curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.5.0/kind-$(OSNAME)-amd64
 	chmod +x ./kind
 
 kubectl:
