@@ -89,7 +89,29 @@ SEARCH_MATCH_CONTEXT_LENGTH = 20
 
 
 TABLE_CELL_FORMATTING = {
-    "events": {"Type": {"Warning": "has-text-warning"}},
+    "events": {
+        "Type": {"Warning": "has-text-warning"},
+        "Reason": {
+            "BackOff": "has-text-danger",
+            "BackoffLimitExceeded": "has-text-danger",
+            "Created": "has-text-success",
+            "DeadlineExceeded": "has-text-danger",
+            "FailedComputeMetricsReplicas": "has-text-danger",
+            "FailedGetResourceMetric": "has-text-danger",
+            "FailedScheduling": "has-text-danger",
+            "Killing": "has-text-warning",
+            "Preempted": "has-text-danger",
+            "Pulled": "has-text-success",
+            "Pulling": "has-text-warning",
+            "SawCompletedJob": "has-text-info",
+            "Scheduled": "has-text-success",
+            "Started": "has-text-success",
+            "SuccessfulCreate": "has-text-success",
+            "SystemOOM": "has-text-danger",
+            "TriggeredScaleUp": "has-text-info",
+            "Unhealthy": "has-text-danger",
+        },
+    },
     "persistentvolumeclaims": {
         "Status": {"Pending": "has-text-warning", "Bound": "has-text-success"}
     },
@@ -284,11 +306,17 @@ async def get_cluster(request, session):
     }
 
 
-def get_cell_class(table, column_index, value):
-    cell_formatting = TABLE_CELL_FORMATTING.get(table.api_obj_class.endpoint)
+def get_cell_class(table_or_plural, column_index_or_name, value):
+    if isinstance(table_or_plural, str):
+        plural = table_or_plural
+        column_name = column_index_or_name
+    else:
+        plural = table_or_plural.api_obj_class.endpoint
+        column_name = table_or_plural.columns[column_index_or_name]["name"]
+    cell_formatting = TABLE_CELL_FORMATTING.get(plural)
     if not cell_formatting:
         return ""
-    cell_formatting = cell_formatting.get(table.columns[column_index]["name"])
+    cell_formatting = cell_formatting.get(column_name)
     if not cell_formatting:
         return ""
     return cell_formatting.get(str(value))
