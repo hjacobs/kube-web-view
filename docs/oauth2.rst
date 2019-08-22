@@ -83,7 +83,7 @@ AWS Cognito Provider
 Setting up Cognito
 -------------------
 
-A number of steps need to be taken to setup AWS Cognito for Oauth2. These instructions are correct as of August 2019
+A number of steps need to be taken to setup `Amazon Cognito <https://aws.amazon.com/cognito/>`_ for OAuth2. These instructions are correct as of August 2019.
 
 Create User Pool
 ^^^^^^^^^^^^^^^^^^
@@ -108,7 +108,7 @@ App Client Settings
 
 IMPORTANT: Domain Name
 ^^^^^^^^^^^^^^^^^^^^^^^^
-You must create a domain name for OAuth to function against AWS Cognito, otherwise the required Authorization and Token URLs will not be exposed. 
+You must create a domain name for OAuth to function against AWS Cognito, otherwise the required Authorization and Token URLs will not be exposed.
 
 You can choose whether to use an AWS-hosted Cognito Domain (eg ``https://{your-chosen-domain}.auth.us-east-1.amazoncognito.com``), or to use your own domain.
 
@@ -125,7 +125,7 @@ You can now update your Deployment with the relevant Environment variables. If y
 Terraform
 -----------
 
-An example Terraform deployment of the above is below: -
+An example Terraform deployment of the above is below:
 
 .. code-block:: text
 
@@ -133,82 +133,82 @@ An example Terraform deployment of the above is below: -
   resource "aws_cognito_user_pool" "kube-web-view" {
     name = "userpool-kube-web-view"
     alias_attributes = [
-      "email", 
+      "email",
       "preferred_username"
     ]
-  
+
     auto_verified_attributes = [
       "email"
     ]
-  
+
     schema {
       attribute_data_type      = "String"
       developer_only_attribute = false
       mutable                  = true
       name                     = "name"
       required                 = true
-  
+
       string_attribute_constraints {
         min_length = 3
         max_length = 70
       }
     }
-  
+
     admin_create_user_config {
       allow_admin_create_user_only = true
     }
-  
+
     tags = {
       "Name" = "userpool-kube-web-view"
     }
   }
-  
+
   # Create the oauth2 Domain
-  
+
   resource "aws_cognito_user_pool_domain" "kube-web-view" {
     domain = "oauth-kube-web-view"
     user_pool_id = aws_cognito_user_pool.kube-web-view.id
   }
-  
-  # kube-web-view Client 
-  
+
+  # kube-web-view Client
+
   resource "aws_cognito_user_pool_client" "kube-web-view" {
     name = "kube-web-view"
     user_pool_id = aws_cognito_user_pool.kube-web-view.id
-  
+
     allowed_oauth_flows = [
       "code",
       "implicit"
     ]
-  
+
     allowed_oauth_scopes = [
       "email",
       "openid",
       "profile",
     ]
-  
+
     supported_identity_providers = [
       "COGNITO"
     ]
-  
+
     generate_secret = true
-  
+
     allowed_oauth_flows_user_pool_client = true
-  
+
     callback_urls = [
       "https://{my-kube-web-view-host}/oauth2/callback"
     ]
   }
-  
-  
+
+
   # Outputs
-  
+
   output "kube-web-view-id" {
     description = "Kube Web View App ID"
     value = aws_cognito_user_pool_client.kube-web-view.id
   }
-  
+
   output "kube-web-view-secret" {
     description = "Kube Web View App Secret"
     value = aws_cognito_user_pool_client.kube-web-view.client_secret
-  
+
