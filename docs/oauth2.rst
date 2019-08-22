@@ -76,3 +76,139 @@ Note that any GitHub user can now login to your deployment of Kubernetes Web Vie
 * build the Docker image
 * configure your kube-web-view deployment and add ``--oauth2-authorized-hook=hooks.oauth2_authorized`` as argument
 * deploy kube-web-view with the new Docker image and CLI option
+
+AWS Cognito Provider
+=====================
+
+Setting up Cognito
+-------------------
+
+A number of steps need to be taken to setup AWS Cognito for Oauth2. These instructions are correct as of August 2019
+
+Create User Pool
+^^^^^^^^^^^^^^^^^^
+
+1. Create a User Pool
+2. Choose how you want End Users to sign in (for example via Email, Username or otherwise)
+3. Once you have gone through all the settings (customise to your liking) for creating a user pool, add an App Client
+
+Create an App Client
+^^^^^^^^^^^^^^^^^^^^^
+1. Choose a Name that is relevant to the application (eg kube-web-view)
+2. Make sure the **Generate client secret** option is selected, and set your **Refresh token expiration** time to whatever you are comfortable with.
+
+The App Client will then generate a Client ID and Client Secret, wich will be used later
+
+App Client Settings
+^^^^^^^^^^^^^^^^^^^^
+1. Select the previously created client
+2. Fill in the **Callback URL(s)** section with ``https://{my-kube-web-view-host}/oauth2/callback``
+3. Under **OAuth 2.0**, choose the relevant **Allowed OAuth Flows** (eg *Authorization Code Grant*, *Implicit Grant*)
+4. Choose the **Allowed OAuth Scopes** you want to include. *email* is the minimum you will need
+
+IMPORTANT: Domain Name
+^^^^^^^^^^^^^^^^^^^^^^^^
+You must create a domain name for OAuth to function against AWS Cognito, otherwise the required Authorization and Token URLs will not be exposed. 
+
+You can choose whether to use an AWS-hosted Cognito Domain (eg ``https://{your-chosen-domain}.auth.us-east-1.amazoncognito.com``), or to use your own domain.
+
+Update Deployment
+^^^^^^^^^^^^^^^^^^^
+
+You can now update your Deployment with the relevant Environment variables. If you have chosen to use an AWS Cognito Domain, then the ``{FQDN}`` variable in the below section will be ``https://{your-chosen-domain}.auth.{aws-region}.amazoncognito.com``. Otherwise, replace it with your domain
+
+* use "https://{FQDN}/oauth2/authorize" for ``OAUTH2_AUTHORIZE_URL``
+* use "https://{FQDN}/oauth2/token" for ``OAUTH2_ACCESS_TOKEN_URL``
+* Use the App Client ID generated during "Create an App Client" in the ``OAUTH2_CLIENT_ID`` environment variable
+* Use the App Client secret in the ``OAUTH2_CLIENT_SECRET`` environment variable.  If you cannot see the secret, press "Show Details" in the AWS Console
+
+Terraform
+-----------
+
+An example Terraform deployment of the above is below: -
+
+.. code-block:: text
+
+  # Create the User Pool
+  resource "aws_cognito_user_pool" "kube-web-view" {
+    name = "userpool-kube-web-view"
+    alias_attributes = [
+      "email", 
+      "preferred_username"
+    ]
+  
+    auto_verified_attributes = [
+      "email"
+    ]
+  
+    schema {
+      attribute_data_type      = "String"
+      developer_only_attribute = false
+      mutable                  = true
+      name                     = "name"
+      required                 = true
+  
+      string_attribute_constraints {
+        min_length = 3
+        max_length = 70
+      }
+    }
+  
+    admin_create_user_config {
+      allow_admin_create_user_only = true
+    }
+  
+    tags = {
+      "Name" = "userpool-kube-web-view"
+    }
+  }
+  
+  # Create the oauth2 Domain
+  
+  resource "aws_cognito_user_pool_domain" "kube-web-view" {
+    domain = "oauth-kube-web-view"
+    user_pool_id = aws_cognito_user_pool.kube-web-view.id
+  }
+  
+  # kube-web-view Client 
+  
+  resource "aws_cognito_user_pool_client" "kube-web-view" {
+    name = "kube-web-view"
+    user_pool_id = aws_cognito_user_pool.kube-web-view.id
+  
+    allowed_oauth_flows = [
+      "code",
+      "implicit"
+    ]
+  
+    allowed_oauth_scopes = [
+      "email",
+      "openid",
+      "profile",
+    ]
+  
+    supported_identity_providers = [
+      "COGNITO"
+    ]
+  
+    generate_secret = true
+  
+    allowed_oauth_flows_user_pool_client = true
+  
+    callback_urls = [
+      "https://{my-kube-web-view-host}/oauth2/callback"
+    ]
+  }
+  
+  
+  # Outputs
+  
+  output "kube-web-view-id" {
+    description = "Kube Web View App ID"
+    value = aws_cognito_user_pool_client.kube-web-view.id
+  }
+  
+  output "kube-web-view-secret" {
+    description = "Kube Web View App Secret"
+    value = aws_cognito_user_pool_client.kube-web-view.client_secret
+  
