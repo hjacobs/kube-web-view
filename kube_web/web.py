@@ -39,7 +39,7 @@ from aiohttp import web
 from kube_web import __version__
 from kube_web import kubernetes
 from kube_web import jinja2_filters
-from .table import add_label_columns, filter_table, sort_table, merge_cluster_tables
+from .table import add_label_columns, filter_table, guess_column_classes, sort_table, merge_cluster_tables
 
 # import tracemalloc
 # tracemalloc.start()
@@ -96,6 +96,7 @@ TABLE_CELL_FORMATTING = {
             "BackoffLimitExceeded": "has-text-danger",
             "Created": "has-text-success",
             "DeadlineExceeded": "has-text-danger",
+            "Failed": "has-text-danger",
             "FailedComputeMetricsReplicas": "has-text-danger",
             "FailedGetResourceMetric": "has-text-danger",
             "FailedScheduling": "has-text-danger",
@@ -461,6 +462,7 @@ async def do_get_resource_list(
                 request, session, _cluster, table, namespace, is_all_namespaces, params
             )
 
+        guess_column_classes(table)
         sort_table(table, params.get("sort"))
         for row in table.rows:
             row["cluster"] = _cluster
@@ -697,6 +699,7 @@ async def get_resource_view(request, session):
             query = query.filter(field_selector=field_selector)
 
         table = await kubernetes.get_table(query)
+        guess_column_classes(table)
         sort_table(table, params.get("sort"))
         table.obj["cluster"] = cluster
     else:

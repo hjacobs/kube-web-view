@@ -120,7 +120,7 @@
         <th>Namespace</th>
         {% endif %}
         {% for column in table.columns: %}
-        <th title="{{ column.description }}"><a href="{{ rel_url.update_query(sort=(column.name + ':desc' if rel_url.query.sort == column.name else column.name)) }}">{{ column.name }}
+        <th title="{{ column.description }}" class="{{ column.class }}"><a href="{{ rel_url.update_query(sort=(column.name + ':desc' if rel_url.query.sort == column.name else column.name)) }}">{{ column.name }}
                 {% if rel_url.query.sort == column.name: %}
                 <span class="icon"><i class="fas fa-sort-down"></i></span>
                 {% elif rel_url.query.sort == column.name + ':desc': %}
@@ -155,7 +155,7 @@
         <td><a href="/clusters/{{ row.cluster.name }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
         {% endif %}
         {% else: %}
-        <td class="{{ get_cell_class(table, loop.index0, cell) }}"
+        <td class="{{ get_cell_class(table, loop.index0, cell) }} {{ table.columns[loop.index0].class }}"
             {% if table.columns[loop.index0].name in ('Age', 'First Seen'): %}
             style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}"
             {% endif %}

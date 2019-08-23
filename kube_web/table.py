@@ -165,3 +165,12 @@ def merge_cluster_tables(t1, t2):
 
         t1.obj["clusters"].extend(t2.obj["clusters"])
         return t1
+
+
+def guess_column_classes(table):
+    for row in table.rows:
+        for i, value in enumerate(row["cells"]):
+            if isinstance(value, int) or isinstance(value, float):
+                table.columns[i]["class"] = "num"
+
+        break
