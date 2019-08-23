@@ -51,7 +51,7 @@ def coroutine_function(value):
     return function
 
 
-def main(argv=None):
+def parse_args(argv=None):
 
     parser = argparse.ArgumentParser(description=f"Kubernetes Web View v{__version__}")
     parser.add_argument(
@@ -157,8 +157,12 @@ def main(argv=None):
         help="Preferred Kubernetes apiVersion per resource type, e.g. 'horizontalpodautoscalers=autoscaling/v2beta2;deployments=apps/v1'",
         default={},
     )
-
     args = parser.parse_args(argv)
+    return args
+
+
+def main(argv=None):
+    args = parse_args(argv)
 
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
 
