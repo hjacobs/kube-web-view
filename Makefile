@@ -71,7 +71,7 @@ run:
 
 .PHONY: run.kind
 run.kind:
-	poetry run python3 -m kube_web --kubeconfig-path=$$(./kind get kubeconfig-path --name=kube-web-view-e2e) --debug --show-container-logs --search-default-resource-types=deployments,pods,configmaps --default-label-columns=pods=app
+	poetry run python3 -m kube_web --kubeconfig-path=$$(./kind get kubeconfig-path --name=kube-web-view-e2e) --debug --show-container-logs --search-default-resource-types=deployments,pods,configmaps --default-label-columns=pods=app "--default-hidden-columns=pods=Nominated Node"
 
 .PHONY: mirror
 mirror:

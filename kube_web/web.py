@@ -550,7 +550,10 @@ async def do_get_resource_list(
         await join_custom_columns(
             request, session, _cluster, table, namespace, is_all_namespaces, params
         )
-        remove_columns(table, params.get("hidecols"))
+        hidden_columns = params.get("hidecols") or request.app[
+            CONFIG
+        ].default_hidden_columns.get(_type)
+        remove_columns(table, hidden_columns)
         guess_column_classes(table)
         sort_table(table, params.get("sort"))
 

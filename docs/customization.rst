@@ -48,6 +48,12 @@ Note that the label names are separated by comma (",") whereas multiple differen
 
 Users of the web UI can remove the pre-configured label columns by passing a single comma as the ``labelcols`` query parameter: ``/clusters/../namespaces/_all/pods?labelcols=,``.
 
+You can hide existing columns via the ``--default-hidden-columns`` command line option, e.g. to remove the "Nominated Node" and "Readiness Gates" columns from pod tables:
+
+.. code-block:: bash
+
+    --default-hidden-columns=pods=Nominated Node,Readiness Gates
+
 
 .. _external-links:
 

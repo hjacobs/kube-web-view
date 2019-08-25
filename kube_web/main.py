@@ -147,6 +147,12 @@ def parse_args(argv=None):
         default={},
     )
     parser.add_argument(
+        "--default-hidden-columns",
+        type=key_value_pairs,
+        help="Comma-separated list of columns to hide per resource type; multiple entries separated by semicolon, e.g. 'pods=Nominated Node,Readiness Gates,version;deployments=Selector'",
+        default={},
+    )
+    parser.add_argument(
         "--oauth2-authorized-hook",
         type=coroutine_function,
         help="Optional hook (name of a coroutine like 'mymodule.myfunc') to process OAuth access token response (validate, log, ..)",
