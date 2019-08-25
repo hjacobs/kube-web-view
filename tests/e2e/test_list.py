@@ -123,6 +123,22 @@ def test_list_pods_with_custom_columns(session):
         assert cells[-3].text.startswith("['hjacobs/")
 
 
+def test_list_secrets_with_custom_columns(session):
+    response = session.get(
+        "/clusters/local/namespaces/_all/secrets?customcols=Data=data"
+    )
+    response.raise_for_status()
+    check_links(response, session)
+    ths = response.html.find("main table thead th")
+    assert ths[-2].text == "Data"
+
+    rows = response.html.find("main table tbody tr")
+    for row in rows:
+        cells = row.find("td")
+        # make sure that we cannot extract secret data via custom columns
+        assert cells[-2].text == "**SECRET-CONTENT-HIDDEN-BY-KUBE-WEB-VIEW**"
+
+
 def test_list_namespaced_resource_type_not_found(session):
     response = session.get("/clusters/local/namespaces/default/foobars")
     assert response.status_code == 404

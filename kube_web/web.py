@@ -94,6 +94,8 @@ SEARCH_OFFERED_RESOURCE_TYPES = [
 
 SEARCH_MATCH_CONTEXT_LENGTH = 20
 
+SECRET_CONTENT_HIDDEN = "**SECRET-CONTENT-HIDDEN-BY-KUBE-WEB-VIEW**"
+
 
 TABLE_CELL_FORMATTING = {
     "events": {
@@ -413,7 +415,10 @@ async def join_custom_columns(
             if row_index is not None:
                 for name in custom_column_names:
                     expression = custom_columns[name]
-                    value = expression.search(obj.obj)
+                    if clazz.kind == "Secret" and not request.app[CONFIG].show_secrets:
+                        value = SECRET_CONTENT_HIDDEN
+                    else:
+                        value = expression.search(obj.obj)
                     table.rows[row_index]["cells"].append(value)
                 rows_joined.add(row_index)
 
@@ -751,7 +756,7 @@ async def get_resource_view(request, session):
     if resource.kind == "Secret" and not request.app[CONFIG].show_secrets:
         # mask out all secret values, but still show keys
         for key in resource.obj.get("data", {}).keys():
-            resource.obj["data"][key] = "**SECRET-CONTENT-HIDDEN-BY-KUBE-WEB-VIEW**"
+            resource.obj["data"][key] = SECRET_CONTENT_HIDDEN
         # the secret data is also leaked in annotations ("last-applied-configuration")
         # => hide annotations
         resource.metadata["annotations"] = {"annotations-hidden": "by-kube-web-view"}
