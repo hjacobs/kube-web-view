@@ -7,6 +7,7 @@ from pykube.query import Table
 
 from kube_web.table import (
     add_label_columns,
+    remove_columns,
     filter_table,
     sort_table,
     merge_cluster_tables,
@@ -183,6 +184,13 @@ def test_sort_table_desc(two_pod_table):
     sort_table(table, "Name:desc")
     assert table.rows[0]["cells"][0] == "pod-b"
     assert table.rows[1]["cells"][0] == "pod-a"
+
+
+def test_remove_columns(two_pod_table):
+    table = two_pod_table
+    remove_columns(table, "Status")
+    assert len(table.columns) == 1
+    assert table.rows[0]["cells"] == ["pod-a"]
 
 
 def test_merge_cluster_tables(single_pod_table, two_pod_table):

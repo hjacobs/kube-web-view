@@ -174,3 +174,24 @@ def guess_column_classes(table):
                 table.columns[i]["class"] = "num"
 
         break
+
+
+def remove_columns(table, hide_columns_param):
+    if not hide_columns_param:
+        return
+    hide_columns = frozenset(
+        filter(None, [l.strip() for l in hide_columns_param.split(",")])
+    )
+    remove_indices = []
+    for i, column in enumerate(table.columns):
+        if column["name"] in hide_columns:
+            remove_indices.append(i)
+
+    remove_indices.reverse()
+
+    for i in remove_indices:
+        del table.columns[i]
+
+    for row in table.rows:
+        for i in remove_indices:
+            del row["cells"][i]

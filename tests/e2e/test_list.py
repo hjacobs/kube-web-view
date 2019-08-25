@@ -297,3 +297,21 @@ def test_object_links(session):
     response.raise_for_status()
     link = response.html.find("main table a.button", first=True)
     assert link.attrs["href"].startswith("#cluster=local;namespace=default;name=")
+
+
+def test_hide_columns(session):
+    response = session.get("/clusters/local/namespaces/default/deployments")
+    response.raise_for_status()
+    ths = response.html.find("main table thead th")
+    assert len(ths) == 9
+    assert ths[5].text == "Containers"
+    assert ths[6].text == "Images"
+
+    response = session.get(
+        "/clusters/local/namespaces/default/deployments?hidecols=Containers,Images"
+    )
+    response.raise_for_status()
+    ths = response.html.find("main table thead th")
+    assert len(ths) == 7
+    assert ths[5].text == "Selector"
+    assert ths[6].text == "Created"

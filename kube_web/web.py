@@ -43,6 +43,7 @@ from kube_web import jinja2_filters
 from .table import (
     add_label_columns,
     filter_table,
+    remove_columns,
     guess_column_classes,
     sort_table,
     merge_cluster_tables,
@@ -549,7 +550,7 @@ async def do_get_resource_list(
         await join_custom_columns(
             request, session, _cluster, table, namespace, is_all_namespaces, params
         )
-
+        remove_columns(table, params.get("hidecols"))
         guess_column_classes(table)
         sort_table(table, params.get("sort"))
 
