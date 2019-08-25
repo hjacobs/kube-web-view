@@ -44,8 +44,18 @@
 </h1>
 
 <form action="#" method="get" id="tools-table-{{ loop.index }}" class="tools-form {% if rel_url.query.labelcols or rel_url.query.selector or rel_url.query.filter: %}is-active{% endif%}">
+    {% if rel_url.query.join: %}
     <input type="hidden" name="join" value="{{ rel_url.query.join }}">
+    {% endif %}
+    {% if rel_url.query.sort: %}
     <input type="hidden" name="sort" value="{{ rel_url.query.sort }}">
+    {% endif %}
+    {% if rel_url.query.customcols: %}
+    <input type="hidden" name="customcols" value="{{ rel_url.query.customcols }}">
+    {% endif %}
+    {% if rel_url.query.hidecols: %}
+    <input type="hidden" name="hidecols" value="{{ rel_url.query.hidecols }}">
+    {% endif %}
     <div class="field is-horizontal">
         <div class="field-label is-normal">
             <label class="label">Label Columns</label>

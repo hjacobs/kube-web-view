@@ -315,3 +315,22 @@ def test_hide_columns(session):
     assert len(ths) == 7
     assert ths[5].text == "Selector"
     assert ths[6].text == "Created"
+
+
+def test_filter_pods_with_custom_columns(session):
+    """
+    Test that filtering on custom columns works
+    """
+    response = session.get(
+        "/clusters/local/namespaces/default/pods?customcols=Images=spec.containers[*].image&filter=hjacobs/"
+    )
+    response.raise_for_status()
+    check_links(response, session)
+    ths = response.html.find("main table thead th")
+    # note: pods have an extra "Links" column (--object-links)
+    assert ths[-3].text == "Images"
+
+    rows = response.html.find("main table tbody tr")
+    for row in rows:
+        cells = row.find("td")
+        assert cells[-3].text.startswith("['hjacobs/")

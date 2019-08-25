@@ -541,7 +541,6 @@ async def do_get_resource_list(
             _type
         )
         add_label_columns(table, label_columns)
-        filter_table(table, params.get("filter"))
 
         # note: we join before sorting, so sorting works on the joined columns, too
         if params.get("join") == "metrics" and _type in ("pods", "nodes"):
@@ -563,6 +562,8 @@ async def do_get_resource_list(
                 custom_columns,
                 params,
             )
+
+        filter_table(table, params.get("filter"))
         hidden_columns = params.get("hidecols") or config.default_hidden_columns.get(
             _type
         )
