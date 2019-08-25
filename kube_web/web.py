@@ -361,6 +361,7 @@ async def join_custom_columns(
     table,
     namespace: str,
     is_all_namespaces: bool,
+    custom_columns_param: str,
     params: dict,
 ):
     if not table.rows:
@@ -371,7 +372,7 @@ async def join_custom_columns(
 
     custom_column_names = []
     custom_columns = {}
-    for part in filter(None, params.get("customcols", "").split(";")):
+    for part in filter(None, custom_columns_param.split(";")):
         name, _, spec = part.partition("=")
         custom_column_names.append(name)
         custom_columns[name] = jmespath.compile(spec)
@@ -532,12 +533,13 @@ async def do_get_resource_list(
         logger.debug(f"Failed to list {_type} in {_cluster.name}: {e}")
         error = {"cluster": _cluster, "resource_type": _type, "exception": e}
     else:
+        config = request.app[CONFIG]
         # table.rows might be None, e.g. for "csinodes"
         if table.rows is None:
             table.obj["rows"] = []
-        label_columns = params.get("labelcols") or request.app[
-            CONFIG
-        ].default_label_columns.get(_type)
+        label_columns = params.get("labelcols") or config.default_label_columns.get(
+            _type
+        )
         add_label_columns(table, label_columns)
         filter_table(table, params.get("filter"))
 
@@ -547,12 +549,23 @@ async def do_get_resource_list(
                 request, session, _cluster, table, namespace, is_all_namespaces, params
             )
 
-        await join_custom_columns(
-            request, session, _cluster, table, namespace, is_all_namespaces, params
+        custom_columns = params.get("customcols") or config.default_custom_columns.get(
+            _type
         )
-        hidden_columns = params.get("hidecols") or request.app[
-            CONFIG
-        ].default_hidden_columns.get(_type)
+        if custom_columns:
+            await join_custom_columns(
+                request,
+                session,
+                _cluster,
+                table,
+                namespace,
+                is_all_namespaces,
+                custom_columns,
+                params,
+            )
+        hidden_columns = params.get("hidecols") or config.default_hidden_columns.get(
+            _type
+        )
         remove_columns(table, hidden_columns)
         guess_column_classes(table)
         sort_table(table, params.get("sort"))

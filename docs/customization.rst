@@ -32,8 +32,8 @@ You can use :ref:`html-templates` for further customization of the sidebar (e.g.
 
 .. _label-columns:
 
-Label Columns
-=============
+Label & Custom Columns
+======================
 
 Most organizations have a standard set of labels for Kubernetes resources, e.g. all pods might have "app" and "version" labels.
 You can instruct Kubernetes Web View to show these labels as columns for the respective resource types via the ``--default-label-columns`` command line option.
@@ -53,6 +53,15 @@ You can hide existing columns via the ``--default-hidden-columns`` command line 
 .. code-block:: bash
 
     --default-hidden-columns=pods=Nominated Node,Readiness Gates
+
+Arbitrary custom columns can be defined with `JMESPath <http://jmespath.org>`_ expressions, e.g. add a column "Images" for pods and the column "Strategy" for deployments:
+
+.. code-block:: bash
+
+    --default-custom-columns=pods=Images=spec.containers[*].image;;deployments=Strategy=spec.strategy
+
+Multiple column definitions are separated by a single semicolon (";") whereas multiple different entries for different resource types are separated by two semicolons (";;").
+Please be aware that custom columns require one additional Kubernetes API call per listing.
 
 
 .. _external-links:

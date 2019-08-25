@@ -34,6 +34,14 @@ def key_value_pairs(value):
     return data
 
 
+def key_value_pairs2(value):
+    data = {}
+    for kv_pair in value.split(";;"):
+        key, sep, value = kv_pair.partition("=")
+        data[key] = value
+    return data
+
+
 def key_value_list_pairs(value):
     data = {}
     for kv_pair in value.split(";"):
@@ -150,6 +158,12 @@ def parse_args(argv=None):
         "--default-hidden-columns",
         type=key_value_pairs,
         help="Comma-separated list of columns to hide per resource type; multiple entries separated by semicolon, e.g. 'pods=Nominated Node,Readiness Gates,version;deployments=Selector'",
+        default={},
+    )
+    parser.add_argument(
+        "--default-custom-columns",
+        type=key_value_pairs2,
+        help="Semicolon-separated list of Column=<expresion> pairs per resource type; multiple entries separated by two semicolons, e.g. 'pods=Images=spec.containers[*].image;;deployments=Replicas=spec.replicas'",
         default={},
     )
     parser.add_argument(

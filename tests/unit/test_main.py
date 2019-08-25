@@ -12,3 +12,15 @@ def test_parse_sidebar_resource_types():
         "Main": ["nodes", "pods"],
         "CRDs": ["foos", "bars"],
     }
+
+
+def test_parse_default_custom_columns():
+    args = parse_args(
+        [
+            "--default-custom-columns=pods=A=metadata.name;B=spec;;deployments=Strategy=spec.strategy"
+        ]
+    )
+    assert args.default_custom_columns == {
+        "pods": "A=metadata.name;B=spec",
+        "deployments": "Strategy=spec.strategy",
+    }
