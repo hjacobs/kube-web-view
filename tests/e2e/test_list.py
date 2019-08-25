@@ -123,6 +123,26 @@ def test_list_pods_with_custom_columns(session):
         assert cells[-3].text.startswith("['hjacobs/")
 
 
+def test_list_pods_with_multiple_custom_columns(session):
+    # note that the semicolon must be urlencoded as %3B!
+    response = session.get(
+        "/clusters/local/namespaces/_all/deployments?customcols=A=metadata.namespace%3BB=metadata.name"
+    )
+    response.raise_for_status()
+    check_links(response, session)
+    ths = response.html.find("main table thead th")
+    assert ths[-3].text == "A"
+    assert ths[-2].text == "B"
+
+    rows = response.html.find("main table tbody tr")
+    for row in rows:
+        cells = row.find("td")
+        # namespace
+        assert cells[-3].text == cells[0].text
+        # name
+        assert cells[-2].text == cells[1].text
+
+
 def test_list_secrets_with_custom_columns(session):
     response = session.get(
         "/clusters/local/namespaces/_all/secrets?customcols=Data=data"

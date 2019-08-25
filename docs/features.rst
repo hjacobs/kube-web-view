@@ -34,7 +34,7 @@ To facilitate processing in spreadsheets or command line tools (``grep``, ``awk`
 Columns can be customized via the ``labelcols`` and ``customcols`` query parameters:
 
 * ``labelcols`` is either a comma separated list of label names or "*" to show all labels
-* ``customcols`` is a semicolon-separated list of Name=spec pairs, where "Name" is an arbitrary column name string and "spec" is a `JMESPath <http://jmespath.org/>`_ expression: e.g. ``Images=spec.containers[*].image`` would show the container images in the "Images" column.
+* ``customcols`` is a semicolon-separated list of Name=spec pairs, where "Name" is an arbitrary column name string and "spec" is a `JMESPath <http://jmespath.org/>`_ expression: e.g. ``Images=spec.containers[*].image`` would show the container images in the "Images" column. Note that the semicolon to separate multiple custom columns must be urlencoded as ``%3B``.
 
 The ``limit`` query parameter can optionally limit the number of shown resources.
 
