@@ -39,7 +39,13 @@ from aiohttp import web
 from kube_web import __version__
 from kube_web import kubernetes
 from kube_web import jinja2_filters
-from .table import add_label_columns, filter_table, guess_column_classes, sort_table, merge_cluster_tables
+from .table import (
+    add_label_columns,
+    filter_table,
+    guess_column_classes,
+    sort_table,
+    merge_cluster_tables,
+)
 
 # import tracemalloc
 # tracemalloc.start()
