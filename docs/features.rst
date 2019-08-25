@@ -31,6 +31,13 @@ Resources can be filtered by label: use the ``selector`` query parameter with la
 
 To facilitate processing in spreadsheets or command line tools (``grep``, ``awk``, etc), all resource listings can be downloaded as tab-separated-values (TSV). Just append ``download=tsv`` to the URL.
 
+Columns can be customized via the ``labelcols`` and ``customcols`` query parameters:
+
+* ``labelcols`` is either a comma separated list of label names or "*" to show all labels
+* ``customcols`` is a semicolon-separated list of Name=spec pairs, where "Name" is an arbitrary column name string and "spec" is a `JMESPath <http://jmespath.org/>`_ expression: e.g. ``Images=spec.containers[*].image`` would show the container images in the "Images" column.
+
+The ``limit`` query parameter can optionally limit the number of shown resources.
+
 Searching
 =========
 
