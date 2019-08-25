@@ -112,84 +112,88 @@
 {% endif %}
 
 <table class="table is-striped">
-    <tr>
-        {% if table.obj.clusters|length > 1: %}
-        <th>Cluster</th>
-        {% endif %}
-        {% if is_all_namespaces: %}
-        <th>Namespace</th>
-        {% endif %}
-        {% for column in table.columns: %}
-        <th title="{{ column.description }}" class="{{ column.class }}"><a href="{{ rel_url.update_query(sort=(column.name + ':desc' if rel_url.query.sort == column.name else column.name)) }}">{{ column.name }}
-                {% if rel_url.query.sort == column.name: %}
-                <span class="icon"><i class="fas fa-sort-down"></i></span>
-                {% elif rel_url.query.sort == column.name + ':desc': %}
-                <span class="icon"><i class="fas fa-sort-up"></i></span>
-                {% endif %}
-            </a></th>
-            {% endfor %}
-            <th><a href="{{ rel_url.update_query(sort=('Created:desc' if rel_url.query.sort == 'Created' else 'Created')) }}">Created
-                    {% if rel_url.query.sort == 'Created': %}
+    <thead>
+        <tr>
+            {% if table.obj.clusters|length > 1: %}
+            <th>Cluster</th>
+            {% endif %}
+            {% if is_all_namespaces: %}
+            <th>Namespace</th>
+            {% endif %}
+            {% for column in table.columns: %}
+            <th title="{{ column.description }}" class="{{ column.class }}"><a href="{{ rel_url.update_query(sort=(column.name + ':desc' if rel_url.query.sort == column.name else column.name)) }}">{{ column.name }}
+                    {% if rel_url.query.sort == column.name: %}
                     <span class="icon"><i class="fas fa-sort-down"></i></span>
-                    {% elif rel_url.query.sort == 'Created:desc': %}
+                    {% elif rel_url.query.sort == column.name + ':desc': %}
                     <span class="icon"><i class="fas fa-sort-up"></i></span>
                     {% endif %}
                 </a></th>
-                {% if object_links[table.api_obj_class.endpoint]: %}
-                <th></th>
-                {% endif %}
-    </tr>
-    {% for row in table.rows: %}
-    <tr>
-        {% if table.obj.clusters|length > 1: %}
-        <td><a href="/clusters/{{ row.cluster.name }}">{{ row.cluster.name }}</a></td>
-        {% endif %}
-        {% if is_all_namespaces: %}
-        <td><a href="/clusters/{{ row.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}">{{ row.object.metadata.namespace }}</a></td>
-        {% endif %}
-        {% for cell in row.cells: %}
-        {% if table.columns[loop.index0].name == 'Name': %}
-        {% if row.object.metadata.namespace: %}
-        <td><a href="/clusters/{{ row.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
-        {% else: %}
-        <td><a href="/clusters/{{ row.cluster.name }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
-        {% endif %}
-        {% else: %}
-        <td class="{{ get_cell_class(table, loop.index0, cell) }} {{ table.columns[loop.index0].class }}"
-            {% if table.columns[loop.index0].name in ('Age', 'First Seen'): %}
-            style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}"
+                {% endfor %}
+                <th><a href="{{ rel_url.update_query(sort=('Created:desc' if rel_url.query.sort == 'Created' else 'Created')) }}">Created
+                        {% if rel_url.query.sort == 'Created': %}
+                        <span class="icon"><i class="fas fa-sort-down"></i></span>
+                        {% elif rel_url.query.sort == 'Created:desc': %}
+                        <span class="icon"><i class="fas fa-sort-up"></i></span>
+                        {% endif %}
+                    </a></th>
+                    {% if object_links[table.api_obj_class.endpoint]: %}
+                    <th></th>
+                    {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in table.rows: %}
+        <tr>
+            {% if table.obj.clusters|length > 1: %}
+            <td><a href="/clusters/{{ row.cluster.name }}">{{ row.cluster.name }}</a></td>
             {% endif %}
-            >
-            {% if table.columns[loop.index0].label and table.columns[loop.index0].label != '*': %}
-            <a href="{{ rel_url.update_query(selector=table.columns[loop.index0].label+'='+cell) }}">{{ cell if cell is not none}}</a>
-            {% elif table.columns[loop.index0].name == 'Node': %}
-            <a href="/clusters/{{ row.cluster.name }}/nodes/{{ cell }}">{{ cell if cell is not none}}</a>
-            {% elif table.columns[loop.index0].name == 'CPU Usage': %}
-            {{ cell|cpu if cell is not none }}
-            {% elif table.columns[loop.index0].name == 'Memory Usage': %}
-            {{ cell|memory('MiB') if cell is not none }} MiB
+            {% if is_all_namespaces: %}
+            <td><a href="/clusters/{{ row.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}">{{ row.object.metadata.namespace }}</a></td>
+            {% endif %}
+            {% for cell in row.cells: %}
+            {% if table.columns[loop.index0].name == 'Name': %}
+            {% if row.object.metadata.namespace: %}
+            <td><a href="/clusters/{{ row.cluster.name }}/namespaces/{{ row.object.metadata.namespace }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
             {% else: %}
-            {{ cell if cell is not none}}
+            <td><a href="/clusters/{{ row.cluster.name }}/{{ table.api_obj_class.endpoint }}/{{ row.object.metadata.name }}">{{ cell }}</a></td>
             {% endif %}
-        </td>
-        {% endif %}
-        {% endfor %}
-        <td style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}">{{ row.object.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
-        {% if object_links[table.api_obj_class.endpoint]: %}
-        <td>
-            {% for link in object_links[table.api_obj_class.endpoint]: %}
-            <a href="{{ link.href.format(cluster=row.cluster.name, namespace=row.object.metadata.namespace, name=row.object.metadata.name) }}" class="button is-primary">
-                <span class="icon"><i class="fas fa-{{ link.icon }}"></i></span>
-            </a>
+            {% else: %}
+            <td class="{{ get_cell_class(table, loop.index0, cell) }} {{ table.columns[loop.index0].class }}"
+                {% if table.columns[loop.index0].name in ('Age', 'First Seen'): %}
+                style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}"
+                {% endif %}
+                >
+                {% if table.columns[loop.index0].label and table.columns[loop.index0].label != '*': %}
+                <a href="{{ rel_url.update_query(selector=table.columns[loop.index0].label+'='+cell) }}">{{ cell if cell is not none}}</a>
+                {% elif table.columns[loop.index0].name == 'Node': %}
+                <a href="/clusters/{{ row.cluster.name }}/nodes/{{ cell }}">{{ cell if cell is not none}}</a>
+                {% elif table.columns[loop.index0].name == 'CPU Usage': %}
+                {{ cell|cpu if cell is not none }}
+                {% elif table.columns[loop.index0].name == 'Memory Usage': %}
+                {{ cell|memory('MiB') if cell is not none }} MiB
+                {% else: %}
+                {{ cell if cell is not none}}
+                {% endif %}
+            </td>
+            {% endif %}
             {% endfor %}
-        </td>
-        {% endif %}
-    </tr>
-    {% else: %}
-    <tr>
-        <td colspan="{{ table.columns|length + 1 }}">No {{ table.api_obj_class.kind }} objects {% if namespace and not is_all_namespaces:%} in namespace "{{ namespace }}"{% endif %} found.</td>
-    </tr>
-    {% endfor %}
+            <td style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}">{{ row.object.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
+            {% if object_links[table.api_obj_class.endpoint]: %}
+            <td>
+                {% for link in object_links[table.api_obj_class.endpoint]: %}
+                <a href="{{ link.href.format(cluster=row.cluster.name, namespace=row.object.metadata.namespace, name=row.object.metadata.name) }}" class="button is-primary">
+                    <span class="icon"><i class="fas fa-{{ link.icon }}"></i></span>
+                </a>
+                {% endfor %}
+            </td>
+            {% endif %}
+        </tr>
+        {% else: %}
+        <tr>
+            <td colspan="{{ table.columns|length + 1 }}">No {{ table.api_obj_class.kind }} objects {% if namespace and not is_all_namespaces:%} in namespace "{{ namespace }}"{% endif %} found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 
 {% endfor %}

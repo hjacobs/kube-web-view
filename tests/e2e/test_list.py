@@ -81,6 +81,22 @@ def test_list_pods_with_node_links(session):
     )
 
 
+def test_list_pods_with_limit(session):
+    response = session.get("/clusters/local/namespaces/default/pods")
+    response.raise_for_status()
+    check_links(response, session)
+    rows = response.html.find("table tbody tr")
+    # verify that we actually have more than one pod in total
+    assert len(rows) > 1
+
+    response = session.get("/clusters/local/namespaces/default/pods?limit=1")
+    response.raise_for_status()
+    check_links(response, session)
+    rows = response.html.find("table tbody tr")
+    # check that the "limit" parameter works
+    assert len(rows) == 1
+
+
 def test_list_pods_with_metrics(session):
     response = session.get("/clusters/local/namespaces/default/pods?join=metrics")
     response.raise_for_status()
@@ -89,6 +105,22 @@ def test_list_pods_with_metrics(session):
     # note: pods have an extra "Links" column (--object-links)
     assert ths[-4].text == "CPU Usage"
     assert ths[-3].text == "Memory Usage"
+
+
+def test_list_pods_with_custom_columns(session):
+    response = session.get(
+        "/clusters/local/namespaces/default/pods?customcols=Images=spec.containers[*].image"
+    )
+    response.raise_for_status()
+    check_links(response, session)
+    ths = response.html.find("main table thead th")
+    # note: pods have an extra "Links" column (--object-links)
+    assert ths[-3].text == "Images"
+
+    rows = response.html.find("main table tbody tr")
+    for row in rows:
+        cells = row.find("td")
+        assert cells[-3].text.startswith("['hjacobs/")
 
 
 def test_list_namespaced_resource_type_not_found(session):

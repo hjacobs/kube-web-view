@@ -7,6 +7,7 @@ import zlib
 import colorsys
 import json
 import base64
+import jmespath
 import time
 import os
 import pykube
@@ -350,6 +351,78 @@ async def get_cluster_resource_types(request, session):
     }
 
 
+async def join_custom_columns(
+    request,
+    session,
+    _cluster,
+    table,
+    namespace: str,
+    is_all_namespaces: bool,
+    params: dict,
+):
+    if not table.rows:
+        # nothing to do
+        return
+
+    clazz = table.api_obj_class
+
+    custom_column_names = []
+    custom_columns = {}
+    for part in filter(None, params.get("customcols", "").split(";")):
+        name, _, spec = part.partition("=")
+        custom_column_names.append(name)
+        custom_columns[name] = jmespath.compile(spec)
+
+    if not custom_columns:
+        # nothing to do
+        return
+
+    for name in custom_column_names:
+        table.columns.append({"name": name})
+
+    row_index_by_namespace_name = {}
+    for i, row in enumerate(table.rows):
+        row_index_by_namespace_name[
+            (
+                row["object"]["metadata"].get("namespace"),
+                row["object"]["metadata"]["name"],
+            )
+        ] = i
+
+    query = wrap_query(clazz.objects(_cluster.api), request, session)
+
+    if issubclass(clazz, NamespacedAPIObject):
+        if is_all_namespaces:
+            query = query.filter(namespace=pykube.all)
+        elif namespace:
+            query = query.filter(namespace=namespace)
+
+    if params.get("selector"):
+        query = query.filter(selector=params["selector"])
+
+    rows_joined = set()
+
+    try:
+        object_list = await kubernetes.get_list(query)
+    except Exception as e:
+        logger.warning(f"Failed to query {clazz.kind} in cluster {_cluster.name}: {e}")
+    else:
+        for obj in object_list:
+            key = (obj.namespace, obj.name)
+            row_index = row_index_by_namespace_name.get(key)
+            if row_index is not None:
+                for name in custom_column_names:
+                    expression = custom_columns[name]
+                    value = expression.search(obj.obj)
+                    table.rows[row_index]["cells"].append(value)
+                rows_joined.add(row_index)
+
+    # fill up cells where we have no values
+    for i, row in enumerate(table.rows):
+        if i not in rows_joined:
+            row["cells"].extend([None] * len(custom_column_names))
+
+
 async def join_metrics(
     request,
     session,
@@ -468,8 +541,17 @@ async def do_get_resource_list(
                 request, session, _cluster, table, namespace, is_all_namespaces, params
             )
 
+        await join_custom_columns(
+            request, session, _cluster, table, namespace, is_all_namespaces, params
+        )
+
         guess_column_classes(table)
         sort_table(table, params.get("sort"))
+
+        limit = params.get("limit")
+        if limit:
+            table.rows[:] = table.rows[: int(limit)]
+
         for row in table.rows:
             row["cluster"] = _cluster
         table.obj["clusters"] = [_cluster]
