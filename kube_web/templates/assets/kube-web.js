@@ -42,4 +42,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const $forms = Array.prototype.slice.call(document.querySelectorAll('form.tools-form'), 0);
+
+  $forms.forEach( el => {
+    el.addEventListener('submit', function () {
+      const $inputs = Array.prototype.slice.call(el.getElementsByTagName('input'), 0);
+      $inputs.forEach( input => {
+        // setting the "name" attribute to empty will prevent having an empty query parameter in the URL
+        if (input.name && !input.value) {
+            input.name = '';
+        }
+      });
+    });
+  });
+
 });
