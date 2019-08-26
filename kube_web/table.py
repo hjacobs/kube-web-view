@@ -184,7 +184,7 @@ def remove_columns(table, hide_columns_param):
     )
     remove_indices = []
     for i, column in enumerate(table.columns):
-        if column["name"] in hide_columns:
+        if column["name"] in hide_columns or "*" in hide_columns:
             remove_indices.append(i)
 
     remove_indices.reverse()

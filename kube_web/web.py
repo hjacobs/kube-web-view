@@ -537,6 +537,13 @@ async def do_get_resource_list(
         # table.rows might be None, e.g. for "csinodes"
         if table.rows is None:
             table.obj["rows"] = []
+
+        # optionally hide any or all columns (before we add label/custom columns)
+        hidden_columns = params.get("hidecols") or config.default_hidden_columns.get(
+            _type
+        )
+        remove_columns(table, hidden_columns)
+
         label_columns = params.get("labelcols") or config.default_label_columns.get(
             _type
         )
@@ -564,10 +571,6 @@ async def do_get_resource_list(
             )
 
         filter_table(table, params.get("filter"))
-        hidden_columns = params.get("hidecols") or config.default_hidden_columns.get(
-            _type
-        )
-        remove_columns(table, hidden_columns)
         guess_column_classes(table)
         sort_table(table, params.get("sort"))
 
