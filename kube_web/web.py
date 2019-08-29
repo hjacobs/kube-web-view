@@ -37,6 +37,8 @@ from pathlib import Path
 
 from aiohttp import web
 
+from kube_web import query_params as qp
+
 from kube_web import __version__
 from kube_web import kubernetes
 from kube_web import jinja2_filters
@@ -287,8 +289,8 @@ def filter_matches(_filter_lower, cluster):
 @aiohttp_jinja2.template("clusters.html")
 @context()
 async def get_cluster_list(request, session):
-    selector = parse_selector(request.query.get("selector"))
-    _filter_lower = request.query.get("filter", "").lower()
+    selector = parse_selector(request.query.get(qp.SELECTOR))
+    _filter_lower = request.query.get(qp.FILTER, "").lower()
     clusters = []
     for cluster in request.app[CLUSTER_MANAGER].clusters:
         if selector_matches(selector, cluster.labels) and filter_matches(
@@ -401,8 +403,8 @@ async def join_custom_columns(
         elif namespace:
             query = query.filter(namespace=namespace)
 
-    if params.get("selector"):
-        query = query.filter(selector=params["selector"])
+    if params.get(qp.SELECTOR):
+        query = query.filter(selector=params[qp.SELECTOR])
 
     rows_joined = set()
 
@@ -468,8 +470,8 @@ async def join_metrics(
         elif namespace:
             query = query.filter(namespace=namespace)
 
-    if params.get("selector"):
-        query = query.filter(selector=params["selector"])
+    if params.get(qp.SELECTOR):
+        query = query.filter(selector=params[qp.SELECTOR])
 
     rows_joined = set()
 
@@ -524,8 +526,8 @@ async def do_get_resource_list(
         elif namespace:
             query = query.filter(namespace=namespace)
 
-        if params.get("selector"):
-            query = query.filter(selector=params["selector"])
+        if params.get(qp.SELECTOR):
+            query = query.filter(selector=params[qp.SELECTOR])
 
         table = await kubernetes.get_table(query)
     except Exception as e:
@@ -539,25 +541,25 @@ async def do_get_resource_list(
             table.obj["rows"] = []
 
         # optionally hide any or all columns (before we add label/custom columns)
-        hidden_columns = params.get("hidecols") or config.default_hidden_columns.get(
-            _type
-        )
+        hidden_columns = params.get(
+            qp.HIDDEN_COLUMNS
+        ) or config.default_hidden_columns.get(_type)
         remove_columns(table, hidden_columns)
 
-        label_columns = params.get("labelcols") or config.default_label_columns.get(
-            _type
-        )
+        label_columns = params.get(
+            qp.LABEL_COLUMNS
+        ) or config.default_label_columns.get(_type)
         add_label_columns(table, label_columns)
 
         # note: we join before sorting, so sorting works on the joined columns, too
-        if params.get("join") == "metrics" and _type in ("pods", "nodes"):
+        if params.get(qp.JOIN) == "metrics" and _type in ("pods", "nodes"):
             await join_metrics(
                 request, session, _cluster, table, namespace, is_all_namespaces, params
             )
 
-        custom_columns = params.get("customcols") or config.default_custom_columns.get(
-            _type
-        )
+        custom_columns = params.get(
+            qp.CUSTOM_COLUMNS
+        ) or config.default_custom_columns.get(_type)
         if custom_columns:
             await join_custom_columns(
                 request,
@@ -570,11 +572,11 @@ async def do_get_resource_list(
                 params,
             )
 
-        filter_table(table, params.get("filter"))
+        filter_table(table, params.get(qp.FILTER))
         guess_column_classes(table)
-        sort_table(table, params.get("sort"))
+        sort_table(table, params.get(qp.SORT))
 
-        limit = params.get("limit")
+        limit = params.get(qp.LIMIT)
         if limit:
             table.rows[:] = table.rows[: int(limit)]
 
@@ -725,7 +727,7 @@ async def get_resource_list(request, session):
                 merged = merge_cluster_tables(previous_table, table)
                 if merged:
                     # sort again after merge
-                    sort_table(merged, params.get("sort"))
+                    sort_table(merged, params.get(qp.SORT))
                 else:
                     tables.append(table)
             else:
@@ -736,7 +738,7 @@ async def get_resource_list(request, session):
 
     duration = time.time() - start
 
-    if params.get("download") == "tsv":
+    if params.get(qp.DOWNLOAD) == "tsv":
         return await download_tsv(request, tables[0])
 
     return {
@@ -765,9 +767,9 @@ async def get_resource_view(request, session):
     plural = request.match_info["plural"]
     name = request.match_info["name"]
     params = request.rel_url.query
-    view = params.get("view")
+    view = params.get(qp.VIEW)
     clazz = await cluster.resource_registry.get_class_by_plural_name(
-        plural, namespaced=bool(namespace), api_version=params.get("api_version")
+        plural, namespaced=bool(namespace), api_version=params.get(qp.API_VERSION)
     )
     query = wrap_query(clazz.objects(cluster.api), request, session)
     if namespace:
@@ -782,7 +784,7 @@ async def get_resource_view(request, session):
         # => hide annotations
         resource.metadata["annotations"] = {"annotations-hidden": "by-kube-web-view"}
 
-    if params.get("download") == "yaml":
+    if params.get(qp.DOWNLOAD) == "yaml":
         return await download_yaml(request, resource)
 
     owners = []
@@ -814,7 +816,7 @@ async def get_resource_view(request, session):
 
         table = await kubernetes.get_table(query)
         guess_column_classes(table)
-        sort_table(table, params.get("sort"))
+        sort_table(table, params.get(qp.SORT))
         table.obj["cluster"] = cluster
     else:
         table = None
@@ -1063,7 +1065,7 @@ async def get_search(request, session):
     params = request.rel_url.query
     cluster = ",".join(params.getall("cluster", []))
     namespace = ",".join(params.getall("namespace", []))
-    selector = params.get("selector", "").strip()
+    selector = params.get(qp.SELECTOR, "").strip()
     search_query = params.get("q", "").strip()
 
     # k=v pairs in query will be changed to selector automatically
