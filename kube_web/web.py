@@ -137,6 +137,11 @@ TABLE_CELL_FORMATTING = {
     "pods": {
         "CPU Usage": {"0": "has-text-grey"},
         "Memory Usage": {"0": "has-text-grey"},
+        "Restarts": {
+            ("<", 1): "has-text-grey",
+            ("<", 4): "has-text-warning",
+            (">", 3): "has-text-danger",
+        },
         "Status": {
             "Completed": "has-text-info",
             "ContainerCreating": "has-text-warning",
@@ -332,7 +337,20 @@ def get_cell_class(table_or_plural, column_index_or_name, value):
     cell_formatting = cell_formatting.get(column_name)
     if not cell_formatting:
         return ""
-    return cell_formatting.get(str(value))
+    clazz = cell_formatting.get(str(value))
+    if clazz:
+        return clazz
+    if isinstance(value, (int, float)):
+        for condition, _class in sorted(cell_formatting.items()):
+            if isinstance(condition, tuple):
+                op, val = condition
+                if op == "<" and value < val:
+                    return _class
+                elif op == ">" and value > val:
+                    return _class
+                elif op == "=" and value == val:
+                    return _class
+    return None
 
 
 @routes.get("/clusters/{cluster}/_resource-types")
