@@ -151,6 +151,8 @@ TABLE_CELL_FORMATTING = {
             "Error": "has-text-danger",
             "Evicted": "has-text-danger",
             "ImagePullBackOff": "has-text-danger",
+            "Init:0/1": "has-text-warning",
+            "Init:CrashLoopBackOff": "has-text-danger",
             "Init:CreateContainerConfigError": "has-text-danger",
             "Init:Error": "has-text-danger",
             "InvalidImageName": "has-text-danger",
