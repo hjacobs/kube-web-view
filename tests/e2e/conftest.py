@@ -1,7 +1,5 @@
 import yaml
-import time
 from tempfile import NamedTemporaryFile
-import requests
 import logging
 from pytest import fixture
 from pathlib import Path
@@ -9,8 +7,6 @@ import os
 from functools import partial
 
 from requests_html import HTMLSession
-
-from subprocess import Popen
 
 kind_cluster_name = "kube-web-view-e2e"
 
@@ -42,40 +38,9 @@ def cluster(kind_cluster) -> dict:
     logging.info("Waiting for rollout ...")
     kubectl("rollout", "status", "deployment/kube-web-view")
 
-    def port_forward(port):
-        return (
-            Popen(
-                [
-                    str(kind_cluster.kubectl_path),
-                    "port-forward",
-                    "service/kube-web-view",
-                    f"{port}:80",
-                ],
-                env={"KUBECONFIG": str(kind_cluster.kubeconfig_path)},
-            ),
-            f"http://localhost:{port}/",
-        )
-
-    port = 38080
-    proc, url = port_forward(port)
-    logging.info(f"Waiting for port forward {url} ...")
-    for i in range(10):
-        time.sleep(1)
-        try:
-            response = requests.get(url, timeout=2)
-            response.raise_for_status()
-        except Exception as e:
-            logging.info(f"Failed to connect: {e}")
-            if i >= 9:
-                raise
-            proc.kill()
-            port += 1
-            proc, url = port_forward(port)
-        else:
-            break
-
-    yield {"url": url}
-    proc.kill()
+    with kind_cluster.port_forward("service/kube-web-view", 80) as port:
+        url = f"http://localhost:{port}/"
+        yield {"url": url}
 
 
 @fixture(scope="session")
