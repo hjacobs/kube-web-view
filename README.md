@@ -58,16 +58,11 @@ This requires Python 3.7 and [poetry](https://poetry.eustace.io/) and will run u
 make test
 ```
 
-The end-to-end (e2e) tests will bootstrap a new Kind cluster, you can run Kubernetes Web View for development against this cluster:
+The end-to-end (e2e) tests will bootstrap a new Kind cluster via [pytest-kind](https://pypi.org/project/pytest-kind/), you can keep the cluster and run Kubernetes Web View for development against it:
 
 ```
+PYTEST_OPTIONS=--keep-cluster make test
 make run.kind
-```
-
-To clean up the e2e test cluster (also needed after a machine reboot):
-
-```
-make clean.e2e
 ```
 
 
