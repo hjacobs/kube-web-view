@@ -9,17 +9,6 @@ OSNAME := $(shell uname | perl -ne 'print lc($$_)')
 
 default: docker
 
-clean:
-	rm -f ./kind ./kubectl
-
-kind:
-	curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-$(OSNAME)-amd64
-	chmod +x ./kind
-
-kubectl:
-	curl -LO https://storage.googleapis.com/kubernetes-release/release/$$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/$(OSNAME)/amd64/kubectl
-	chmod +x ./kubectl
-
 .PHONY: poetry
 poetry:
 	poetry install
@@ -38,17 +27,13 @@ test.unit:
 	poetry run coverage report
 
 .PHONY: test.e2e
-test.e2e: kind kubectl docker
+test.e2e: docker
 	env TEST_IMAGE=$(IMAGE):$(TAG) \
 		poetry run pytest -v -r=a \
 			--log-cli-level info \
 			--log-cli-format '%(asctime)s %(levelname)s %(message)s' \
 			--cluster-name kube-web-view-e2e \
 			tests/e2e $(PYTEST_OPTIONS)
-
-.PHONY: clean.e2e
-clean.e2e:
-	./kind delete cluster --name=kube-web-view-e2e
 
 docker: 
 	docker build --build-arg "VERSION=$(VERSION)" -t "$(IMAGE):$(TAG)" .
@@ -72,7 +57,7 @@ run:
 
 .PHONY: run.kind
 run.kind:
-	poetry run python3 -m kube_web --kubeconfig-path=$$(./kind get kubeconfig-path --name=kube-web-view-e2e) --debug --show-container-logs --search-default-resource-types=deployments,pods,configmaps --default-label-columns=pods=app "--default-hidden-columns=pods=Nominated Node"
+	poetry run python3 -m kube_web --kubeconfig-path=$$(.pytest-kind/kube-web-view-e2e/kind get kubeconfig-path --name=kube-web-view-e2e) --debug --show-container-logs --search-default-resource-types=deployments,pods,configmaps --default-label-columns=pods=app "--default-hidden-columns=pods=Nominated Node"
 
 .PHONY: mirror
 mirror:
