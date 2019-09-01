@@ -1,6 +1,10 @@
 from .resource_registry import ResourceRegistry
 from .selector import selector_matches
 
+from .cluster_discovery import OAuth2BearerTokenAuth
+
+from pathlib import Path
+
 
 class Cluster:
     def __init__(self, name: str, api, labels: dict, preferred_api_versions: dict):
@@ -16,10 +20,17 @@ class ClusterNotFound(Exception):
 
 
 class ClusterManager:
-    def __init__(self, discoverer, selector: dict, preferred_api_versions: dict):
+    def __init__(
+        self,
+        discoverer,
+        selector: dict,
+        cluster_auth_token_path: Path,
+        preferred_api_versions: dict,
+    ):
         self._clusters = {}
         self.discoverer = discoverer
         self.selector = selector
+        self.cluster_auth_token_path = cluster_auth_token_path
         self.preferred_api_versions = preferred_api_versions
         self.reload()
 
@@ -27,6 +38,11 @@ class ClusterManager:
         _clusters = {}
         for cluster in self.discoverer.get_clusters():
             if selector_matches(self.selector, cluster.labels):
+                if self.cluster_auth_token_path:
+                    # overwrite auth mechanism with dynamic access token (loaded from file)
+                    cluster.api.session.auth = OAuth2BearerTokenAuth(
+                        self.cluster_auth_token_path
+                    )
                 _clusters[cluster.name] = Cluster(
                     cluster.name,
                     cluster.api,

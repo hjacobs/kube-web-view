@@ -94,6 +94,11 @@ def parse_args(argv=None):
         help="Optional label selector to filter clusters, e.g. 'region=eu-central-1' would only load clusters with label 'region' equal 'eu-central-1'",
     )
     parser.add_argument(
+        "--cluster-auth-token-path",
+        type=Path,
+        help="Path to file containing OAuth2 access Bearer token to use for cluster authentication",
+    )
+    parser.add_argument(
         "--cluster-auth-use-session-token",
         action="store_true",
         help="Use OAuth2 access token from frontend session for cluster authentication",
@@ -203,7 +208,10 @@ def main(argv=None):
                 args.kubeconfig_path, args.kubeconfig_contexts
             )
     cluster_manager = ClusterManager(
-        cluster_discoverer, args.cluster_label_selector, args.preferred_api_versions
+        cluster_discoverer,
+        args.cluster_label_selector,
+        args.cluster_auth_token_path,
+        args.preferred_api_versions,
     )
     app = get_app(cluster_manager, args)
     aiohttp.web.run_app(app, port=args.port, handle_signals=False)
