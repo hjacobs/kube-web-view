@@ -3,6 +3,7 @@
 IMAGE            ?= hjacobs/kube-web-view
 GITDIFFHASH       = $(shell git diff | md5sum | cut -c 1-4)
 VERSION          ?= $(shell git describe --tags --always --dirty=-dirty-$(GITDIFFHASH))
+VERSIONPY         = $(shell echo $(VERSION) | cut -d- -f 1)
 TAG              ?= $(VERSION)
 TTYFLAGS          = $(shell test -t 0 && echo "-it")
 OSNAME := $(shell uname | perl -ne 'print lc($$_)')
@@ -65,6 +66,8 @@ mirror:
 
 .PHONY: version
 version:
-	sed -i "s/version = .*/version = \"${VERSION}\"/" pyproject.toml
-	sed -i "s/__version__ = .*/__version__ = '${VERSION}'/" kube_web/__init__.py
-	sed -i "s/BUILD_VERSION/${VERSION}/g" kube_web/templates/base.html
+	# poetry only accepts a narrow version format
+	sed -i "s/^version = .*/version = \"${VERSIONPY}\"/" pyproject.toml
+	sed -i "s/^version = .*/version = \"${VERSION}\"/" docs/conf.py
+	sed -i "s/^__version__ = .*/__version__ = \"${VERSION}\"/" kube_web/__init__.py
+	sed -i "s/v=[0-9A-Za-z._-]*/v=${VERSION}/g" kube_web/templates/base.html

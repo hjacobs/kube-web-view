@@ -1,2 +1,2 @@
 # This version is replaced during release process.
-__version__ = "2019.0.dev1"
+__version__ = "19.8.5-10-g940c675-dirty-e491"

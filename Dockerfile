@@ -27,7 +27,8 @@ ARG VERSION=dev
 
 # replace build version in package and
 # add build version to static asset links to break browser cache
-RUN sed -i "s/__version__ = .*/__version__ = '${VERSION}'/" /kube_web/__init__.py && \
-    sed -i "s/BUILD_VERSION/${VERSION}/g" /kube_web/templates/base.html
+# see also "version" in Makefile
+RUN sed -i "s/^__version__ = .*/__version__ = \"${VERSION}\"/" /kube_web/__init__.py && \
+    sed -i "s/v=[0-9A-Za-z._-]*/v=${VERSION}/g" /kube_web/templates/base.html
 
 ENTRYPOINT ["/usr/local/bin/python", "-m", "kube_web"]
