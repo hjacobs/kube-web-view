@@ -9,6 +9,8 @@ This section guides through the various options of setting up Kubernetes Web Vie
 * Do you want to use kube-web-view as a local development/ops tool? See :ref:`local-usage`
 * Do you want to use it in a single cluster or access multiple clusters via kube-web-view? See :ref:`single-cluster` or :ref:`multiple-clusters`.
 * How do you plan to secure your setup and authenticate users? See :ref:`access-control`.
+* Do you want to customize behavior and look & feel for your organization? See :ref:`customization`.
+* Please make sure to read the :ref:`security`.
 
 
 .. _local-usage:
@@ -70,9 +72,10 @@ Kubernetes Web View can access multiple clusters via different methods:
 
 Kubernetes Web View will access the Kubernetes API differently, depending on the configuration:
 
-* when using ``--clusters``: no authentication method (or session token if ``--cluster-auth-session-token`` is set)
-* when using ``--kubeconfig-path``: try to use the authentication method defined in the Kubeconfig file
+* when using ``--clusters``: no authentication method (or token from ``--cluster-auth-token-path``, or session token if ``--cluster-auth-session-token`` is set)
+* when using ``--kubeconfig-path``: try to use the authentication method defined in the Kubeconfig file (e.g. client certificate)
 * when using ``--cluster-registry-url``: use the Cluster Registry Bearer token from ``--cluster-registry-oauth2-bearer-token-path``
+* when using ``--cluster-auth-token-path``: load the access token from the given file and use it as "Bearer" token for all Kubernetes API calls --- this overwrites any of the above authentication methods
 * when using ``--cluster-auth-session-token``: use the OAuth session token as "Bearer" token for the Kubernetes API --- this overwrites any other authentication method
 
 You can also combine the ``--clusters`` option with ``kubectl proxy`` to access clusters which have an unsupported authentication method:
@@ -80,6 +83,9 @@ You can also combine the ``--clusters`` option with ``kubectl proxy`` to access 
 * start ``kubectl proxy --port=8001`` in a sidecar container
 * run the kube-web-view container with the ``--clusters=http://localhost:8001`` argument
 
+You can use ``--cluster-auth-token-path`` to dynamically refresh the Bearer access token in the background.
+This is useful if you need to rotate the token regularly (e.g. every hour). Either run a sidecar process with a shared volume (e.g. "emptyDir") to write/refresh the token
+or mount a Kubernetes secret into kube-web-view's container at the given path.
 
 
 .. _access-control:
