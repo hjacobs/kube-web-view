@@ -26,4 +26,4 @@ See also :ref:`security`.
 .. _Minikube: https://github.com/kubernetes/minikube
 .. _kind: https://kind.sigs.k8s.io/
 
-
+For guidance on setting up Kubernetes Web View for your environment, read the :ref:`setup` section.
