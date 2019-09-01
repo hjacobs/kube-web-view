@@ -72,11 +72,11 @@ Kubernetes Web View can access multiple clusters via different methods:
 
 Kubernetes Web View will access the Kubernetes API differently, depending on the configuration:
 
-* when using ``--clusters``: no authentication method (or token from ``--cluster-auth-token-path``, or session token if ``--cluster-auth-session-token`` is set)
+* when using ``--clusters``: no authentication method (or token from ``--cluster-auth-token-path``, or session token if ``--cluster-auth-use-session-token`` is set)
 * when using ``--kubeconfig-path``: try to use the authentication method defined in the Kubeconfig file (e.g. client certificate)
 * when using ``--cluster-registry-url``: use the Cluster Registry Bearer token from ``--cluster-registry-oauth2-bearer-token-path``
 * when using ``--cluster-auth-token-path``: load the access token from the given file and use it as "Bearer" token for all Kubernetes API calls --- this overwrites any of the above authentication methods
-* when using ``--cluster-auth-session-token``: use the OAuth session token as "Bearer" token for the Kubernetes API --- this overwrites any other authentication method
+* when using ``--cluster-auth-use-session-token``: use the OAuth session token as "Bearer" token for the Kubernetes API --- this overwrites any other authentication method and only works when :ref:`oauth2` is enabled
 
 You can also combine the ``--clusters`` option with ``kubectl proxy`` to access clusters which have an unsupported authentication method:
 
