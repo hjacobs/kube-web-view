@@ -1384,11 +1384,13 @@ def get_app(cluster_manager, config):
     if config.object_links:
         for link_def in config.object_links.split(","):
             resource_type, sep, url_template = link_def.partition("=")
+            url_template, *options = url_template.split("|")
+            icon, title, *rest = options + [None, None]
             object_links[resource_type].append(
                 {
                     "href": url_template,
-                    "title": "External link for object {name}",
-                    "icon": "external-link-alt",
+                    "icon": icon or "external-link-alt",
+                    "title": title or "External link for object {name}",
                 }
             )
 
@@ -1396,11 +1398,14 @@ def get_app(cluster_manager, config):
     if config.label_links:
         for link_def in config.label_links.split(","):
             label, sep, url_template = link_def.partition("=")
+            url_template, *options = url_template.split("|")
+            icon, title, *rest = options + [None, None]
             label_links[label].append(
                 {
                     "href": url_template,
-                    "title": "External link for {label} label with value '{label_value}'",
-                    "icon": "external-link-alt",
+                    "icon": icon or "external-link-alt",
+                    "title": title
+                    or "External link for {label} label with value '{label_value}'",
                 }
             )
 
