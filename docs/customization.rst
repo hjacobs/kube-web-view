@@ -103,6 +103,14 @@ Example command line argument to link resources with an "application" label to `
 
     --label-links=application=https://myresourcereport/application-{label_value}.html
 
+Links can optionally specify the icon and link title (tooltip) by appending icon name and title text separated by pipe ("|"):
+
+.. code-block:: bash
+
+    --label-links=application=https://myresourcereport/application-{label_value}.html|file-invoice-dollar|Kubernetes Resource Report
+
+Check the `Font Awesome Gallery <https://fontawesome.com/icons?d=gallery&m=free>`_ for available icon names (some ideas: "external-link-alt", "eye", "th-large", "search", "tools").
+
 .. _customize-search:
 
 Search

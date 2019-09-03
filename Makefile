@@ -54,7 +54,7 @@ docs:
 
 .PHONY: run
 run:
-	poetry run python3 -m kube_web --show-container-logs --debug "--object-links=ingresses=javascript:alert('{name}')" "--label-links=application=javascript:alert('Application label has value {label_value}')|eye" --preferred-api-versions=deployments=apps/v1
+	poetry run python3 -m kube_web --show-container-logs --debug "--object-links=ingresses=javascript:alert('{name}')" "--label-links=application=javascript:alert('Application label has value {label_value}')|eye|This is a link!" --preferred-api-versions=deployments=apps/v1
 
 .PHONY: run.kind
 run.kind:
