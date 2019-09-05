@@ -90,7 +90,7 @@
 {% for key, val in resource.obj.items()|sort: %}
 {% if key not in ('metadata', 'apiVersion', 'kind'): %}
 
-<div class="section">
+<div class="section collapsible">
     <h4 class="title is-5">{{ key|capitalize }}</h4>
     <div class="content">
         {{ val|yaml|highlight|safe }}
@@ -110,7 +110,7 @@
 
 
 {% if table: %}
-<div class="section">
+<div class="section collapsible">
     <h4 class="title is-5">Pods</h4>
     <table class="table is-striped">
         <tr>
@@ -159,7 +159,7 @@
 </div>
 {% endif %}
 
-<div class="section">
+<div class="section collapsible">
     {% include "partials/events.html" %}
 </div>
 

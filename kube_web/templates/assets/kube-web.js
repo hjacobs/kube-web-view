@@ -56,4 +56,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  const $collapsibleHeaders = Array.prototype.slice.call(document.querySelectorAll('main .collapsible h4.title'), 0);
+
+  $collapsibleHeaders.forEach( el => {
+    el.addEventListener('click', function () {
+      const $section = el.parentElement;
+      $section.classList.toggle('is-collapsed');
+    });
+  });
+
 });

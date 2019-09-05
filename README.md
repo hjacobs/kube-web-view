@@ -61,7 +61,7 @@ make test
 The end-to-end (e2e) tests will bootstrap a new Kind cluster via [pytest-kind](https://pypi.org/project/pytest-kind/), you can keep the cluster and run Kubernetes Web View for development against it:
 
 ```
-PYTEST_OPTIONS=--keep-cluster make test
+PYTEST_ADDOPTS=--keep-cluster make test
 make run.kind
 ```
 

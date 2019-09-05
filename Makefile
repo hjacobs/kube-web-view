@@ -34,7 +34,7 @@ test.e2e: docker
 			--log-cli-level info \
 			--log-cli-format '%(asctime)s %(levelname)s %(message)s' \
 			--cluster-name kube-web-view-e2e \
-			tests/e2e $(PYTEST_OPTIONS)
+			tests/e2e
 
 docker: 
 	docker build --build-arg "VERSION=$(VERSION)" -t "$(IMAGE):$(TAG)" .

@@ -75,6 +75,15 @@ table.table.has-bottom-controls { margin-bottom: 0.5rem; }
 div.section { margin: 0 0 1rem 0; padding: 0; }
 div.section h4.title { margin-bottom: 1rem; }
 
+div.section.collapsible h4.title { cursor: pointer; border-bottom: 1px solid #fff; }
+div.section.collapsible h4.title:hover { color: #363636; border-bottom: 1px solid #dbdbdb; }
+
+div.section.collapsible h4.title:hover::after { content: " ▴"; }
+div.section.is-collapsed h4.title { color: #7a7a7a; border-bottom: 1px solid #dbdbdb; }
+div.section.is-collapsed h4.title:hover::after { content: " ▾"; }
+div.section.is-collapsed .content,
+div.section.is-collapsed table { display: none; }
+
 a.toggle-tools.is-active span {
     transform: rotate(180deg);
 }
