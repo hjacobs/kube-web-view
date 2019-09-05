@@ -5,7 +5,6 @@ import jinja2
 import csv
 import zlib
 import colorsys
-import json
 import base64
 import jmespath
 import time
@@ -1266,8 +1265,9 @@ async def auth(request, handler):
         # Get access token
         code = request.query["code"]
         try:
-            state = json.loads(request.query["state"])
-            original_url = state["url"]
+            original_url = base64.urlsafe_b64decode(request.query["state"]).decode(
+                "utf-8"
+            )
         except:
             original_url = "/"
         redirect_uri = str(request.url.with_path(OAUTH2_CALLBACK_PATH))
@@ -1299,7 +1299,11 @@ async def auth(request, handler):
             # (it's optional according to https://tools.ietf.org/html/rfc6749#section-4.1.1)
             redirect_uri = str(request.url.with_path(OAUTH2_CALLBACK_PATH))
             params["redirect_uri"] = redirect_uri
-            params["state"] = json.dumps({"url": str(request.rel_url)})
+            # NOTE: we use urlsafe Base64 because some OAuth providers choke on certain characters
+            # see https://codeberg.org/hjacobs/kube-web-view/issues/74
+            params["state"] = base64.urlsafe_b64encode(
+                str(request.rel_url).encode("utf-8")
+            )
             raise web.HTTPFound(location=client.get_authorize_url(**params))
     response = await handler(request)
     return response
