@@ -22,12 +22,12 @@
             </main>
         </div>
         {% include "partials/footer.html" %}
-        {% if rel_url.query.refresh: %}
+        {% if reload: %}
         <script>
-            // refresh page after X seconds..
-            const refreshInterval = {{ rel_url.query.refresh|float }};
-            if (refreshInterval > 0.5) {
-                window.setTimeout(function () { location.reload(); }, refreshInterval * 1000);
+            // reload page after X seconds..
+            const reloadInterval = {{ reload }};
+            if (reloadInterval > 0.5) {
+                window.setTimeout(function () { location.reload(); }, reloadInterval * 1000);
             }
         </script>
         {% endif %}

@@ -264,7 +264,7 @@ def context():
                     else:
                         ctx["namespaces"] = namespaces
             ctx["rel_url"] = request.rel_url
-            ctx["refresh"] = float(request.query.get("refresh", 0))
+            ctx["reload"] = float(request.query.get("reload", 0))
             return ctx
 
         return func_wrapper
@@ -1368,7 +1368,7 @@ async def error_handler(request, handler):
             "error_text": error_text,
             "status": status,
             "rel_url": request.rel_url,
-            "refresh": float(request.query.get("refresh", 0)),
+            "reload": float(request.query.get("reload", 0)),
         }
         response = aiohttp_jinja2.render_template(
             "error.html", request, context, status=status

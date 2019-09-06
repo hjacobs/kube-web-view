@@ -41,9 +41,9 @@
                     </div>
                 </form>
             </div>
-            <a class="navbar-item {{ "is-active" if refresh }}" href="{{ rel_url.update_query(refresh=0 if refresh else 2) }}" style="width: auto">
+            <a class="navbar-item {{ "is-active" if reload }}" href="{{ rel_url.update_query(reload=0 if reload else 2) }}" style="width: auto">
                 <span class="icon">
-                    {% if refresh: %}
+                    {% if reload: %}
                     <span class="fa-stack">
                         <i class="fas fa-slash fa-stack-1x"></i>
                         <i class="fas fa-redo-alt fa-stack-1x"></i>
