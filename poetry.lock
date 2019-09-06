@@ -441,7 +441,7 @@ description = "Python client library for Kubernetes"
 name = "pykube-ng"
 optional = false
 python-versions = "*"
-version = "19.9.0"
+version = "19.9.2"
 
 [package.dependencies]
 PyYAML = "*"
@@ -759,7 +759,7 @@ version = "0.6.0"
 more-itertools = "*"
 
 [metadata]
-content-hash = "148091527dc0f87e3440f7f086f178f25d3878a4b49aafd7f04fec8935369fbe"
+content-hash = "10e48b398be78761c40d975f85f4991c6dfef0498304de60a35be15c06612b19"
 python-versions = "^3.7"
 
 [metadata.hashes]
@@ -809,7 +809,7 @@ pycparser = ["a988718abfad80b6b157acce7bf130a30876d27603738ac39f140993246b25b3"]
 pyee = ["a9c9b60e8693a260dd942ef5a71358cfcbba15792d5e72caf0e3c891c4e91c3b", "dbe44f61c40a995d2bdfd83d9fcb87ae025882d2c7f366513325e3daa09d7ede"]
 pyflakes = ["17dbeb2e3f4d772725c777fabc446d5634d1038f234e77343108ce445ea69ce0", "d976835886f8c5b31d47970ed689944a0262b5f3afa00a5a7b4dc81e5449f8a2"]
 pygments = ["71e430bc85c88a430f000ac1d9b331d2407f681d6f6aec95e8bcfbc3df5b0127", "881c4c157e45f30af185c1ffe8d549d48ac9127433f2c380c24b84572ad66297"]
-pykube-ng = ["4082603adeedd401ea48157a9561decc068b9a15117b87c60e4025ca3f20e650", "a398d3b54768159f0defe5b0c452f359e46ef891735bbdef53a5c8d751c84063"]
+pykube-ng = ["22e595aede4caf8eeb4fe5289e22785a986b4ff641b454d18c88347e71b8fe9d", "eeac0cb0104d7167ad0c8532cf30de86b2691d1368638e624b86ed36d6f77638"]
 pyparsing = ["6f98a7b9397e206d78cc01df10131398f1c8b8510a2f4d97d9abd82e1aacdd80", "d9338df12903bbf5d65a0e4e87c2161968b10d2e489652bb47001d82a9b028b4"]
 pyppeteer = ["51fe769b722a1718043b74d12c20420f29e0dd9eeea2b66652b7f93a9ad465dd"]
 pyquery = ["07987c2ed2aed5cba29ff18af95e56e9eb04a2249f42ce47bddfb37f487229a3", "4771db76bd14352eba006463656aef990a0147a0eeaf094725097acfa90442bf"]

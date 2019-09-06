@@ -27,6 +27,9 @@
             // reload page after X seconds..
             const reloadInterval = {{ reload }};
             if (reloadInterval > 0.5) {
+                const button = document.getElementById("btn-reload");
+                button.style.animationName = "reload";
+                button.style.animationDuration = reloadInterval + "s";
                 window.setTimeout(function () { location.reload(); }, reloadInterval * 1000);
             }
         </script>

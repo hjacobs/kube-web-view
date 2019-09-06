@@ -10,6 +10,27 @@ html { overflow: scroll; }
 .navbar-end .control .icon { color: #98b8ed; }
 .navbar-end .control .icon { color: #98b8ed; }
 
+.navbar-end a.navbar-item {
+    width: auto;
+}
+.navbar-end a.is-active {
+    background-color: transparent !important;
+}
+
+@keyframes reload {
+    0% { background-image: linear-gradient(to top, #2366d1ff 0%, #2366d100 10%); }
+    10% { background-image: linear-gradient(to top, #2366d1ff 10%, #2366d100 20%); }
+    20% { background-image: linear-gradient(to top, #2366d1ff 20%, #2366d100 30%); }
+    30% { background-image: linear-gradient(to top, #2366d1ff 30%, #2366d100 40%); }
+    40% { background-image: linear-gradient(to top, #2366d1ff 40%, #2366d100 50%); }
+    50% { background-image: linear-gradient(to top, #2366d1ff 50%, #2366d100 60%); }
+    60% { background-image: linear-gradient(to top, #2366d1ff 60%, #2366d100 70%); }
+    70% { background-image: linear-gradient(to top, #2366d1ff 70%, #2366d100 80%); }
+    80% { background-image: linear-gradient(to top, #2366d1ff 80%, #2366d100 90%); }
+    90% { background-image: linear-gradient(to top, #2366d1ff 90%, #2366d100 100%); }
+    100% { background-image: linear-gradient(to top, #2366d1ff 100%, #2366d1ff 100%); }
+}
+
 .container.is-fluid { margin-left: 0; padding: 1.5rem 0; }
 
 
