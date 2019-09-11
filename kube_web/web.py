@@ -11,6 +11,7 @@ import time
 import os
 import pykube
 import logging
+import re
 import requests.exceptions
 import pykube.exceptions
 from yarl import URL
@@ -97,6 +98,8 @@ SEARCH_OFFERED_RESOURCE_TYPES = [
 SEARCH_MATCH_CONTEXT_LENGTH = 20
 
 SECRET_CONTENT_HIDDEN = "**SECRET-CONTENT-HIDDEN-BY-KUBE-WEB-VIEW**"
+
+NON_WORD_CHARS = re.compile("[^0-9a-zA-Z]+")
 
 
 TABLE_CELL_FORMATTING = {
@@ -376,6 +379,12 @@ async def get_cluster_resource_types(request, session):
     }
 
 
+def generate_name_from_spec(spec: str) -> str:
+    words = NON_WORD_CHARS.split(spec)
+    name = " ".join([word.capitalize() for word in words if word])
+    return name
+
+
 async def join_custom_columns(
     request,
     session,
@@ -396,6 +405,9 @@ async def join_custom_columns(
     custom_columns = {}
     for part in filter(None, custom_columns_param.split(";")):
         name, _, spec = part.partition("=")
+        if not spec:
+            spec = name
+            name = generate_name_from_spec(spec)
         custom_column_names.append(name)
         custom_columns[name] = jmespath.compile(spec)
 

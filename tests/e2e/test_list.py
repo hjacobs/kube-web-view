@@ -123,6 +123,22 @@ def test_list_pods_with_custom_columns(session):
         assert cells[-3].text.startswith("['hjacobs/")
 
 
+def test_list_pods_with_custom_column_auto_name(session):
+    response = session.get(
+        "/clusters/local/namespaces/default/pods?customcols=spec.containers[*].image"
+    )
+    response.raise_for_status()
+    check_links(response, session)
+    ths = response.html.find("main table thead th")
+    # note: pods have an extra "Links" column (--object-links)
+    assert ths[-3].text == "Spec Containers Image"
+
+    rows = response.html.find("main table tbody tr")
+    for row in rows:
+        cells = row.find("td")
+        assert cells[-3].text.startswith("['hjacobs/")
+
+
 def test_list_pods_with_multiple_custom_columns(session):
     # note that the semicolon must be urlencoded as %3B!
     response = session.get(
