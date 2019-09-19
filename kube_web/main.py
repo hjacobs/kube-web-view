@@ -200,10 +200,16 @@ def main(argv=None):
         cluster_discoverer = ClusterRegistryDiscoverer(
             args.cluster_registry_url, args.cluster_registry_oauth2_bearer_token_path
         )
+    elif args.kubeconfig_path:
+        cluster_discoverer = KubeconfigDiscoverer(
+            args.kubeconfig_path, args.kubeconfig_contexts
+        )
     else:
+        # try to use in-cluster config
         try:
             cluster_discoverer = ServiceAccountClusterDiscoverer()
         except ServiceAccountNotFound:
+            # fallback to default kubeconfig
             cluster_discoverer = KubeconfigDiscoverer(
                 args.kubeconfig_path, args.kubeconfig_contexts
             )
