@@ -62,7 +62,34 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('click', function () {
       const $section = el.parentElement;
       $section.classList.toggle('is-collapsed');
+      const $collapsed = Array.prototype.slice.call(document.querySelectorAll('main .is-collapsed'), 0);
+      const names = [];
+      $collapsed.forEach( el => {
+          names.push(el.dataset.name);
+      });
+      if (names) {
+        document.location.hash = "collapsed=" + names.join(",");
+      } else {
+        document.location.hash = "";
+      }
     });
   });
+
+  const hash = document.location.hash;
+  if (hash) {
+    const hashParams = hash.substring(1).split(";");
+    hashParams.forEach( param => {
+        const keyVal = param.split("=");
+        if (keyVal[0] == "collapsed") {
+            // collapse all sections mentioned in URL fragment
+            keyVal[1].split(",").forEach( name => {
+                const $sections = document.querySelectorAll('main .collapsible[data-name=' + name + ']');
+                $sections.forEach( el => {
+                    el.classList.add("is-collapsed");
+                });
+            });
+        }
+    });
+  }
 
 });
