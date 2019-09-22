@@ -268,6 +268,7 @@ def context():
                         ctx["namespaces"] = namespaces
             ctx["rel_url"] = request.rel_url
             ctx["reload"] = float(request.query.get("reload", 0))
+            ctx["theme"] = request.query.get("theme", "default")
             return ctx
 
         return func_wrapper

@@ -1,0 +1,35 @@
+
+.navbar-end input { color: #fff; border-bottom: 1px solid #98b8ed;}
+.navbar-end input::placeholder { color: #98b8ed; }
+.navbar-end input:focus { border-color: #fff; }
+.navbar-end .control .icon { color: #98b8ed; }
+.navbar-end .control .icon { color: #98b8ed; }
+
+@keyframes reload {
+    0% { background-image: linear-gradient(to top, #2366d1ff 0%, #2366d100 10%); }
+    10% { background-image: linear-gradient(to top, #2366d1ff 10%, #2366d100 20%); }
+    20% { background-image: linear-gradient(to top, #2366d1ff 20%, #2366d100 30%); }
+    30% { background-image: linear-gradient(to top, #2366d1ff 30%, #2366d100 40%); }
+    40% { background-image: linear-gradient(to top, #2366d1ff 40%, #2366d100 50%); }
+    50% { background-image: linear-gradient(to top, #2366d1ff 50%, #2366d100 60%); }
+    60% { background-image: linear-gradient(to top, #2366d1ff 60%, #2366d100 70%); }
+    70% { background-image: linear-gradient(to top, #2366d1ff 70%, #2366d100 80%); }
+    80% { background-image: linear-gradient(to top, #2366d1ff 80%, #2366d100 90%); }
+    90% { background-image: linear-gradient(to top, #2366d1ff 90%, #2366d100 100%); }
+    100% { background-image: linear-gradient(to top, #2366d1ff 100%, #2366d1ff 100%); }
+}
+
+aside.menu { background: #fafafa; }
+
+h1 .meta,
+h2 .meta {
+    color: #7a7a7a;
+}
+
+table th a { color: #363636; }
+table th a:hover { color: #3273dc; }
+
+div.section.collapsible h4.title { border-bottom: 1px solid #fff; }
+div.section.collapsible h4.title:hover { color: #363636; border-bottom: 1px solid #dbdbdb; }
+
+div.section.is-collapsed h4.title { color: #7a7a7a; border-bottom: 1px solid #dbdbdb; }
