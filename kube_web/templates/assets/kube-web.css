@@ -35,7 +35,7 @@ html { overflow: scroll; }
 
 
 /* aside menu has toggle for mobile */
-aside.menu { padding: 1.5rem; margin-top: -1.5rem; background: #fafafa; }
+aside.menu { padding: 1.5rem; margin-top: -1.5rem; background: #282f2f; }
 
 main { flex-grow: 1; flex-shrink: 1; }
 
@@ -84,8 +84,8 @@ h2 .meta {
     }
 }
 
-table th a { color: #363636; }
-table th a:hover { color: #3273dc; }
+table th a { color: #f2f2f2; }
+table th a:hover { /* color: #3273dc; */ }
 
 table th.num:not([align]),
 table td.num:not([align]) { text-align: right; }
