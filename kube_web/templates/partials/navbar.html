@@ -1,4 +1,4 @@
-<nav class="navbar is-fixed-top is-link" aria-label="main navigation">
+<nav class="navbar is-fixed-top is-{{ 'link' if theme == "default" else 'primary' }}" aria-label="main navigation">
     <div class="navbar-brand">
         <a role="button" class="navbar-burger" data-target="nav-menu" aria-label="menu" aria-expanded="false">
             <span aria-hidden="true"></span>
@@ -51,6 +51,11 @@
                     {% else: %}
                     <i class="fas fa-redo-alt"></i>
                     {% endif %}
+                </span>
+            </a>
+            <a class="navbar-item" href="/preferences">
+                <span class="icon">
+                    <i class="fas fa-user-cog"></i>
                 </span>
             </a>
         </div>

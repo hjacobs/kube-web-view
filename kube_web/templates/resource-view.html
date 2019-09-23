@@ -23,7 +23,7 @@
           href="/clusters/{{ cluster }}/{{ resource.endpoint }}/{{ resource.name }}?download=yaml"
           {% endif %}
           title="Download resource object as YAML"
-          class="button is-light">
+          class="button is-{{ theme_button }}">
             <span class="icon"><i class="fas fa-file-download"></i></span>
         </a>
         {% for link in object_links[resource.endpoint]: %}

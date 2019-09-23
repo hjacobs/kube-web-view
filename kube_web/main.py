@@ -182,6 +182,17 @@ def parse_args(argv=None):
         help="Preferred Kubernetes apiVersion per resource type, e.g. 'horizontalpodautoscalers=autoscaling/v2beta2;deployments=apps/v1'",
         default={},
     )
+    parser.add_argument(
+        "--default-theme",
+        help="Default CSS theme to use (default: default)",
+        default="default",
+    )
+    parser.add_argument(
+        "--theme-options",
+        type=comma_separated_values,
+        help="CSS themes the user can choose from (default: all themes)",
+        default=[],
+    )
     args = parser.parse_args(argv)
     return args
 

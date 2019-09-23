@@ -168,7 +168,6 @@ TABLE_CELL_FORMATTING = {
     },
 }
 
-
 routes = web.RouteTableDef()
 
 
@@ -202,6 +201,13 @@ def get_clusters(request, cluster: str):
             [request.app[CLUSTER_MANAGER].get(_cluster) for _cluster in parts]
         )
     return clusters, is_all_clusters
+
+
+def get_theme(request) -> str:
+    theme = request.query.get("theme", request.cookies.get("theme"))
+    if not theme or theme not in request.app[CONFIG].theme_options:
+        theme = request.app[CONFIG].default_theme
+    return theme
 
 
 async def build_sidebar_menu(
@@ -268,6 +274,9 @@ def context():
                         ctx["namespaces"] = namespaces
             ctx["rel_url"] = request.rel_url
             ctx["reload"] = float(request.query.get("reload", 0))
+            ctx["theme"] = get_theme(request)
+            # FIXME: hack to switch between light/dark button
+            ctx["theme_button"] = "dark" if ctx["theme"] == "darkly" else "light"
             return ctx
 
         return func_wrapper
@@ -285,6 +294,27 @@ async def get_index(request):
     else:
         target = "/clusters"
     raise web.HTTPFound(location=target)
+
+
+@routes.get("/preferences")
+@aiohttp_jinja2.template("preferences.html")
+@context()
+async def get_preferences(request, session):
+    theme_options = request.app[CONFIG].theme_options
+    return {"theme_options": theme_options}
+
+
+@routes.post("/preferences")
+@context()
+async def save_preferences(request, session):
+    theme_options = request.app[CONFIG].theme_options
+    data = await request.post()
+    theme = data["theme"]
+    if theme not in theme_options:
+        raise web.HTTPBadRequest(text="Invalid theme")
+    response = web.HTTPFound(location="/preferences")
+    response.set_cookie("theme", theme, max_age=3600 * 24 * 600, httponly=True)
+    return response
 
 
 def filter_matches(_filter_lower, cluster):
@@ -1381,6 +1411,7 @@ async def error_handler(request, handler):
             "status": status,
             "rel_url": request.rel_url,
             "reload": float(request.query.get("reload", 0)),
+            "theme": get_theme(request),
         }
         response = aiohttp_jinja2.render_template(
             "error.html", request, context, status=status
@@ -1398,6 +1429,11 @@ def get_app(cluster_manager, config):
     if config.static_assets_path:
         # overwrite assets path
         static_assets_path = Path(config.static_assets_path)
+
+    themes_path = static_assets_path / "themes"
+    installed_themes = list(x.name for x in themes_path.iterdir() if x.is_dir())
+    if not config.theme_options:
+        config.theme_options = installed_themes
 
     object_links = collections.defaultdict(list)
     if config.object_links:
