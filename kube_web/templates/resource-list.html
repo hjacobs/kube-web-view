@@ -27,17 +27,17 @@
           href="/clusters/{{ table.obj.clusters|map(attribute='name')|join(',') }}/{{ table.api_obj_class.endpoint }}?{{ rel_url.update_query(download='tsv').query_string }}"
           {% endif %}
           title="Download resource list as Tab-Separated-Values (TSV)"
-          class="button is-light">
+          class="button is-{{ theme_button }}">
             <span class="icon"><i class="fas fa-file-download"></i></span>
         </a>
         <a
                                   href="#"
-                                  class="button is-light toggle-tools" data-target="tools-table-{{ loop.index }}">
+                                  class="button is-{{ theme_button }} toggle-tools" data-target="tools-table-{{ loop.index }}">
             <span class="icon"><i class="fas fa-caret-square-down"></i></span>
         </a>
         <a
                                   href="/search?cluster={{ table.obj.clusters|map(attribute='name')|join(',') }}&namespace={{ namespace or '' }}&type={{ table.api_obj_class.endpoint }}"
-                                  class="button is-light">
+                                  class="button is-{{ theme_button }}">
             <span class="icon"><i class="fas fa-search"></i></span>
         </a>
     </span>

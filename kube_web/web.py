@@ -275,6 +275,8 @@ def context():
             ctx["rel_url"] = request.rel_url
             ctx["reload"] = float(request.query.get("reload", 0))
             ctx["theme"] = get_theme(request)
+            # FIXME: hack to switch between light/dark button
+            ctx["theme_button"] = "dark" if ctx["theme"] == "darkly" else "light"
             return ctx
 
         return func_wrapper
