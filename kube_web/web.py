@@ -204,7 +204,7 @@ def get_clusters(request, cluster: str):
 
 
 def get_theme(request) -> str:
-    theme = request.query.get("theme")
+    theme = request.query.get("theme", request.cookies.get("theme"))
     if not theme or theme not in request.app[CONFIG].theme_options:
         theme = request.app[CONFIG].default_theme
     return theme
@@ -292,6 +292,27 @@ async def get_index(request):
     else:
         target = "/clusters"
     raise web.HTTPFound(location=target)
+
+
+@routes.get("/preferences")
+@aiohttp_jinja2.template("preferences.html")
+@context()
+async def get_preferences(request, session):
+    theme_options = request.app[CONFIG].theme_options
+    return {"theme_options": theme_options}
+
+
+@routes.post("/preferences")
+@context()
+async def save_preferences(request, session):
+    theme_options = request.app[CONFIG].theme_options
+    data = await request.post()
+    theme = data["theme"]
+    if theme not in theme_options:
+        raise web.HTTPBadRequest(text="Invalid theme")
+    response = web.HTTPFound(location="/preferences")
+    response.set_cookie("theme", theme, max_age=3600 * 24 * 600, httponly=True)
+    return response
 
 
 def filter_matches(_filter_lower, cluster):
