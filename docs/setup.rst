@@ -81,7 +81,7 @@ Kubernetes Web View will access the Kubernetes API differently, depending on the
 You can also combine the ``--clusters`` option with ``kubectl proxy`` to access clusters which have an unsupported authentication method:
 
 * start ``kubectl proxy --port=8001`` in a sidecar container
-* run the kube-web-view container with the ``--clusters=http://localhost:8001`` argument
+* run the kube-web-view container with the ``--clusters=mycluster=http://localhost:8001`` argument
 
 You can use ``--cluster-auth-token-path`` to dynamically refresh the Bearer access token in the background.
 This is useful if you need to rotate the token regularly (e.g. every hour). Either run a sidecar process with a shared volume (e.g. "emptyDir") to write/refresh the token
