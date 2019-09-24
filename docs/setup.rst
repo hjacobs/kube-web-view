@@ -33,14 +33,14 @@ you can use "kubectl proxy" as a workaround:
 .. code-block:: bash
 
     kubectl proxy --port=8001 &  # start proxy in background
-    docker run -it --net=host -u $(id -u) --clusters=http://localhost:8001 hjacobs/kube-web-view
+    docker run -it --net=host -u $(id -u) hjacobs/kube-web-view --clusters=local=http://localhost:8001
 
 If you are using Docker for Mac, this needs to be slightly different in order to navigate the VM/container inception:
 
 .. code-block:: bash
 
     $ kubectl proxy --accept-hosts '.*' --port=8001 &
-    $ docker run -it -p 8080:8080 --cluster=http://docker.for.mac.localhost:8001 hjacobs/kube-web-view
+    $ docker run -it -p 8080:8080 hjacobs/kube-web-view --clusters=local=http://docker.for.mac.localhost:8001
 
 Now direct your browser to http://localhost:8080
 
