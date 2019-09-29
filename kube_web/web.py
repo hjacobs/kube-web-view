@@ -212,8 +212,14 @@ def get_theme(request) -> str:
 
 
 def update_context_for_theme(ctx, request) -> str:
-    theme = get_theme(request)
-    ctx["theme"] = request.app[THEME_SETTINGS][theme]
+    theme_name = get_theme(request)
+    theme_settings = request.app[THEME_SETTINGS][theme_name]
+    ctx["theme"] = theme_settings
+    ctx["age_color"] = partial(
+        jinja2_filters.age_color,
+        hue=theme_settings["age_color_hue"],
+        value=theme_settings["age_color_value"],
+    )
 
 
 async def build_sidebar_menu(
@@ -1486,7 +1492,6 @@ def get_app(cluster_manager, config):
         pluralize=jinja2_filters.pluralize,
         yaml=jinja2_filters.yaml,
         highlight=jinja2_filters.highlight,
-        age_color=jinja2_filters.age_color,
         cpu=jinja2_filters.cpu,
         memory=jinja2_filters.memory,
     )

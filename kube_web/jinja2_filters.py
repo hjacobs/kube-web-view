@@ -37,7 +37,7 @@ def highlight(value, linenos=False):
     return pygments.highlight(value, get_lexer_by_name("yaml"), formatter)
 
 
-def age_color(date_time, days=7):
+def age_color(date_time, days=7, hue=0.39, value=0.21):
     """Return HTML color calculated by age of input time value.
     :param d: datetime value to base color calculation on
     :param days: upper limit for color calculation, in days
@@ -51,9 +51,9 @@ def age_color(date_time, days=7):
     d = datetime.datetime.utcnow() - date_time
     # we consider the last minute equal
     d = max(0, d.total_seconds() - 60)
-    v = max(0, 1.0 - d / (days * 24.0 * 3600))
+    s = max(0, 1.0 - d / (days * 24.0 * 3600))
     # dates older than days are color #363636 (rgb(54, 54, 54))
-    r, g, b = colorsys.hsv_to_rgb(0.39, v, 0.21 + (v * 0.6))
+    r, g, b = colorsys.hsv_to_rgb(hue, s, value + (s * (0.81 - value)))
     return (
         f"#{int(round(r * 255)):02x}{int(round(g * 255)):02x}{int(round(b * 255)):02x}"
     )

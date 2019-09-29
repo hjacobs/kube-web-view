@@ -1,2 +1,4 @@
 navbar_class: primary
 button_class: light
+age_color_hue: 0.33
+age_color_value: 0.8

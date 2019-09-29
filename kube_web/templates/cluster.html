@@ -52,7 +52,7 @@
                     <span class="tag">{{ key }}: {{ val }}</span>
                     {% endfor %}
                 </td>
-                <td style="color:{{ resource.metadata.creationTimestamp|age_color(days=1) }}">{{ resource.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
+                <td style="color:{{ age_color(resource.metadata.creationTimestamp, days=1) }}">{{ resource.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
             </tr>
             {% endfor %}
         </table>

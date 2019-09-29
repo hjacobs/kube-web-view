@@ -170,7 +170,7 @@
             {% else: %}
             <td class="{{ get_cell_class(table, loop.index0, cell) }} {{ table.columns[loop.index0].class }}"
                 {% if table.columns[loop.index0].name in ('Age', 'First Seen'): %}
-                style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}"
+                style="color:{{ age_color(row.object.metadata.creationTimestamp, days=1) }}"
                 {% endif %}
                 >
                 {% if table.columns[loop.index0].label and table.columns[loop.index0].label != '*': %}
@@ -187,7 +187,7 @@
             </td>
             {% endif %}
             {% endfor %}
-            <td style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}">{{ row.object.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
+            <td style="color:{{ age_color(row.object.metadata.creationTimestamp, days=1) }}">{{ row.object.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
             {% if object_links[table.api_obj_class.endpoint]: %}
             <td>
                 {% for link in object_links[table.api_obj_class.endpoint]: %}

@@ -137,7 +137,7 @@
             {% else: %}
             <td class="{{ get_cell_class(table, loop.index0, cell) }}"
                 {% if table.columns[loop.index0].name in ('Age', 'First Seen'): %}
-                style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}"
+                style="color:{{ age_color(row.object.metadata.creationTimestamp, days=1) }}"
                 {% endif %}
                 >
                 {% if table.columns[loop.index0].name == 'Node': %}
@@ -148,7 +148,7 @@
             </td>
             {% endif %}
             {% endfor %}
-            <td style="color:{{ row.object.metadata.creationTimestamp|age_color(days=1) }}">{{ row.object.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
+            <td style="color:{{ age_color(row.object.metadata.creationTimestamp, days=1) }}">{{ row.object.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }}</td>
         </tr>
         {% else: %}
         <tr>
