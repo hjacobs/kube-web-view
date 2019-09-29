@@ -1,4 +1,5 @@
-from kube_web.web import generate_name_from_spec
+import re
+from kube_web.web import generate_name_from_spec, is_allowed_namespace
 
 
 def test_generate_name_from_spec():
@@ -11,3 +12,13 @@ def test_generate_name_from_spec():
         generate_name_from_spec('metadata.annotations."foo"')
         == "Metadata Annotations Foo"
     )
+
+
+def test_is_allowed_namespace():
+    assert is_allowed_namespace("a", [], [])
+    assert is_allowed_namespace("a", [re.compile("a")], [])
+    assert is_allowed_namespace("a", [], [re.compile("b")])
+    assert not is_allowed_namespace("a", [re.compile("b")], [])
+    assert not is_allowed_namespace("a", [], [re.compile("a")])
+
+    assert not is_allowed_namespace("default-foo", [re.compile("default")], [])

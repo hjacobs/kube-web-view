@@ -261,10 +261,10 @@ async def build_sidebar_menu(
 
 def is_allowed_namespace(namespace: str, include_namespaces, exclude_namespaces):
     include_matches = not include_namespaces or any(
-        p.match(namespace) for p in include_namespaces
+        p.fullmatch(namespace) for p in include_namespaces
     )
     exclude_matches = exclude_namespaces and any(
-        p.match(namespace) for p in exclude_namespaces
+        p.fullmatch(namespace) for p in exclude_namespaces
     )
     return include_matches and not exclude_matches
 

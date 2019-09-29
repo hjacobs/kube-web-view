@@ -8,6 +8,7 @@ from pykube.query import Table
 from kube_web.table import (
     add_label_columns,
     remove_columns,
+    filter_table_by_predicate,
     filter_table,
     sort_table,
     merge_cluster_tables,
@@ -190,6 +191,12 @@ def test_filter_table_not_equal_and(two_pod_table):
     table = two_pod_table
     filter_table(table, "Status!=Running,Status!=Completed")
     assert len(table.rows) == 0
+
+
+def test_filter_table_by_predicate(two_pod_table):
+    table = two_pod_table
+    filter_table_by_predicate(table, lambda row: row["cells"][0] == "pod-a")
+    assert len(table.rows) == 1
 
 
 def test_sort_table(two_pod_table):
