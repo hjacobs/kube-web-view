@@ -52,3 +52,10 @@ def test_search_container_image_match_highlight(session):
         '<span class="match"><em>hjacobs/wrong-container-image:</em>0.1</span>'
         == match.html
     )
+
+
+def test_search_forbidden_namespace(session):
+    response = session.get("/search?q=forbidden&type=deployments")
+    response.raise_for_status()
+    matches = list(response.html.find("main .search-result"))
+    assert len(matches) == 0

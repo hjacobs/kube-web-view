@@ -50,3 +50,22 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: my-forbidden-namespace
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-in-forbbiden-ns
+  namespace: my-forbidden-namespace
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: deployment-in-forbidden-ns
+  template:
+    metadata:
+      labels:
+        app: deployment-in-forbidden-ns
+    spec:
+      containers:
+        - name: mycontainer
+          image: nginx

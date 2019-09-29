@@ -66,7 +66,9 @@ def test_list_namespaces(session):
     response = session.get("/clusters/local/namespaces")
     response.raise_for_status()
     check_links(response, session)
-    namespace_urls = list(a.attrs["href"] for a in response.html.find("main table td a"))
+    namespace_urls = list(
+        a.attrs["href"] for a in response.html.find("main table td a")
+    )
     assert "/clusters/local/namespaces/default" in namespace_urls
     # we excluded the forbidden namespace via --exclude-namespaces
     assert "/clusters/local/namespaces/my-forbidden-namespace" not in namespace_urls
@@ -81,8 +83,27 @@ def test_list_namespaced_resources(session):
 
 
 def test_list_namespaced_resources_forbidden(session):
-    response = session.get("/clusters/local/namespaces/my-forbidden-namespace/deployments")
+    response = session.get(
+        "/clusters/local/namespaces/my-forbidden-namespace/deployments"
+    )
     assert response.status_code == 403
+
+
+def test_list_namespaced_resources_filter_out_forbidden(session):
+    response = session.get("/clusters/local/namespaces/_all/deployments")
+    response.raise_for_status()
+    deployment_urls = list(
+        a.attrs["href"] for a in response.html.find("main table td a")
+    )
+    assert (
+        "/clusters/local/namespaces/default/deployments/kube-web-view"
+        in deployment_urls
+    )
+    # we excluded the forbidden namespace via --exclude-namespaces
+    assert (
+        "/clusters/local/namespaces/my-forbidden-namespace/deployment-in-forbbiden-ns"
+        not in deployment_urls
+    )
 
 
 def test_list_pods_with_node_links(session):

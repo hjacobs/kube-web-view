@@ -303,7 +303,7 @@ def is_row_in_allowed_namespace(
 
 
 def validate_namespace(namespace: str, request):
-    if namespace and not filter_namespaces([namespace], request):
+    if namespace and namespace != ALL and not filter_namespaces([namespace], request):
         raise web.HTTPForbidden(
             text="Access to this Namespace was denied by configuration"
         )
