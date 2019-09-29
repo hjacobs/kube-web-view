@@ -275,8 +275,6 @@ def context():
             ctx["rel_url"] = request.rel_url
             ctx["reload"] = float(request.query.get("reload", 0))
             ctx["theme"] = get_theme(request)
-            # FIXME: hack to switch between light/dark button
-            ctx["theme_button"] = "dark" if ctx["theme"] == "darkly" else "light"
             return ctx
 
         return func_wrapper
@@ -1431,9 +1429,14 @@ def get_app(cluster_manager, config):
         static_assets_path = Path(config.static_assets_path)
 
     themes_path = static_assets_path / "themes"
-    installed_themes = list(x.name for x in themes_path.iterdir() if x.is_dir())
+    theme_settings = {}
+    for entry in themes_path.iterdir():
+        if entry.is_dir():
+            with (entry / "settings.yaml").open() as fd:
+                theme_settings[entry.name] = yaml.safe_load(fd)
+
     if not config.theme_options:
-        config.theme_options = installed_themes
+        config.theme_options = list(sorted(theme_settings.keys()))
 
     object_links = collections.defaultdict(list)
     if config.object_links:
@@ -1483,6 +1486,7 @@ def get_app(cluster_manager, config):
     env.globals["version"] = __version__
     env.globals["object_links"] = object_links
     env.globals["label_links"] = label_links
+    env.globals["theme_settings"] = theme_settings
 
     app.add_routes(routes)
     app.router.add_static("/assets", static_assets_path)
