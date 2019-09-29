@@ -45,3 +45,8 @@ spec:
     namespace: default
   version: v1beta1
   versionPriority: 100
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-forbidden-namespace

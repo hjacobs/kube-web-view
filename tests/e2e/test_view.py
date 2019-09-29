@@ -10,6 +10,11 @@ def test_view_namespace(session):
     assert title.text == "default (Namespace) - Kubernetes Web View"
 
 
+def test_view_namespace_forbidden(session):
+    response = session.get("/clusters/local/namespaces/my-forbidden-namespace")
+    assert response.status_code == 403
+
+
 def test_view_namespaced_resource(session):
     response = session.get(
         "/clusters/local/namespaces/default/deployments/kube-web-view"
@@ -20,6 +25,13 @@ def test_view_namespaced_resource(session):
     response = session.get("/clusters/local/namespaces/default/services/kube-web-view")
     response.raise_for_status()
     assert "ClusterIP" in response.text
+
+
+def test_view_namespaced_resource_forbidden(session):
+    response = session.get(
+        "/clusters/local/namespaces/my-forbidden-namespace/deployments/kube-web-view"
+    )
+    assert response.status_code == 403
 
 
 def test_cluster_not_found(session):

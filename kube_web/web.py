@@ -44,6 +44,7 @@ from kube_web import kubernetes
 from kube_web import jinja2_filters
 from .table import (
     add_label_columns,
+    filter_table_by_predicate,
     filter_table,
     remove_columns,
     guess_column_classes,
@@ -258,6 +259,62 @@ async def build_sidebar_menu(
     return menu
 
 
+def is_allowed_namespace(namespace: str, include_namespaces, exclude_namespaces):
+    include_matches = not include_namespaces or any(
+        p.match(namespace) for p in include_namespaces
+    )
+    exclude_matches = exclude_namespaces and any(
+        p.match(namespace) for p in exclude_namespaces
+    )
+    return include_matches and not exclude_matches
+
+
+def filter_namespaces(namespaces: list, request):
+    include_namespaces = request.app[CONFIG].include_namespaces
+    exclude_namespaces = request.app[CONFIG].exclude_namespaces
+    if not include_namespaces and not exclude_namespaces:
+        # no filters defined => nothing to do
+        return namespaces
+
+    matching_namespaces = []
+    for namespace in namespaces:
+        name = namespace if isinstance(namespace, str) else namespace.name
+        if is_allowed_namespace(name, include_namespaces, exclude_namespaces):
+            matching_namespaces.append(namespace)
+
+    return matching_namespaces
+
+
+def is_row_in_allowed_namespace(
+    row, api_obj_class, include_namespaces, exclude_namespaces
+):
+    if not include_namespaces and not exclude_namespaces:
+        return True
+    if api_obj_class.kind == "Namespace":
+        return is_allowed_namespace(
+            row["object"]["metadata"]["name"], include_namespaces, exclude_namespaces
+        )
+    if "namespace" not in row["object"]["metadata"]:
+        # not a namespaced object
+        return True
+    return is_allowed_namespace(
+        row["object"]["metadata"]["namespace"], include_namespaces, exclude_namespaces
+    )
+
+
+def validate_namespace(namespace: str, request):
+    if namespace and not filter_namespaces([namespace], request):
+        raise web.HTTPForbidden(
+            text="Access to this Namespace was denied by configuration"
+        )
+
+
+def get_and_validate_namespace_parameter(request):
+    namespace = request.match_info.get("namespace")
+    validate_namespace(namespace, request)
+    return namespace
+
+
 def context():
     def decorator(func):
         async def func_wrapper(request):
@@ -283,7 +340,7 @@ def context():
                         # access might be restricted to selected namespaces
                         logger.warning(f"Could not list namespaces: {e}")
                     else:
-                        ctx["namespaces"] = namespaces
+                        ctx["namespaces"] = filter_namespaces(namespaces, request)
             ctx["rel_url"] = request.rel_url
             ctx["reload"] = float(request.query.get("reload", 0))
             update_context_for_theme(ctx, request)
@@ -364,7 +421,7 @@ async def get_cluster(request, session):
         "cluster": cluster.name,
         "cluster_obj": cluster,
         "namespace": None,
-        "namespaces": namespaces,
+        "namespaces": filter_namespaces(namespaces, request),
         "resource_types": sorted(resource_types, key=lambda t: (t.kind, t.version)),
     }
 
@@ -644,6 +701,15 @@ async def do_get_resource_list(
                 params,
             )
 
+        filter_table_by_predicate(
+            table,
+            partial(
+                is_row_in_allowed_namespace,
+                api_obj_class=table.api_obj_class,
+                include_namespaces=request.app[CONFIG].include_namespaces,
+                exclude_namespaces=request.app[CONFIG].exclude_namespaces,
+            ),
+        )
         filter_table(table, params.get(qp.FILTER))
         guess_column_classes(table)
         sort_table(table, params.get(qp.SORT))
@@ -721,7 +787,7 @@ async def download_yaml(request, resource):
 async def get_namespaced_resource_types(request, session):
     cluster = request.match_info["cluster"]
     clusters, is_all_clusters = get_clusters(request, cluster)
-    namespace = request.match_info["namespace"]
+    namespace = get_and_validate_namespace_parameter(request)
     resource_types = set()
     preferred_api_versions = {}
     for _cluster in clusters:
@@ -744,7 +810,7 @@ async def get_namespaced_resource_types(request, session):
 async def get_resource_list(request, session):
     cluster = request.match_info["cluster"]
     clusters, is_all_clusters = get_clusters(request, cluster)
-    namespace = request.match_info.get("namespace")
+    namespace = get_and_validate_namespace_parameter(request)
     plural = request.match_info["plural"]
 
     is_all_namespaces = namespace == ALL
@@ -835,7 +901,7 @@ async def get_resource_list(request, session):
 @context()
 async def get_resource_view(request, session):
     cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
-    namespace = request.match_info.get("namespace")
+    namespace = get_and_validate_namespace_parameter(request)
     plural = request.match_info["plural"]
     name = request.match_info["name"]
     params = request.rel_url.query
@@ -843,6 +909,10 @@ async def get_resource_view(request, session):
     clazz = await cluster.resource_registry.get_class_by_plural_name(
         plural, namespaced=bool(namespace), api_version=params.get(qp.API_VERSION)
     )
+
+    if clazz.kind == "Namespace":
+        validate_namespace(name, request)
+
     query = wrap_query(clazz.objects(cluster.api), request, session)
     if namespace:
         query = query.filter(namespace=namespace)
@@ -939,7 +1009,7 @@ def pod_color(name):
 @context()
 async def get_resource_logs(request, session):
     cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
-    namespace = request.match_info.get("namespace")
+    namespace = get_and_validate_namespace_parameter(request)
     plural = request.match_info["plural"]
     name = request.match_info["name"]
     tail_lines = int(request.rel_url.query.get("tail_lines") or 200)
@@ -1037,6 +1107,15 @@ async def search(
                 query = query.filter(selector=selector)
 
             table = await kubernetes.get_table(query)
+            filter_table_by_predicate(
+                table,
+                partial(
+                    is_row_in_allowed_namespace,
+                    api_obj_class=table.api_obj_class,
+                    include_namespaces=request.app[CONFIG].include_namespaces,
+                    exclude_namespaces=request.app[CONFIG].exclude_namespaces,
+                ),
+            )
             if filter_query:
                 filter_table(table, filter_query, match_labels=True)
                 # add label columns AFTER filtering, so there is less to do

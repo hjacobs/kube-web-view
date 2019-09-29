@@ -62,12 +62,27 @@ def test_list_cluster_resources_in_multiple_clusters(session):
     assert "/clusters/local/nodes/kube-web-view-e2e-control-plane" in response.text
 
 
+def test_list_namespaces(session):
+    response = session.get("/clusters/local/namespaces")
+    response.raise_for_status()
+    check_links(response, session)
+    namespace_urls = list(a.attrs["href"] for a in response.html.find("main table td a"))
+    assert "/clusters/local/namespaces/default" in namespace_urls
+    # we excluded the forbidden namespace via --exclude-namespaces
+    assert "/clusters/local/namespaces/my-forbidden-namespace" not in namespace_urls
+
+
 def test_list_namespaced_resources(session):
     response = session.get("/clusters/local/namespaces/default/deployments")
     response.raise_for_status()
     check_links(response, session)
     assert "application=kube-web-view" in response.text
     assert "kube-web-view-container" in response.text
+
+
+def test_list_namespaced_resources_forbidden(session):
+    response = session.get("/clusters/local/namespaces/my-forbidden-namespace/deployments")
+    assert response.status_code == 403
 
 
 def test_list_pods_with_node_links(session):

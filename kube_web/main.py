@@ -3,6 +3,7 @@ import aiohttp.web
 import argparse
 import importlib
 import logging
+import re
 
 from pathlib import Path
 
@@ -24,6 +25,10 @@ logger = logging.getLogger(__name__)
 
 def comma_separated_values(value):
     return list(filter(None, value.split(",")))
+
+
+def comma_separated_patterns(value):
+    return list(re.compile(p) for p in filter(None, value.split(",")))
 
 
 def key_value_pairs(value):
@@ -70,6 +75,16 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         "--version", action="version", version=f"kube-web-view {__version__}"
+    )
+    parser.add_argument(
+        "--include-namespaces",
+        type=comma_separated_patterns,
+        help="List of namespaces to allow access to (default: all namespaces). Can be a comma-separated list of regex patterns.",
+    )
+    parser.add_argument(
+        "--exclude-namespaces",
+        type=comma_separated_patterns,
+        help="List of namespaces to deny access to (default: none). Can be a comma-separated list of regex patterns.",
     )
     parser.add_argument(
         "--clusters",

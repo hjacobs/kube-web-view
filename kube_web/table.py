@@ -64,6 +64,12 @@ def add_label_columns(table, label_columns_param):
             row["cells"].insert(i + 1, contents)
 
 
+def filter_table_by_predicate(table, predicate):
+    for i in range(len(table.rows) - 1, -1, -1):
+        if not predicate(table.rows[i]):
+            del table.rows[i]
+
+
 def filter_table(table, filter_param, match_labels=False):
     if not filter_param:
         return

@@ -71,4 +71,5 @@ spec:
           args:
           - --show-container-logs
           - --object-links=pods=#cluster={cluster};namespace={namespace};name={name}
+          - --exclude-namespaces=.*forbidden.*
           env: []
