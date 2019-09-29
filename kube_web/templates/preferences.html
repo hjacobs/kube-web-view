@@ -10,7 +10,7 @@
         <span class="select">
             <select name="theme">
                 {% for theme_option in theme_options|sort: %}
-                <option {{ 'selected' if theme_option == theme }}>{{ theme_option }}</option>
+                <option {{ 'selected' if theme_option == theme.name }}>{{ theme_option }}</option>
                 {% endfor %}
             </select>
         </span>

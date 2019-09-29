@@ -61,6 +61,7 @@ OAUTH2_CALLBACK_PATH = "/oauth2/callback"
 
 CLUSTER_MANAGER = "cluster_manager"
 CONFIG = "config"
+THEME_SETTINGS = "theme_settings"
 
 ALL = "_all"
 
@@ -210,6 +211,11 @@ def get_theme(request) -> str:
     return theme
 
 
+def update_context_for_theme(ctx, request) -> str:
+    theme = get_theme(request)
+    ctx["theme"] = request.app[THEME_SETTINGS][theme]
+
+
 async def build_sidebar_menu(
     cluster: str, clusters, namespace: str, sidebar_resource_types: dict
 ):
@@ -274,7 +280,7 @@ def context():
                         ctx["namespaces"] = namespaces
             ctx["rel_url"] = request.rel_url
             ctx["reload"] = float(request.query.get("reload", 0))
-            ctx["theme"] = get_theme(request)
+            update_context_for_theme(ctx, request)
             return ctx
 
         return func_wrapper
@@ -1409,8 +1415,8 @@ async def error_handler(request, handler):
             "status": status,
             "rel_url": request.rel_url,
             "reload": float(request.query.get("reload", 0)),
-            "theme": get_theme(request),
         }
+        update_context_for_theme(context, request)
         response = aiohttp_jinja2.render_template(
             "error.html", request, context, status=status
         )
@@ -1434,6 +1440,7 @@ def get_app(cluster_manager, config):
         if entry.is_dir():
             with (entry / "settings.yaml").open() as fd:
                 theme_settings[entry.name] = yaml.safe_load(fd)
+            theme_settings[entry.name]["name"] = entry.name
 
     if not config.theme_options:
         config.theme_options = list(sorted(theme_settings.keys()))
@@ -1486,7 +1493,6 @@ def get_app(cluster_manager, config):
     env.globals["version"] = __version__
     env.globals["object_links"] = object_links
     env.globals["label_links"] = label_links
-    env.globals["theme_settings"] = theme_settings
 
     app.add_routes(routes)
     app.router.add_static("/assets", static_assets_path)
@@ -1511,5 +1517,6 @@ def get_app(cluster_manager, config):
 
     app[CLUSTER_MANAGER] = cluster_manager
     app[CONFIG] = config
+    app[THEME_SETTINGS] = theme_settings
 
     return app

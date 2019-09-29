@@ -4,12 +4,12 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}{% endblock %} - Kubernetes Web View</title>
-        <link rel="stylesheet" href="/assets/themes/{{ theme }}/bulmaswatch.min.css?v=19.9.1">
+        <link rel="stylesheet" href="/assets/themes/{{ theme.name }}/bulmaswatch.min.css?v=19.9.1">
         <script defer src="/assets/solid.min.js?v=19.9.1"></script>
         <script defer src="/assets/fontawesome.min.js?v=19.9.1"></script>
         <script src="/assets/kube-web.js?v=19.9.1"></script>
         <link rel="stylesheet" href="/assets/kube-web.css?v=19.9.1" />
-        <link rel="stylesheet" href="/assets/themes/{{ theme }}/kube-web.css?v=19.9.1" />
+        <link rel="stylesheet" href="/assets/themes/{{ theme.name }}/kube-web.css?v=19.9.1" />
         <link rel="shortcut icon" href="/assets/favicon.png">
         <link rel="icon" type="image/png" href="/assets/favicon.png">
         {% include "partials/extrahead.html" %}
