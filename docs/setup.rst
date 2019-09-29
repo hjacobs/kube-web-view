@@ -9,6 +9,7 @@ This section guides through the various options of setting up Kubernetes Web Vie
 * Do you want to use kube-web-view as a local development/ops tool? See :ref:`local-usage`
 * Do you want to use it in a single cluster or access multiple clusters via kube-web-view? See :ref:`single-cluster` or :ref:`multiple-clusters`.
 * How do you plan to secure your setup and authenticate users? See :ref:`access-control`.
+* Should users see everything in your cluster(s) or only some namespaces? See :ref:`namespace-access`.
 * Do you want to customize behavior and look & feel for your organization? See :ref:`customization`.
 * Please make sure to read the :ref:`security`.
 
@@ -99,4 +100,19 @@ There are multiple options to secure your Kubernetes Web View deployment:
 * Using a custom LB/proxy: you can expose the kube-web-view frontend through a custom proxy (e.g. nginx with ACLs, AWS ALB with authorization, etc). The setup highly depends on your environment and infrastructure.
 * Using the built-in OAuth support: kube-web-view has support for the authorization grant OAuth redirect flow which works with common OAuth providers such as Google, GitHub, Cognito, and others. See :ref:`oauth2` on how to configure OAuth in Kubernetes Web View.
 
-Please also read the :ref:`security`.
+.. _namespace-access:
+
+Namespace Access
+================
+
+Kubernetes Web View allows to limit namespace access with include and exclude patterns, examples:
+
+* use ``--include-namespaces=default,dev`` to only allow access to the "default" and "dev" namespaces
+* use ``--exclude-namespaces=kube-.*`` to deny access to all "kube-.*" (system) namespaces
+
+Users can still access the "_all" namespaced resource lists and search across namespaces, but objects for non-allowed namespaces will be filtered out.
+You can use this feature to give users a more streamlined experience by hiding infrastructure namespaces (e.g. "kube-system") from them.
+
+Note that ``--exclude-namespaces`` always takes precedence over ``--include-namespaces``, i.e. you can include all "foo-.*" namespaces (``--include-namespaces=foo-.*``) and exclude only "foo-bar" via (``--exclude-namespaces=foo-bar``).
+
+Please use Kubernetes RBAC roles for proper access control, kube-web-view's namespace filtering is just another layer of protection. Please also read the :ref:`security`.

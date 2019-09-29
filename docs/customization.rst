@@ -12,6 +12,7 @@ for the needs of your organization:
 * :ref:`external-links` can be added to link objects to monitoring tools, internal application registries, custom UIs, etc
 * the :ref:`customize-search` can be customized to search in CRDs, or to cover frequent search cases
 * setting :ref:`preferred-api-versions` allows forcing the use of specific/newer Kubernetes API versions
+* one of the :ref:`themes` can be selected as default, or you can create your own CSS theme
 * :ref:`html-templates` can be customized to match your branding, to add static links, and to inject custom JS/CSS
 * :ref:`static-assets` can be included to add images, JS, or CSS files
 
@@ -140,6 +141,26 @@ Here the example CLI option to force using new API versions for Deployment and H
 
     --preferred-api-versions=horizontalpodautoscalers=autoscaling/v2beta2;deployments=apps/v1
 
+.. _themes:
+
+Themes
+======
+
+Kubernetes Web View ships with a number of color (CSS) themes. You can choose a default theme for your users via ``--default-theme`` and/or limit the selection via ``--theme-options``. Available themes are:
+
+darkly
+    Flatly in night mode: dark background, blue and green as primary colors, see `darkly demo <https://kube-web-view.demo.j-serv.de/clusters/local/namespaces/default/pods?theme=darkly>`_
+default
+    Kubernetes Web View default theme: white background, blue as primary color, see `default demo <https://kube-web-view.demo.j-serv.de/clusters/local/namespaces/default/pods?theme=default>`_
+flatly
+    Flat and thick: white background, blue and green as primary colors, see `flatly demo <https://kube-web-view.demo.j-serv.de/clusters/local/namespaces/default/pods?theme=flatly>`_
+slate
+    Shades of gunmetal grey: dark grey background, grey colors, see `slate demo <https://kube-web-view.demo.j-serv.de/clusters/local/namespaces/default/pods?theme=slate>`_
+superhero
+    The brave and the blue: dark background, orange navbar, see `superhero demo <https://kube-web-view.demo.j-serv.de/clusters/local/namespaces/default/pods?theme=superhero>`_
+
+
+You can use one of the `Bulmaswatch themes <https://jenil.github.io/bulmaswatch/>`_ to create your own.
 
 .. _html-templates:
 
