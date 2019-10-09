@@ -61,7 +61,7 @@ make test
 It is also possible to run static and unit tests in docker env (`make test` is equal to `make poetry lint test.unit docker`)
 
 ```
-docker run -it -v $PWD:/src -w /src python:3.7 /bin/bash -c "pip3 install poetry flake8; make poetry lint test.unit"
+docker run -it -v $PWD:/src -w /src python:3.7 /bin/bash -c "pip3 install poetry; make poetry lint test.unit"
 make docker
 ```
 
