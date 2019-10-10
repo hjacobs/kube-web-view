@@ -6,3 +6,7 @@ kubectl
 docs/_build/
 .kube
 *.egg-info
+.idea/
+*.iml
+Pipfile
+Pipfile.lock

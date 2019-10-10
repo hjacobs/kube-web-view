@@ -104,6 +104,16 @@ def parse_args(argv=None):
         help="Path to OAuth2 Bearer token for Cluster Registry authentication",
     )
     parser.add_argument(
+        "--cluster-registry-config-keys",
+        type=comma_separated_values,
+        help="Comma-separated list of cluster configuration keys to be used for object links",
+    )
+    parser.add_argument(
+        "--cluster-registry-labels",
+        type=comma_separated_values,
+        help="Comma-separated list of cluster labels to display",
+    )
+    parser.add_argument(
         "--cluster-label-selector",
         type=parse_selector,
         help="Optional label selector to filter clusters, e.g. 'region=eu-central-1' would only load clusters with label 'region' equal 'eu-central-1'",
@@ -141,7 +151,7 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         "--object-links",
-        help="Comma-separated list of URL templates per resource type to link to external tools, e.g. 'pods=https://mymonitoringtool/{cluster}/{namespace}/{name}'",
+        help="URL templates as defined in kube_web/object_link_schema.yaml",
     )
     parser.add_argument(
         "--label-links",
@@ -224,7 +234,8 @@ def main(argv=None):
         cluster_discoverer = StaticClusterDiscoverer(args.clusters)
     elif args.cluster_registry_url:
         cluster_discoverer = ClusterRegistryDiscoverer(
-            args.cluster_registry_url, args.cluster_registry_oauth2_bearer_token_path
+            args.cluster_registry_url, args.cluster_registry_oauth2_bearer_token_path,
+            args.cluster_registry_labels, args.cluster_registry_config_keys
         )
     elif args.kubeconfig_path:
         cluster_discoverer = KubeconfigDiscoverer(

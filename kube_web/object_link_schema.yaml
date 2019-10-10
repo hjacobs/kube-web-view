@@ -1,0 +1,117 @@
+title: schema for object link definitions
+type: object
+additionalProperties: false
+properties:
+  links:
+    description: definition of links
+    type: array
+    items:
+      oneOf:
+        - description: a declarative link
+          type: object
+          additionalProperties: false
+          properties:
+            kinds:
+              description: restrict to these kubernetes kinds
+              type: array
+              items:
+                type: string
+              examples:
+                - Pod
+            source:
+              description: where the link originates from
+              type: object
+              additionalProperties: false
+              properties:
+                group:
+                  description: put the link into a group of this name
+                  type: string
+                  default: ""
+                  examples:
+                    - application
+                    - "{metadata.kind}"
+                name:
+                  description: additionally, a name may be used to differenciate different sources with the same group,
+                    e.g. different containers
+                  type: string
+                  default: ""
+                  examples:
+                    - logstash
+                href:
+                  description: the target URL for the source
+                  type: string
+                  examples:
+                    - "https://example.net/applications/{metadata.labels['application']}"
+            title:
+              description: title to show for the link
+              type: string
+              default: "External link for object {metadata.name}"
+              examples:
+                - "Logs of {metadata.labels['application']"
+            icon:
+              description: the icon to show on the link
+                it's an icon in https://fontawesome.com/icons?d=gallery&s=solid&m=free
+              type: string
+              default: external-link-alt
+              examples:
+                - bolt
+            href:
+              description: the target URL for the link
+              type: string
+              examples:
+                - "https://example.net/applications/{metadata.labels['application']}"
+          required:
+            - href
+        - description: a link generator
+          type: object
+          additionalProperties: false
+          properties:
+            file:
+              descripiton: |
+                The file where the function is defined.
+                The function must return 1 or more dicts of type 'a declarative link' (see above).
+                'Kinds' is not checked, so you must check the kind inside the function, if necessary.
+              type: string
+              examples:
+                - /my/python/file.py
+            function:
+              descripiton: the name of the function
+              type: string
+              examples:
+                - get_links
+            args:
+              descripiton: |
+                additional arguments for the function
+                By default, cluster, metadata, and spec are passed to the function.
+                cluster:
+                  name:
+                    description: name of the cluster
+                    type: string
+                  config:
+                    description: config values as specified in --cluster-registry-config-keys
+                    type: object
+                    additionalProperties:
+                      type: string
+                metadata:
+                  description: parsed metadata of kubernetes object
+                  type: object
+                spec:
+                  description: parsed spec of kubernetes object
+                  type: object
+                kind:
+                  description: the kubernetes kind
+                  type: string
+              type: object
+              additionalProperties:
+                type: string
+              examples:
+                - {token_path: '/my/path'}
+          required:
+            - file
+            - function
+  groups:
+    description: defines the order of the groups (from the source).
+      If there are more sources with the same group, the name of the source determines the order
+    type: array
+    items:
+      type: string

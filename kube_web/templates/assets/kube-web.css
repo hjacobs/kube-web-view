@@ -39,7 +39,9 @@ aside.menu { padding: 1.5rem; margin-top: -1.5rem; }
 
 main { flex-grow: 1; flex-shrink: 1; }
 
-h1 .links,
+h1 .links {
+    font-size: 1.5rem;
+}
 h2 .links {
     margin: 0 1rem;
 }

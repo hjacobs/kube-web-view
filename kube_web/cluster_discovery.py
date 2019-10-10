@@ -1,15 +1,13 @@
 import logging
 import time
+from os import environ
 from pathlib import Path
 from urllib.parse import urljoin
 
 import requests
-from requests.auth import AuthBase
-
+from box import Box
 from pykube import HTTPClient, KubeConfig
-
-
-logger = logging.getLogger(__name__)
+from requests.auth import AuthBase
 
 
 class OAuth2BearerTokenAuth(AuthBase):
@@ -23,17 +21,21 @@ class OAuth2BearerTokenAuth(AuthBase):
         if "Authorization" in request.headers:
             # do not overwrite any existing Authorization header
             return request
-        with self.token_path.open() as fd:
-            token = fd.read().strip()
+
+        token = environ.get('oauth_token')
+        if not token:
+            with self.token_path.open() as fd:
+                token = fd.read().strip()
         request.headers["Authorization"] = f"Bearer {token}"
         return request
 
 
 class Cluster:
-    def __init__(self, name: str, api: HTTPClient, labels: dict = None):
+    def __init__(self, name: str, api: HTTPClient, labels: dict = None, config: dict = None):
         self.name = name
         self.api = api
         self.labels = labels or {}
+        self.config = config or {}
 
 
 class StaticClusterDiscoverer:
@@ -77,10 +79,14 @@ class ClusterRegistryDiscoverer:
         self,
         cluster_registry_url: str,
         oauth2_bearer_token_path: Path,
+        label_keys: list,
+        config_keys: list,
         cache_lifetime=60,
     ):
         self._url = cluster_registry_url
         self._oauth2_bearer_token_path = oauth2_bearer_token_path
+        self._label_keys = label_keys
+        self._config_keys = config_keys
         self._cache_lifetime = cache_lifetime
         self._last_cache_refresh = 0
         self._clusters = []
@@ -103,17 +109,21 @@ class ClusterRegistryDiscoverer:
                     client.session.auth = OAuth2BearerTokenAuth(
                         self._oauth2_bearer_token_path
                     )
-                    labels = {}
-                    for key in (
-                        "id",
-                        "channel",
-                        "environment",
-                        "infrastructure_account",
-                        "region",
-                    ):
-                        if key in row:
-                            labels[key.replace("_", "-")] = row[key]
-                    clusters.append(Cluster(row["alias"], client, labels))
+
+                    def parse_map(keys: list):
+                        result = {}
+                        if keys:
+                            box = Box(row)
+                            for key in keys:
+                                try:
+                                    result[key.replace("_", "-").split('.')[-1]] = eval(f'box.{key}', {'box': box})
+                                except KeyError:
+                                    pass
+
+                        return result
+
+                    clusters.append(Cluster(row["alias"], client,
+                                            parse_map(self._label_keys), parse_map(self._config_keys)))
             self._clusters = clusters
             self._last_cache_refresh = time.time()
         except:

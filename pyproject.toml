@@ -37,3 +37,5 @@ pytest-kind = ">=19.9.1"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+jsonschema = "^3.0"
+python-box = "^3.4"

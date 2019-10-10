@@ -29,6 +29,7 @@ from aiohttp_remotes import XForwardedRelaxed
 from aioauth_client import OAuth2Client
 from cryptography.fernet import Fernet
 
+from kube_web.object_links import prepare_object_links, render_object_links
 from .cluster_manager import ClusterNotFound
 from .resource_registry import ResourceTypeNotFound
 from .selector import parse_selector, selector_matches
@@ -900,6 +901,7 @@ async def get_resource_list(request, session):
 @aiohttp_jinja2.template("resource-view.html")
 @context()
 async def get_resource_view(request, session):
+    config = request.app[CONFIG]
     cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
     namespace = get_and_validate_namespace_parameter(request)
     plural = request.match_info["plural"]
@@ -918,7 +920,7 @@ async def get_resource_view(request, session):
         query = query.filter(namespace=namespace)
     resource = await kubernetes.get_by_name(query, name)
 
-    if resource.kind == "Secret" and not request.app[CONFIG].show_secrets:
+    if resource.kind == "Secret" and not config.show_secrets:
         # mask out all secret values, but still show keys
         for key in resource.obj.get("data", {}).keys():
             resource.obj["data"][key] = SECRET_CONTENT_HIDDEN
@@ -987,6 +989,7 @@ async def get_resource_view(request, session):
         "view": view,
         "table": table,
         "events": events,
+        "object_links": render_object_links(config.object_links, cluster, resource),
         "get_cell_class": get_cell_class,
     }
 
@@ -1530,34 +1533,7 @@ def get_app(cluster_manager, config):
     if not config.theme_options:
         config.theme_options = list(sorted(theme_settings.keys()))
 
-    object_links = collections.defaultdict(list)
-    if config.object_links:
-        for link_def in config.object_links.split(","):
-            resource_type, sep, url_template = link_def.partition("=")
-            url_template, *options = url_template.split("|")
-            icon, title, *rest = options + [None, None]
-            object_links[resource_type].append(
-                {
-                    "href": url_template,
-                    "icon": icon or "external-link-alt",
-                    "title": title or "External link for object {name}",
-                }
-            )
-
-    label_links = collections.defaultdict(list)
-    if config.label_links:
-        for link_def in config.label_links.split(","):
-            label, sep, url_template = link_def.partition("=")
-            url_template, *options = url_template.split("|")
-            icon, title, *rest = options + [None, None]
-            label_links[label].append(
-                {
-                    "href": url_template,
-                    "icon": icon or "external-link-alt",
-                    "title": title
-                    or "External link for {label} label with value '{label_value}'",
-                }
-            )
+    config.object_links = prepare_object_links(config.object_links)
 
     app = web.Application()
     aiohttp_jinja2.setup(
@@ -1575,8 +1551,6 @@ def get_app(cluster_manager, config):
         memory=jinja2_filters.memory,
     )
     env.globals["version"] = __version__
-    env.globals["object_links"] = object_links
-    env.globals["label_links"] = label_links
 
     app.add_routes(routes)
     app.router.add_static("/assets", static_assets_path)
