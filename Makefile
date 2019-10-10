@@ -19,7 +19,7 @@ test: poetry lint test.unit test.e2e
 
 .PHONY: lint
 lint: 
-	flake8
+	poetry run flake8
 	poetry run black --check kube_web
 
 .PHONY: test.unit

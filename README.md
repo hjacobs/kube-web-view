@@ -58,6 +58,13 @@ This requires Python 3.7 and [poetry](https://poetry.eustace.io/) and will run u
 make test
 ```
 
+It is also possible to run static and unit tests in docker env (`make test` is equal to `make poetry lint test.unit docker`)
+
+```
+docker run -it -v $PWD:/src -w /src python:3.7 /bin/bash -c "pip3 install poetry; make poetry lint test.unit"
+make docker
+```
+
 The end-to-end (e2e) tests will bootstrap a new Kind cluster via [pytest-kind](https://pypi.org/project/pytest-kind/), you can keep the cluster and run Kubernetes Web View for development against it:
 
 ```
