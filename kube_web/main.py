@@ -234,8 +234,10 @@ def main(argv=None):
         cluster_discoverer = StaticClusterDiscoverer(args.clusters)
     elif args.cluster_registry_url:
         cluster_discoverer = ClusterRegistryDiscoverer(
-            args.cluster_registry_url, args.cluster_registry_oauth2_bearer_token_path,
-            args.cluster_registry_labels, args.cluster_registry_config_keys
+            args.cluster_registry_url,
+            args.cluster_registry_oauth2_bearer_token_path,
+            args.cluster_registry_labels,
+            args.cluster_registry_config_keys,
         )
     elif args.kubeconfig_path:
         cluster_discoverer = KubeconfigDiscoverer(

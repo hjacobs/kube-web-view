@@ -7,7 +7,9 @@ from pathlib import Path
 
 
 class Cluster:
-    def __init__(self, name: str, api, labels: dict, config: dict, preferred_api_versions: dict):
+    def __init__(
+        self, name: str, api, labels: dict, config: dict, preferred_api_versions: dict
+    ):
         self.name = name
         self.api = api
         self.labels = labels or {}

@@ -5,9 +5,12 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 import requests
+from requests.auth import AuthBase
 from box import Box
 from pykube import HTTPClient, KubeConfig
-from requests.auth import AuthBase
+
+
+logger = logging.getLogger(__name__)
 
 
 class OAuth2BearerTokenAuth(AuthBase):
@@ -22,7 +25,7 @@ class OAuth2BearerTokenAuth(AuthBase):
             # do not overwrite any existing Authorization header
             return request
 
-        token = environ.get('oauth_token')
+        token = environ.get("oauth_token")
         if not token:
             with self.token_path.open() as fd:
                 token = fd.read().strip()
@@ -31,7 +34,9 @@ class OAuth2BearerTokenAuth(AuthBase):
 
 
 class Cluster:
-    def __init__(self, name: str, api: HTTPClient, labels: dict = None, config: dict = None):
+    def __init__(
+        self, name: str, api: HTTPClient, labels: dict = None, config: dict = None
+    ):
         self.name = name
         self.api = api
         self.labels = labels or {}
@@ -94,6 +99,20 @@ class ClusterRegistryDiscoverer:
         if self._oauth2_bearer_token_path:
             self._session.auth = OAuth2BearerTokenAuth(self._oauth2_bearer_token_path)
 
+    def parse_map(self, row, keys: list):
+        result = {}
+        if keys:
+            box = Box(row)
+            for key in keys:
+                try:
+                    result[key.replace("_", "-").split(".")[-1]] = eval(
+                        f"box.{key}", {"box": box}
+                    )
+                except KeyError:
+                    pass
+
+        return result
+
     def refresh(self):
         try:
             response = self._session.get(
@@ -110,20 +129,14 @@ class ClusterRegistryDiscoverer:
                         self._oauth2_bearer_token_path
                     )
 
-                    def parse_map(keys: list):
-                        result = {}
-                        if keys:
-                            box = Box(row)
-                            for key in keys:
-                                try:
-                                    result[key.replace("_", "-").split('.')[-1]] = eval(f'box.{key}', {'box': box})
-                                except KeyError:
-                                    pass
-
-                        return result
-
-                    clusters.append(Cluster(row["alias"], client,
-                                            parse_map(self._label_keys), parse_map(self._config_keys)))
+                    clusters.append(
+                        Cluster(
+                            row["alias"],
+                            client,
+                            self.parse_map(row, self._label_keys),
+                            self.parse_map(row, self._config_keys),
+                        )
+                    )
             self._clusters = clusters
             self._last_cache_refresh = time.time()
         except:

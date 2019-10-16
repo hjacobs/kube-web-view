@@ -22,6 +22,11 @@ lint:
 	poetry run flake8
 	poetry run black --check kube_web
 
+.PHONY: fmt
+fmt:
+	flake8
+	poetry run black kube_web
+
 .PHONY: test.unit
 test.unit:
 	poetry run coverage run --source=kube_web -m py.test tests/unit
