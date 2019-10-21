@@ -128,7 +128,7 @@ def render_object_link(link, cluster, resource, args):
             links = [links]
         return links
 
-    if "kinds" in link and resource.metadata.kind not in link["kinds"]:
+    if "kinds" in link and resource.kind not in link["kinds"]:
         return []
 
     try:
