@@ -87,7 +87,7 @@ def render_object_links(object_link_config, cluster, resource):
         "cluster": cluster,
         "kind": box.kind,
         "metadata": box.metadata,
-        "spec": box.spec,
+        "spec": box.get("spec", {}),
     }
 
     links = reduce(
