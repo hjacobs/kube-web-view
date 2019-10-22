@@ -70,6 +70,9 @@ spec:
           imagePullPolicy: IfNotPresent  # For our E2E tests.
           args:
           - --show-container-logs
-          - --object-links=pods=#cluster={cluster};namespace={namespace};name={name}
-          - --exclude-namespaces=.*forbidden.*
+          - |
+            --object-links=
+              links:
+               - href: "#cluster={cluster};namespace={namespace};name={name}"
+                 kinds: [Pod]
           env: []
