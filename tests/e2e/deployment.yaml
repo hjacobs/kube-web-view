@@ -73,6 +73,6 @@ spec:
           - |
             --object-links=
               links:
-               - href: "#cluster={cluster};namespace={namespace};name={name}"
+               - href: "#cluster={cluster.name};namespace={metadata.namespace};name={metadata.name}"
                  kinds: [Pod]
           env: []
