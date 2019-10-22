@@ -115,7 +115,9 @@ def render_object_links(object_link_config, cluster, resource):
 def render(o, args):
     if isinstance(o, dict):
         return {k: render(v, args) for k, v in o.items()}
-    return eval("f'''" + o + "'''", args)
+    if isinstance(o, str):
+        return eval("f'''" + o + "'''", args)
+    return o
 
 
 def render_object_link(link, cluster, resource, args):
