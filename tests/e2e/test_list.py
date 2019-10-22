@@ -139,8 +139,8 @@ def test_list_pods_with_metrics(session):
     check_links(response, session)
     ths = response.html.find("main table th")
     # note: pods have an extra "Links" column (--object-links)
-    assert ths[-4].text == "CPU Usage"
-    assert ths[-3].text == "Memory Usage"
+    assert ths[-3].text == "CPU Usage"
+    assert ths[-2].text == "Memory Usage"
 
 
 def test_list_pods_with_custom_columns(session):
@@ -151,12 +151,12 @@ def test_list_pods_with_custom_columns(session):
     check_links(response, session)
     ths = response.html.find("main table thead th")
     # note: pods have an extra "Links" column (--object-links)
-    assert ths[-3].text == "Images"
+    assert ths[-2].text == "Images"
 
     rows = response.html.find("main table tbody tr")
     for row in rows:
         cells = row.find("td")
-        assert cells[-3].text.startswith("['hjacobs/")
+        assert cells[-2].text.startswith("['hjacobs/")
 
 
 def test_list_pods_with_custom_column_auto_name(session):
@@ -167,12 +167,12 @@ def test_list_pods_with_custom_column_auto_name(session):
     check_links(response, session)
     ths = response.html.find("main table thead th")
     # note: pods have an extra "Links" column (--object-links)
-    assert ths[-3].text == "Spec Containers Image"
+    assert ths[-2].text == "Spec Containers Image"
 
     rows = response.html.find("main table tbody tr")
     for row in rows:
         cells = row.find("td")
-        assert cells[-3].text.startswith("['hjacobs/")
+        assert cells[-2].text.startswith("['hjacobs/")
 
 
 def test_list_pods_with_multiple_custom_columns(session):
@@ -373,9 +373,9 @@ def test_filter_pods_with_custom_columns(session):
     check_links(response, session)
     ths = response.html.find("main table thead th")
     # note: pods have an extra "Links" column (--object-links)
-    assert ths[-3].text == "Images"
+    assert ths[-2].text == "Images"
 
     rows = response.html.find("main table tbody tr")
     for row in rows:
         cells = row.find("td")
-        assert cells[-3].text.startswith("['hjacobs/")
+        assert cells[-2].text.startswith("['hjacobs/")
