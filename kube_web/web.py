@@ -978,7 +978,7 @@ async def get_resource_view(request, session):
     if resource.kind == "Namespace":
         namespace = resource.name
 
-    return {
+    context = {
         "cluster": cluster.name,
         "namespace": namespace,
         "plural": plural,
@@ -989,6 +989,10 @@ async def get_resource_view(request, session):
         "events": events,
         "get_cell_class": get_cell_class,
     }
+    prerender_hook = request.app[CONFIG].resource_view_prerender_hook
+    if prerender_hook:
+        await prerender_hook(cluster, namespace, resource, context)
+    return context
 
 
 def pod_color(name):
@@ -1530,35 +1534,6 @@ def get_app(cluster_manager, config):
     if not config.theme_options:
         config.theme_options = list(sorted(theme_settings.keys()))
 
-    object_links = collections.defaultdict(list)
-    if config.object_links:
-        for link_def in config.object_links.split(","):
-            resource_type, sep, url_template = link_def.partition("=")
-            url_template, *options = url_template.split("|")
-            icon, title, *rest = options + [None, None]
-            object_links[resource_type].append(
-                {
-                    "href": url_template,
-                    "icon": icon or "external-link-alt",
-                    "title": title or "External link for object {name}",
-                }
-            )
-
-    label_links = collections.defaultdict(list)
-    if config.label_links:
-        for link_def in config.label_links.split(","):
-            label, sep, url_template = link_def.partition("=")
-            url_template, *options = url_template.split("|")
-            icon, title, *rest = options + [None, None]
-            label_links[label].append(
-                {
-                    "href": url_template,
-                    "icon": icon or "external-link-alt",
-                    "title": title
-                    or "External link for {label} label with value '{label_value}'",
-                }
-            )
-
     app = web.Application()
     aiohttp_jinja2.setup(
         app,
@@ -1575,8 +1550,8 @@ def get_app(cluster_manager, config):
         memory=jinja2_filters.memory,
     )
     env.globals["version"] = __version__
-    env.globals["object_links"] = object_links
-    env.globals["label_links"] = label_links
+    env.globals["object_links"] = config.object_links
+    env.globals["label_links"] = config.label_links
 
     app.add_routes(routes)
     app.router.add_static("/assets", static_assets_path)

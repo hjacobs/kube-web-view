@@ -1,6 +1,7 @@
 import asyncio
 import aiohttp.web
 import argparse
+import collections
 import importlib
 import logging
 import re
@@ -62,6 +63,23 @@ def coroutine_function(value):
     if not asyncio.iscoroutinefunction(function):
         raise ValueError(f"Not a coroutine (async) function: {value}")
     return function
+
+
+def links_dict(value):
+    links = collections.defaultdict(list)
+    if value:
+        for link_def in value.split(","):
+            key, sep, url_template = link_def.partition("=")
+            url_template, *options = url_template.split("|")
+            icon, title, *rest = options + [None, None]
+            links[key].append(
+                {
+                    "href": url_template,
+                    "icon": icon or "external-link-alt",
+                    "title": title or "External link",
+                }
+            )
+    return links
 
 
 def parse_args(argv=None):
@@ -141,10 +159,12 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         "--object-links",
+        type=links_dict,
         help="Comma-separated list of URL templates per resource type to link to external tools, e.g. 'pods=https://mymonitoringtool/{cluster}/{namespace}/{name}'",
     )
     parser.add_argument(
         "--label-links",
+        type=links_dict,
         help="Comma-separated list of URL templates per label to link to external tools, e.g. 'application=https://myui/apps/{application}'",
     )
     parser.add_argument(
@@ -190,6 +210,11 @@ def parse_args(argv=None):
         "--oauth2-authorized-hook",
         type=coroutine_function,
         help="Optional hook (name of a coroutine like 'mymodule.myfunc') to process OAuth access token response (validate, log, ..)",
+    )
+    parser.add_argument(
+        "--resource-view-prerender-hook",
+        type=coroutine_function,
+        help="Optional hook (name of a coroutine like 'mymodule.myfunc') to process/enrich template context for the resource detail view",
     )
     parser.add_argument(
         "--preferred-api-versions",
