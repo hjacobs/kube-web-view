@@ -344,6 +344,13 @@ def test_download_sort_link(session):
     )
 
 
+def test_object_links(session):
+    response = session.get("/clusters/local/namespaces/default/pods")
+    response.raise_for_status()
+    link = response.html.find("main table a.button", first=True)
+    assert link.attrs["href"].startswith("#cluster=local;namespace=default;name=")
+
+
 def test_hide_columns(session):
     response = session.get("/clusters/local/namespaces/default/deployments")
     response.raise_for_status()
