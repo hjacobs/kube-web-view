@@ -978,11 +978,14 @@ async def get_resource_view(request, session):
     if resource.kind == "Namespace":
         namespace = resource.name
 
+    links = []
+
     context = {
         "cluster": cluster.name,
         "namespace": namespace,
         "plural": plural,
         "resource": resource,
+        "links": links,
         "owners": owners,
         "view": view,
         "table": table,

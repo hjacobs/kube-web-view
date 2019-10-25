@@ -42,6 +42,13 @@
         </a>
         {% endfor %}
         {% endfor %}
+        {% for link in links: %}
+        <a href="{{ link.href }}"
+           class="button {{ link.class }}"
+           title="{{ link.title }}">
+            <span class="icon"><i class="fas fa-{{ link.icon }}"></i></span>
+        </a>
+        {% endfor %}
     </span>
     <span class="meta">
         created {{ resource.metadata.creationTimestamp.replace('T', ' ').replace('Z', '') }},
