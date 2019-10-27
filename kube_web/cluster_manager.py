@@ -7,10 +7,13 @@ from pathlib import Path
 
 
 class Cluster:
-    def __init__(self, name: str, api, labels: dict, preferred_api_versions: dict):
+    def __init__(
+        self, name: str, api, labels: dict, spec: dict, preferred_api_versions: dict
+    ):
         self.name = name
         self.api = api
         self.labels = labels or {}
+        self.spec = spec or {}
         self.resource_registry = ResourceRegistry(api, preferred_api_versions)
 
 
@@ -47,6 +50,7 @@ class ClusterManager:
                     cluster.name,
                     cluster.api,
                     cluster.labels,
+                    cluster.spec,
                     self.preferred_api_versions,
                 )
 

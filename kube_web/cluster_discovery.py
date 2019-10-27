@@ -30,10 +30,13 @@ class OAuth2BearerTokenAuth(AuthBase):
 
 
 class Cluster:
-    def __init__(self, name: str, api: HTTPClient, labels: dict = None):
+    def __init__(
+        self, name: str, api: HTTPClient, labels: dict = None, spec: dict = None
+    ):
         self.name = name
         self.api = api
         self.labels = labels or {}
+        self.spec = spec or {}
 
 
 class StaticClusterDiscoverer:
@@ -113,7 +116,7 @@ class ClusterRegistryDiscoverer:
                     ):
                         if key in row:
                             labels[key.replace("_", "-")] = row[key]
-                    clusters.append(Cluster(row["alias"], client, labels))
+                    clusters.append(Cluster(row["alias"], client, labels, row))
             self._clusters = clusters
             self._last_cache_refresh = time.time()
         except:
