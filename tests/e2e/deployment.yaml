@@ -72,4 +72,5 @@ spec:
           - --show-container-logs
           - --object-links=pods=#cluster={cluster};namespace={namespace};name={name}
           - --exclude-namespaces=.*forbidden.*
+          - --resource-view-prerender-hook=kube_web.example_hooks.resource_view_prerender
           env: []

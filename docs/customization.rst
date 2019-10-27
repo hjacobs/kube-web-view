@@ -15,6 +15,7 @@ for the needs of your organization:
 * one of the :ref:`themes` can be selected as default, or you can create your own CSS theme
 * :ref:`html-templates` can be customized to match your branding, to add static links, and to inject custom JS/CSS
 * :ref:`static-assets` can be included to add images, JS, or CSS files
+* :ref:`prerender-hooks` can be used to add or transform view data
 
 
 .. _sidebar:
@@ -241,6 +242,31 @@ Static Assets
 As you might want to add or change static assets (e.g. JS, CSS, images),
 you can point Kubernetes Web View to a folder containing your custom assets.
 Use the ``--static-assets-path`` command line option for this and either build a custom Docker image or mount your asset directory into the pod.
+
+.. _prerender-hooks:
+
+Prerender Hooks
+===============
+
+The view data (``context`` for Jinja2_ template) can be modified by custom prerender hooks to allow advanced customization.
+
+For example, to add generated custom links for deployments to the resource detail view, create a coroutine function with signature like ``async def resource_view_prerender(cluster, namespace, resource, context)`` in a file ``hooks.py``:
+
+.. code-block:: python
+
+    async def resource_view_prerender(cluster, namespace: str, resource, context: dict):
+        if resource.kind == "Deployment":
+            link = {
+                "href": f"https://cd.example.org/pipelines/{resource.labels['pipeline-id']}/{resource.labels['deployment-id']}",
+                "class": "is-link",
+                "title": "Pipeline link",
+                "icon": "external-link-alt",
+            }
+            context["links"].append(link)
+
+This file would need to be in the Python search path, e.g. as ``hooks.py`` in the root ("/") of the Docker image. Pass the hook function as ``--resource-view-prerender-hook=hooks.resource_view_prerender`` to Kubernetes Web View.
+
+Note that you can also do more advanced stuff in the prerender hook, e.g. call out to external systems to look up additional information.
 
 
 .. _Jinja2: https://palletsprojects.com/p/jinja/
