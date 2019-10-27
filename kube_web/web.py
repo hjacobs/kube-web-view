@@ -900,6 +900,7 @@ async def get_resource_list(request, session):
 @aiohttp_jinja2.template("resource-view.html")
 @context()
 async def get_resource_view(request, session):
+    config = request.app[CONFIG]
     cluster = request.app[CLUSTER_MANAGER].get(request.match_info["cluster"])
     namespace = get_and_validate_namespace_parameter(request)
     plural = request.match_info["plural"]
@@ -918,7 +919,7 @@ async def get_resource_view(request, session):
         query = query.filter(namespace=namespace)
     resource = await kubernetes.get_by_name(query, name)
 
-    if resource.kind == "Secret" and not request.app[CONFIG].show_secrets:
+    if resource.kind == "Secret" and not config.show_secrets:
         # mask out all secret values, but still show keys
         for key in resource.obj.get("data", {}).keys():
             resource.obj["data"][key] = SECRET_CONTENT_HIDDEN
@@ -980,6 +981,44 @@ async def get_resource_view(request, session):
 
     links = []
 
+    if config.object_links:
+        for link in config.object_links[resource.endpoint]:
+            links.append(
+                {
+                    "href": link["href"].format(
+                        cluster=cluster.name, namespace=namespace, name=resource.name
+                    ),
+                    "class": "is-primary",
+                    "title": link["title"].format(
+                        cluster=cluster.name, namespace=namespace, name=resource.name
+                    ),
+                    "icon": link["icon"],
+                }
+            )
+    if config.label_links:
+        for label, label_value in sorted(resource.labels.items()):
+            for link in config.label_links[label]:
+                links.append(
+                    {
+                        "href": link["href"].format(
+                            cluster=cluster.name,
+                            namespace=namespace,
+                            name=resource.name,
+                            label=label,
+                            label_value=label_value,
+                        ),
+                        "class": "is-info",
+                        "title": link["title"].format(
+                            cluster=cluster.name,
+                            namespace=namespace,
+                            name=resource.name,
+                            label=label,
+                            label_value=label_value,
+                        ),
+                        "icon": link["icon"],
+                    }
+                )
+
     context = {
         "cluster": cluster.name,
         "namespace": namespace,
@@ -992,7 +1031,7 @@ async def get_resource_view(request, session):
         "events": events,
         "get_cell_class": get_cell_class,
     }
-    prerender_hook = request.app[CONFIG].resource_view_prerender_hook
+    prerender_hook = config.resource_view_prerender_hook
     if prerender_hook:
         await prerender_hook(cluster, namespace, resource, context)
     return context
