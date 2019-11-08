@@ -130,9 +130,9 @@ class ClusterRegistryDiscoverer:
 
 
 class KubeconfigDiscoverer:
-    def __init__(self, kubeconfig_path: Path, contexts: set):
+    def __init__(self, kubeconfig_path: Path, contexts: set = None):
         self._path = kubeconfig_path
-        self._contexts = contexts
+        self._contexts = contexts or frozenset()
 
     def get_clusters(self):
         # Kubernetes Python client expects "vintage" string path
@@ -144,9 +144,13 @@ class KubeconfigDiscoverer:
                 continue
             # create a new KubeConfig with new "current context"
             context_config = KubeConfig(config.doc, context)
-            client = HTTPClient(context_config)
-            cluster = Cluster(context, client)
-            yield cluster
+            try:
+                client = HTTPClient(context_config)
+                cluster = Cluster(context, client)
+            except Exception as e:
+                logger.warning(f"Failed to load context {context}, skipping! {e}")
+            else:
+                yield cluster
 
 
 class MockDiscoverer:

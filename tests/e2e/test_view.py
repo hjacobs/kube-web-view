@@ -145,11 +145,11 @@ def test_object_links(session):
 
 
 def test_link_added_by_prerender_hook(session):
-    response = session.get("/clusters/local/namespaces/default/deployments/kube-web-view")
+    response = session.get(
+        "/clusters/local/namespaces/default/deployments/kube-web-view"
+    )
     response.raise_for_status()
     check_links(response, session)
 
     link = response.html.find("main h1 a.is-link", first=True)
-    assert link.attrs["href"].startswith(
-        "#this-is-a-custom-link"
-    )
+    assert link.attrs["href"].startswith("#this-is-a-custom-link")
