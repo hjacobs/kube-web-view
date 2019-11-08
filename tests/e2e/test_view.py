@@ -10,6 +10,13 @@ def test_view_namespace(session):
     assert title.text == "default (Namespace) - Kubernetes Web View"
 
 
+def test_view_namespace_trailing_slash(session):
+    response = session.get("/clusters/local/namespaces/default/")
+    response.raise_for_status()
+    title = response.html.find("title", first=True)
+    assert title.text == "default (Namespace) - Kubernetes Web View"
+
+
 def test_view_namespace_forbidden(session):
     response = session.get("/clusters/local/namespaces/my-forbidden-namespace")
     assert response.status_code == 403

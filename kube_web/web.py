@@ -1554,6 +1554,16 @@ async def error_handler(request, handler):
         return response
 
 
+@web.middleware
+async def trailing_slash(request, handler):
+    path = request.url.path
+    if path != "/" and path.endswith("/"):
+        redirect = request.url.with_path(path[:-1]).with_query(request.url.query)
+        raise web.HTTPFound(location=redirect)
+    response = await handler(request)
+    return response
+
+
 def get_app(cluster_manager, config):
     templates_paths = [str(Path(__file__).parent / "templates")]
     if config.templates_path:
@@ -1615,6 +1625,7 @@ def get_app(cluster_manager, config):
         app.middlewares.append(auth)
 
     app.middlewares.append(error_handler)
+    app.middlewares.append(trailing_slash)
 
     app[CLUSTER_MANAGER] = cluster_manager
     app[CONFIG] = config
