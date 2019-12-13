@@ -1,4 +1,4 @@
-FROM python:3.7-slim
+FROM python:3.8-slim
 
 WORKDIR /
 
@@ -10,15 +10,15 @@ COPY pyproject.toml /
 # fake package to make Poetry happy (we will install the actual contents in the later stage)
 RUN mkdir /kube_web && touch /kube_web/__init__.py && touch /README.md
 
-RUN poetry config settings.virtualenvs.create false && \
+RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-dev --no-ansi
 
-FROM python:3.7-slim
+FROM python:3.8-slim
 
 WORKDIR /
 
 # copy pre-built packages to this image
-COPY --from=0 /usr/local/lib/python3.7/site-packages /usr/local/lib/python3.7/site-packages
+COPY --from=0 /usr/local/lib/python3.8/site-packages /usr/local/lib/python3.8/site-packages
 
 # now copy the actual code we will execute (poetry install above was just for dependencies)
 COPY kube_web /kube_web
