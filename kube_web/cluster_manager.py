@@ -3,6 +3,8 @@ from .selector import selector_matches
 
 from .cluster_discovery import OAuth2BearerTokenAuth
 
+from typing import Dict
+
 from pathlib import Path
 
 
@@ -30,7 +32,7 @@ class ClusterManager:
         cluster_auth_token_path: Path,
         preferred_api_versions: dict,
     ):
-        self._clusters = {}
+        self._clusters: Dict[str, Cluster] = {}
         self.discoverer = discoverer
         self.selector = selector
         self.cluster_auth_token_path = cluster_auth_token_path

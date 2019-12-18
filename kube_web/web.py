@@ -19,6 +19,7 @@ from http import HTTPStatus
 import yaml
 
 from functools import partial
+from typing import Dict
 
 from pykube import ObjectDoesNotExist, HTTPClient
 from pykube.objects import NamespacedAPIObject, Namespace, Event, Pod
@@ -212,7 +213,7 @@ def get_theme(request) -> str:
     return theme
 
 
-def update_context_for_theme(ctx, request) -> str:
+def update_context_for_theme(ctx, request):
     theme_name = get_theme(request)
     theme_settings = request.app[THEME_SETTINGS][theme_name]
     ctx["theme"] = theme_settings
@@ -613,7 +614,7 @@ async def join_metrics(
             key = (metrics.namespace, metrics.name)
             row_index = row_index_by_namespace_name.get(key)
             if row_index is not None:
-                usage = collections.defaultdict(float)
+                usage: Dict[str, float] = collections.defaultdict(float)
                 if "containers" in metrics.obj:
                     for container in metrics.obj["containers"]:
                         for k, v in container.get("usage", {}).items():
@@ -737,7 +738,7 @@ class ResponseWriter:
         self.data = ""
 
 
-async def as_tsv(table, fd) -> str:
+async def as_tsv(table, fd):
     writer = csv.writer(fd, delimiter="\t", lineterminator="\n")
     is_multi_cluster = len(table.obj["clusters"]) > 1
     columns = []

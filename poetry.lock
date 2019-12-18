@@ -395,6 +395,30 @@ version = "4.7.1"
 
 [[package]]
 category = "dev"
+description = "Optional static typing for Python"
+name = "mypy"
+optional = false
+python-versions = ">=3.5"
+version = "0.760"
+
+[package.dependencies]
+mypy-extensions = ">=0.4.3,<0.5.0"
+typed-ast = ">=1.4.0,<1.5.0"
+typing-extensions = ">=3.7.4"
+
+[package.extras]
+dmypy = ["psutil (>=4.0)"]
+
+[[package]]
+category = "dev"
+description = "Experimental type system extensions for programs checked with the mypy typechecker."
+name = "mypy-extensions"
+optional = false
+python-versions = "*"
+version = "0.4.3"
+
+[[package]]
+category = "dev"
 description = "Core utilities for Python packages"
 name = "packaging"
 optional = false
@@ -805,6 +829,14 @@ python-versions = "*"
 version = "1.4.0"
 
 [[package]]
+category = "dev"
+description = "Backported and Experimental Type Hints for Python 3.5+"
+name = "typing-extensions"
+optional = false
+python-versions = "*"
+version = "3.7.4.1"
+
+[[package]]
 category = "main"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 name = "urllib3"
@@ -873,7 +905,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "d585b2decadd61c2158eb94eea530e4972f1017e62a555b17ff231f964d94df8"
+content-hash = "e8619b3d959e00907a48acb7f8858bba73e4225c132f5080ae470f76295902fc"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1176,6 +1208,25 @@ multidict = [
     {file = "multidict-4.7.1-cp38-cp38-win_amd64.whl", hash = "sha256:cf24e15986762f0e75a622eb19cfe39a042e952b8afba3e7408835b9af2be4fb"},
     {file = "multidict-4.7.1.tar.gz", hash = "sha256:d7b6da08538302c5245cd3103f333655ba7f274915f1f5121c4f4b5fbdb3febe"},
 ]
+mypy = [
+    {file = "mypy-0.760-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:ec6eaf98a57624d96d9916352a5bad2d73959f6358fabf43838f7d1a4d2f8389"},
+    {file = "mypy-0.760-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:aa8e3bd1540dd5c39ef580ec2146a9c99c45f7c62af890095fec9e87b5ca19fb"},
+    {file = "mypy-0.760-cp35-cp35m-win_amd64.whl", hash = "sha256:588c0e38466306aa7dbe6522ceacf37dde8b13cfa5edde90be2ce382f078875f"},
+    {file = "mypy-0.760-cp36-cp36m-macosx_10_6_x86_64.whl", hash = "sha256:4c8f812a2fbefa96185933fbe05aa035e9cf791cf3a23bbdb6a219c80b60e0b1"},
+    {file = "mypy-0.760-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:573c68df69f0e399fa57866a0b72989acf0a56c4008eee59c789c2ca5ea9df03"},
+    {file = "mypy-0.760-cp36-cp36m-win_amd64.whl", hash = "sha256:4223f576813c79a10d0fd14192c86f1b85e3bd235c93792f22ed811a20b5ee4e"},
+    {file = "mypy-0.760-cp37-cp37m-macosx_10_6_x86_64.whl", hash = "sha256:b978ba1ea90d0abe2fc720ec9a41824b7d3a1304569bd58c9038d8d61dc4dfdb"},
+    {file = "mypy-0.760-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:39f7be2f89668d21b2bbab45ce5aa15e69bf8d6f3b46f9e1cc1a88e4fcc84f3d"},
+    {file = "mypy-0.760-cp37-cp37m-win_amd64.whl", hash = "sha256:ce69577b424058bfa177df27213869f37c1e964c3e1ebd3b3d54f1d10b234c4d"},
+    {file = "mypy-0.760-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:0308c35fd16c96a81b8dfc4d09ec63b8fa607cfec087acf5aafb44c2c45197de"},
+    {file = "mypy-0.760-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:4ea9ee847ea5bb38ea275441f3aea7eeba1b96187a3f968ee359d33d9dcc0eda"},
+    {file = "mypy-0.760-cp38-cp38-win_amd64.whl", hash = "sha256:c85c5367c2e8247e06cc0aba84e3633e90f48e8a0677bc51b351e138b5ff80b1"},
+    {file = "mypy-0.760-py3-none-any.whl", hash = "sha256:6d1bd2e675823a19e6bf72149540ab9851bfe698b796aea698fb926ab2bedd02"},
+]
+mypy-extensions = [
+    {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
+    {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
+]
 packaging = [
     {file = "packaging-19.2-py2.py3-none-any.whl", hash = "sha256:d9551545c6d761f3def1677baf08ab2a3ca17c56879e70fecba2fc4dde4ed108"},
     {file = "packaging-19.2.tar.gz", hash = "sha256:28b924174df7a2fa32c1953825ff29c61e2f5e082343165438812f00d3a7fc47"},
@@ -1352,6 +1403,11 @@ typed-ast = [
     {file = "typed_ast-1.4.0-cp38-cp38-win32.whl", hash = "sha256:1170afa46a3799e18b4c977777ce137bb53c7485379d9706af8a59f2ea1aa161"},
     {file = "typed_ast-1.4.0-cp38-cp38-win_amd64.whl", hash = "sha256:838997f4310012cf2e1ad3803bce2f3402e9ffb71ded61b5ee22617b3a7f6b6e"},
     {file = "typed_ast-1.4.0.tar.gz", hash = "sha256:66480f95b8167c9c5c5c87f32cf437d585937970f3fc24386f313a4c97b44e34"},
+]
+typing-extensions = [
+    {file = "typing_extensions-3.7.4.1-py2-none-any.whl", hash = "sha256:910f4656f54de5993ad9304959ce9bb903f90aadc7c67a0bef07e678014e892d"},
+    {file = "typing_extensions-3.7.4.1-py3-none-any.whl", hash = "sha256:cf8b63fedea4d89bab840ecbb93e75578af28f76f66c35889bd7065f5af88575"},
+    {file = "typing_extensions-3.7.4.1.tar.gz", hash = "sha256:091ecc894d5e908ac75209f10d5b4f118fbdb2eb1ede6a63544054bb1edb41f2"},
 ]
 urllib3 = [
     {file = "urllib3-1.25.7-py2.py3-none-any.whl", hash = "sha256:a8a318824cc77d1fd4b2bec2ded92646630d7fe8619497b142c84a9e6f5a7293"},

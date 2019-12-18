@@ -1,7 +1,10 @@
+from typing import Dict, Any
+
+
 def parse_selector(param: str):
     if not param:
         return None
-    selector = {}
+    selector: Dict[str, Any] = {}
     conditions = param.split(",")
     for condition in conditions:
         key, _, val = condition.partition("=")

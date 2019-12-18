@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from pykube.objects import APIObject, NamespacedAPIObject
+from typing import List, Type
 from kube_web import kubernetes
 
 logger = logging.getLogger(__name__)
@@ -112,8 +113,8 @@ class ResourceRegistry:
         self.api = api
         self.preferred_api_versions = preferred_api_versions
         self._lock = asyncio.Lock()
-        self._cluster_resource_types = []
-        self._namespaced_resource_types = []
+        self._cluster_resource_types: List[Type[APIObject]] = []
+        self._namespaced_resource_types: List[Type[NamespacedAPIObject]] = []
 
     async def initialize(self):
         async with self._lock:

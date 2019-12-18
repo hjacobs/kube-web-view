@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 
 import requests
 from requests.auth import AuthBase
+from typing import List
 
 from pykube import HTTPClient, KubeConfig
 
@@ -86,7 +87,7 @@ class ClusterRegistryDiscoverer:
         self._oauth2_bearer_token_path = oauth2_bearer_token_path
         self._cache_lifetime = cache_lifetime
         self._last_cache_refresh = 0
-        self._clusters = []
+        self._clusters: List[Cluster] = []
         self._session = requests.Session()
         if self._oauth2_bearer_token_path:
             self._session.auth = OAuth2BearerTokenAuth(self._oauth2_bearer_token_path)
