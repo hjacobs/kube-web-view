@@ -717,9 +717,9 @@ async def do_get_resource_list(
 
         limit = params.get(qp.LIMIT)
         if limit:
-            table.rows[:] = table.rows[: int(limit)]
+            table.rows[:] = table.rows[: int(limit)]  # type: ignore
 
-        for row in table.rows:
+        for row in table.rows:  # type: ignore
             row["cluster"] = _cluster
         table.obj["clusters"] = [_cluster]
     return clazz, table, error
