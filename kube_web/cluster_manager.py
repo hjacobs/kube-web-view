@@ -3,7 +3,7 @@ from .selector import selector_matches
 
 from .cluster_discovery import OAuth2BearerTokenAuth
 
-from typing import Dict
+from typing import Dict, List
 
 from pathlib import Path
 
@@ -59,10 +59,10 @@ class ClusterManager:
         self._clusters = _clusters
 
     @property
-    def clusters(self):
+    def clusters(self) -> List[Cluster]:
         return list(self._clusters.values())
 
-    def get(self, cluster: str):
+    def get(self, cluster: str) -> Cluster:
         obj = self._clusters.get(cluster)
         if not obj:
             raise ClusterNotFound(cluster)
