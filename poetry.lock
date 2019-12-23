@@ -517,11 +517,11 @@ category = "main"
 description = "Python client library for Kubernetes"
 name = "pykube-ng"
 optional = false
-python-versions = "*"
-version = "19.12.0"
+python-versions = ">=3.6"
+version = "19.12.1"
 
 [package.dependencies]
-PyYAML = "*"
+pyyaml = "*"
 requests = ">=2.12"
 
 [package.extras]
@@ -1267,8 +1267,8 @@ pygments = [
     {file = "Pygments-2.5.2.tar.gz", hash = "sha256:98c8aa5a9f778fcd1026a17361ddaf7330d1b7c62ae97c3bb0ae73e0b9b6b0fe"},
 ]
 pykube-ng = [
-    {file = "pykube-ng-19.12.0.tar.gz", hash = "sha256:58a457a72c12fc22fa4c69018450818df7ec3498b67dfe4636cb3b59bcfbc08c"},
-    {file = "pykube_ng-19.12.0-py2.py3-none-any.whl", hash = "sha256:260c09afff66e97f036a5fa16942271931e8f5f9e7c996f677aebb84b5cec853"},
+    {file = "pykube-ng-19.12.1.tar.gz", hash = "sha256:d8d184a4834e577236508198f0db8d6d46508698512ac742b6861d47de79265c"},
+    {file = "pykube_ng-19.12.1-py3-none-any.whl", hash = "sha256:46974ff355d7d18ca9c3722f957e1182fb27a0401c4c06942bdfcd7e11ecffd3"},
 ]
 pyparsing = [
     {file = "pyparsing-2.4.5-py2.py3-none-any.whl", hash = "sha256:20f995ecd72f2a1f4bf6b072b63b22e2eb457836601e76d6e5dfcd75436acc1f"},
