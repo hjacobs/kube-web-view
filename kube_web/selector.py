@@ -1,4 +1,5 @@
-from typing import Dict, Any
+from typing import Any
+from typing import Dict
 
 
 def parse_selector(param: str):

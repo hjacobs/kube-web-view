@@ -1,18 +1,19 @@
-import yaml
-from tempfile import NamedTemporaryFile
 import logging
-from pytest import fixture
-from pathlib import Path
 import os
 from functools import partial
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from typing import Generator
 
+import yaml
+from pytest import fixture
 from requests_html import HTMLSession
 
 kind_cluster_name = "kube-web-view-e2e"
 
 
 @fixture(scope="session")
-def cluster(kind_cluster) -> dict:
+def cluster(kind_cluster) -> Generator[dict, None, None]:
     docker_image = os.getenv("TEST_IMAGE")
     kind_cluster.load_docker_image(docker_image)
 

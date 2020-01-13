@@ -1,13 +1,13 @@
 import logging
 import time
 from pathlib import Path
+from typing import List
 from urllib.parse import urljoin
 
 import requests
+from pykube import HTTPClient
+from pykube import KubeConfig
 from requests.auth import AuthBase
-from typing import List
-
-from pykube import HTTPClient, KubeConfig
 
 
 logger = logging.getLogger(__name__)
@@ -120,7 +120,7 @@ class ClusterRegistryDiscoverer:
                     clusters.append(Cluster(row["alias"], client, labels, row))
             self._clusters = clusters
             self._last_cache_refresh = time.time()
-        except:
+        except Exception:
             logger.exception(f"Failed to refresh from cluster registry {self._url}")
 
     def get_clusters(self):

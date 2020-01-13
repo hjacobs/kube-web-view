@@ -1,10 +1,10 @@
 import colorsys
 import datetime
-import yaml as pyyaml
 
 import pygments
-from pygments.lexers import get_lexer_by_name
+import yaml as pyyaml
 from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_by_name
 
 
 def pluralize(singular):

@@ -159,7 +159,7 @@ def merge_cluster_tables(t1, t2):
         for i, column in enumerate(t1.columns):
             column_indicies[column["name"]] = i
         for row in t1.rows:
-            for i in range(added):
+            for _ in range(added):
                 row["cells"].append(None)
         for row in t2.rows:
             new_row_cells = [None] * len(t1.columns)

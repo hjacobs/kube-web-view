@@ -1,5 +1,7 @@
 import re
-from kube_web.web import generate_name_from_spec, is_allowed_namespace
+
+from kube_web.web import generate_name_from_spec
+from kube_web.web import is_allowed_namespace
 
 
 def test_generate_name_from_spec():

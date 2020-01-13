@@ -1,57 +1,55 @@
 import asyncio
-import aiohttp_jinja2
-import collections
-import jinja2
-import csv
-import zlib
-import colorsys
 import base64
-import jmespath
-import time
-import os
-import pykube
+import collections
+import colorsys
+import csv
 import logging
+import os
 import re
-import requests.exceptions
-import pykube.exceptions
-from yarl import URL
-from http import HTTPStatus
-import yaml
-
+import time
+import zlib
 from functools import partial
+from http import HTTPStatus
+from pathlib import Path
 from typing import Dict
 
-from pykube import ObjectDoesNotExist, HTTPClient
-from pykube.objects import NamespacedAPIObject, Namespace, Event, Pod
-from pykube.query import Query
-from aiohttp_session import get_session, setup as session_setup
-from aiohttp_session.cookie_storage import EncryptedCookieStorage
-from aiohttp_remotes import XForwardedRelaxed
+import aiohttp_jinja2
+import jinja2
+import jmespath
+import pykube.exceptions
+import requests.exceptions
+import yaml
 from aioauth_client import OAuth2Client
+from aiohttp import web
+from aiohttp_remotes import XForwardedRelaxed
+from aiohttp_session import get_session
+from aiohttp_session import setup as session_setup
+from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from cryptography.fernet import Fernet
+from pykube import HTTPClient
+from pykube import ObjectDoesNotExist
+from pykube.objects import Event
+from pykube.objects import Namespace
+from pykube.objects import NamespacedAPIObject
+from pykube.objects import Pod
+from pykube.query import Query
+from yarl import URL
 
 from .cluster_manager import ClusterNotFound
 from .resource_registry import ResourceTypeNotFound
-from .selector import parse_selector, selector_matches
-
-from pathlib import Path
-
-from aiohttp import web
-
-from kube_web import query_params as qp
-
+from .selector import parse_selector
+from .selector import selector_matches
+from .table import add_label_columns
+from .table import filter_table
+from .table import filter_table_by_predicate
+from .table import guess_column_classes
+from .table import merge_cluster_tables
+from .table import remove_columns
+from .table import sort_table
 from kube_web import __version__
-from kube_web import kubernetes
 from kube_web import jinja2_filters
-from .table import (
-    add_label_columns,
-    filter_table_by_predicate,
-    filter_table,
-    remove_columns,
-    guess_column_classes,
-    sort_table,
-    merge_cluster_tables,
-)
+from kube_web import kubernetes
+from kube_web import query_params as qp
 
 # import tracemalloc
 # tracemalloc.start()
@@ -854,7 +852,7 @@ async def get_resource_list(request, session):
     tables = []
     tables_by_resource_type = {}
     errors_by_cluster = collections.defaultdict(list)
-    for clazz, table, error in await asyncio.gather(*tasks):
+    for _clazz, table, error in await asyncio.gather(*tasks):
         if error:
             if len(clusters) == 1:
                 # directly re-raise the exception as single cluster was given
@@ -1334,7 +1332,7 @@ async def get_search(request, session):
         for _cluster in request.app[CLUSTER_MANAGER].clusters:
             is_match = search_query_lower in _cluster.name.lower()
             if not is_match:
-                for key, val in _cluster.labels.items():
+                for val in _cluster.labels.values():
                     if search_query_lower in val.lower():
                         is_match = True
                         break
@@ -1369,7 +1367,7 @@ async def get_search(request, session):
                             clazz = await _cluster.resource_registry.get_class_by_plural_name(
                                 resource_type, False
                             )
-                    except:
+                    except Exception:
                         if i >= len(clusters) - 1:
                             raise
                     else:
@@ -1447,7 +1445,7 @@ async def auth(request, handler):
             original_url = base64.urlsafe_b64decode(request.query["state"]).decode(
                 "utf-8"
             )
-        except:
+        except Exception:
             original_url = "/"
         redirect_uri = str(request.url.with_path(OAUTH2_CALLBACK_PATH))
         access_token, data = await client.get_access_token(
