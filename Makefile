@@ -19,9 +19,7 @@ test: poetry lint test.unit test.e2e
 
 .PHONY: lint
 lint:
-	poetry run flake8
-	poetry run black --check kube_web
-	poetry run mypy --ignore-missing-imports kube_web
+	poetry run pre-commit run --all-files
 
 .PHONY: test.unit
 test.unit:

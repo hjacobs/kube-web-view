@@ -10,6 +10,11 @@ repos:
       - id: check-hooks-apply
       - id: check-useless-excludes
 
+  - repo: https://codeberg.org/hjacobs/kube-manifest-lint
+    rev: 0.2.0
+    hooks:
+      - id: kube-manifest-lint
+
   # formatters
 
   - repo: https://github.com/asottile/reorder_python_imports
@@ -22,13 +27,8 @@ repos:
     hooks:
       - id: black
 
-  #  - repo: https://github.com/pre-commit/mirrors-yapf
-  #    rev: v0.28.0
-  #    hooks:
-  #      - id: yapf
-
   - repo: https://github.com/asottile/pyupgrade
-    rev: v1.26.0
+    rev: v1.26.1
     hooks:
       - id: pyupgrade
         stages: [push]
