@@ -41,6 +41,14 @@ Columns can be customized via the ``labelcols`` and ``customcols`` query paramet
 
 The ``limit`` query parameter can optionally limit the number of shown resources.
 
+Examples
+--------
+
+* List all Nodes with their allocatable memory: ``/clusters/_all/nodes?customcols=Memory=status.allocatable.memory``
+* Find all Pods which are not running and have not finished: ``/clusters/_all/namespaces/_all/pods?filter=Status!%3DRunning%2CStatus!%3DCompleted``
+* Find all Pods using the privileged PodSecurityPolicy: ``/clusters/_all/namespaces/_all/pods?customcols=PSP=metadata.annotations.%22kubernetes.io/psp%22&filter=privileged``
+* List all Ingresses with their custom Skipper filters: ``/clusters/_all/namespaces/_all/ingresses?customcols=Filter=metadata.annotations."zalando.org/skipper-filter"``
+
 Searching
 =========
 
