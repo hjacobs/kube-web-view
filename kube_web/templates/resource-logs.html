@@ -33,7 +33,7 @@
 {% else: %}
 
 <div class="section">
-    Showing last {{ tail_lines }} log lines per container for {{ pods|length }} pods.
+    Showing last {{ tail_lines }} log lines {% if all_containers|length > 2: %} of {{container_name}} container {% else: %} per container {% endif %}for {{ pods|length }} pods.
 </div>
 
 {% if all_containers|length > 2: %}
