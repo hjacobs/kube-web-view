@@ -1050,16 +1050,14 @@ def pod_color(name):
     # b = (v % 10) * 20 + 55;
     return "#%02x%02x%02x" % (int(r * 255), int(g * 255), int(b * 255))
 
+
 async def get_log_from_container(color, pod, container_name, timestamp, tail_lines):
     """Return array of logs of single container
     """
     logs = []
     container_log = await kubernetes.logs(
-                            pod,
-                            container=container_name,
-                            timestamps=True,
-                            tail_lines=tail_lines,
-                            )
+        pod, container=container_name, timestamps=True, tail_lines=tail_lines,
+    )
     for line in container_log.split("\n"):
         # this is a hacky way to determine whether it's a multi-line log message
         # (our current year of the timestamp starts with "20"..)
@@ -1072,8 +1070,9 @@ async def get_log_from_container(color, pod, container_name, timestamp, tail_lin
                 color,
                 container_name,
             )
-    
+
     return logs
+
 
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}/{name}/logs")
 @aiohttp_jinja2.template("resource-logs.html")
@@ -1105,9 +1104,7 @@ async def get_resource_logs(request, session):
         raise web.HTTPNotFound(text="Resource has no logs")
 
     logs = []
-    all_containers = {
-        "all": True
-    }
+    all_containers = {"all": True}
 
     for pod in pods:
         for container in pod.obj["spec"]["containers"]:
@@ -1118,10 +1115,18 @@ async def get_resource_logs(request, session):
         for pod in pods:
             color = pod_color(pod.name)
             if container_name != "all":
-                logs.extend(await get_log_from_container(color, pod, container_name, True, tail_lines))
+                logs.extend(
+                    await get_log_from_container(
+                        color, pod, container_name, True, tail_lines
+                    )
+                )
             else:
                 for container in pod.obj["spec"]["containers"]:
-                    logs.extend(await get_log_from_container(color, pod, container["name"], True, tail_lines))
+                    logs.extend(
+                        await get_log_from_container(
+                            color, pod, container["name"], True, tail_lines
+                        )
+                    )
 
     logs.sort()
 
