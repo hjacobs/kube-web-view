@@ -36,6 +36,7 @@
     Showing last {{ tail_lines }} log lines per container for {{ pods|length }} pods.
 </div>
 
+{% if all_containers|length > 2: %}
 <div class="tabs is-small">
     <ul>
         {% for container_tab in all_containers: %}
@@ -47,6 +48,7 @@
         {% endfor %}
     </ul>
 </div>
+{% endif %}
 
 <pre>
 {% for log in logs: %}<span style="color:{{ log[2] }}">{{ log[1] }}</span> <span class="has-text-grey">{{ log[3] }}</span> {{ log[0] }}{{ '\n' }}{% endfor %}
