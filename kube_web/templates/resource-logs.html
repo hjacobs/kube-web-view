@@ -36,6 +36,18 @@
     Showing last {{ tail_lines }} log lines per container for {{ pods|length }} pods.
 </div>
 
+<div class="tabs is-small">
+    <ul>
+        {% for container_tab in all_containers: %}
+            {%if container_tab == container_name %}
+                <li class="is-active"><a>{{ container_tab }}</a></li>
+            {% else: %}
+                <li ><a href="/clusters/{{ cluster }}/namespaces/{{ resource.metadata.namespace }}/{{ resource.endpoint }}/{{ resource.name }}/logs?container={{ container_tab }}">{{container_tab}}</a></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>
+
 <pre>
 {% for log in logs: %}<span style="color:{{ log[2] }}">{{ log[1] }}</span> <span class="has-text-grey">{{ log[3] }}</span> {{ log[0] }}{{ '\n' }}{% endfor %}
 </pre>
