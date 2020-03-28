@@ -18,10 +18,8 @@ poetry:
 test: poetry lint test.unit test.e2e
 
 .PHONY: lint
-lint: 
-	poetry run flake8
-	poetry run black --check kube_web
-	poetry run mypy --ignore-missing-imports kube_web
+lint:
+	poetry run pre-commit run --all-files
 
 .PHONY: test.unit
 test.unit:
@@ -37,7 +35,7 @@ test.e2e: docker
 			--cluster-name kube-web-view-e2e \
 			tests/e2e
 
-docker: 
+docker:
 	docker build --build-arg "VERSION=$(VERSION)" -t "$(IMAGE):$(TAG)" .
 	@echo 'Docker image $(IMAGE):$(TAG) can now be used.'
 

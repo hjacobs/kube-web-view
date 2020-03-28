@@ -1,24 +1,22 @@
-import asyncio
-import aiohttp.web
 import argparse
+import asyncio
 import collections
 import importlib
 import logging
 import re
-
 from pathlib import Path
 
-from kube_web import __version__
-from .web import get_app
-from .selector import parse_selector
-from .cluster_discovery import (
-    StaticClusterDiscoverer,
-    ClusterRegistryDiscoverer,
-    ServiceAccountClusterDiscoverer,
-    ServiceAccountNotFound,
-    KubeconfigDiscoverer,
-)
+import aiohttp.web
+
+from .cluster_discovery import ClusterRegistryDiscoverer
+from .cluster_discovery import KubeconfigDiscoverer
+from .cluster_discovery import ServiceAccountClusterDiscoverer
+from .cluster_discovery import ServiceAccountNotFound
+from .cluster_discovery import StaticClusterDiscoverer
 from .cluster_manager import ClusterManager
+from .selector import parse_selector
+from .web import get_app
+from kube_web import __version__
 
 
 logger = logging.getLogger(__name__)

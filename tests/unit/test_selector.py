@@ -1,4 +1,5 @@
-from kube_web.selector import parse_selector, selector_matches
+from kube_web.selector import parse_selector
+from kube_web.selector import selector_matches
 
 
 def test_parse_selector():

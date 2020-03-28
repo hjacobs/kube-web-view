@@ -285,7 +285,7 @@ def test_list_resources_in_all_clusters(session):
 
 
 def test_list_pods_wrong_container_image(session):
-    for i in range(10):
+    for _ in range(10):
         response = session.get(
             "/clusters/local/namespaces/default/pods?selector=e2e=wrong-container-image"
         )
@@ -370,9 +370,7 @@ def test_hide_columns(session):
 
 
 def test_filter_pods_with_custom_columns(session):
-    """
-    Test that filtering on custom columns works
-    """
+    """Test that filtering on custom columns works."""
     response = session.get(
         "/clusters/local/namespaces/default/pods?customcols=Images=spec.containers[*].image&filter=hjacobs/"
     )

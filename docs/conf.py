@@ -3,9 +3,7 @@
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
-
 # -- Path setup --------------------------------------------------------------
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -13,8 +11,6 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-
-
 # -- Project information -----------------------------------------------------
 
 project = "Kubernetes Web View"
@@ -56,7 +52,7 @@ try:
     html_theme = "sphinx_rtd_theme"
 
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-except:
+except Exception:
     pass
 
 # Add any paths that contain custom static files (such as style sheets) here,

@@ -1,12 +1,13 @@
-import re
-
-from pykube.query import Query
-from pykube.http import HTTPClient
-from pykube.objects import Pod, APIObject, NamespacedAPIObject
-from functools import partial
 import asyncio
-
 import concurrent.futures
+import re
+from functools import partial
+
+from pykube.http import HTTPClient
+from pykube.objects import APIObject
+from pykube.objects import NamespacedAPIObject
+from pykube.objects import Pod
+from pykube.query import Query
 
 FACTORS = {
     "n": 1 / 1000000000,
@@ -50,6 +51,8 @@ class PodMetrics(NamespacedAPIObject):
 
 def parse_resource(v):
     """
+    Parse a Kubernetes resource spec.
+
     >>> parse_resource('100m')
     0.1
     >>> parse_resource('100M')
