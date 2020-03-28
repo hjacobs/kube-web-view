@@ -1,3 +1,5 @@
+import re
+
 from .resource_registry import ResourceRegistry
 from .selector import selector_matches
 
@@ -6,6 +8,13 @@ from .cluster_discovery import OAuth2BearerTokenAuth
 from typing import Dict, List
 
 from pathlib import Path
+
+INVALID_CLUSTER_NAME_CHAR_PATTERN = re.compile("[^a-zA-Z0-9:_.-]")
+
+
+def sanitize_cluster_name(name: str):
+    """Replace all invalid characters with a colon (":")."""
+    return INVALID_CLUSTER_NAME_CHAR_PATTERN.sub(":", name)
 
 
 class Cluster:
@@ -48,8 +57,11 @@ class ClusterManager:
                     cluster.api.session.auth = OAuth2BearerTokenAuth(
                         self.cluster_auth_token_path
                     )
-                _clusters[cluster.name] = Cluster(
-                    cluster.name,
+                # the cluster name might contain invalid characters,
+                # e.g. KubeConfig context names can contain slashes
+                sanitized_name = sanitize_cluster_name(cluster.name)
+                _clusters[sanitized_name] = Cluster(
+                    sanitized_name,
                     cluster.api,
                     cluster.labels,
                     cluster.spec,
