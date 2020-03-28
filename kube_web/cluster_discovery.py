@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class OAuth2BearerTokenAuth(AuthBase):
-    """Dynamic authentication loading OAuth Bearer token from file
-    (potentially mounted from a Kubernetes secret)"""
+
+    """Dynamic authentication loading OAuth Bearer token from file (potentially mounted from a Kubernetes secret)."""
 
     def __init__(self, token_path: Path):
         self.token_path = token_path

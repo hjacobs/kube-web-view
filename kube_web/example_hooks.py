@@ -1,4 +1,4 @@
-"""This file contains example hook functions for Kubernetes Web View."""
+"""Define example hook functions for Kubernetes Web View."""
 
 
 async def resource_view_prerender(cluster, namespace, resource, context):

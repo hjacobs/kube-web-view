@@ -370,9 +370,7 @@ def test_hide_columns(session):
 
 
 def test_filter_pods_with_custom_columns(session):
-    """
-    Test that filtering on custom columns works
-    """
+    """Test that filtering on custom columns works."""
     response = session.get(
         "/clusters/local/namespaces/default/pods?customcols=Images=spec.containers[*].image&filter=hjacobs/"
     )

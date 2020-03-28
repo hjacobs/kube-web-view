@@ -186,7 +186,7 @@ class HTTPClientWithAccessToken(HTTPClient):
 
 
 def wrap_query(query: Query, request, session):
-    """Wrap a pykube Query object to inject the OAuth2 session token (if configured)"""
+    """Wrap a pykube Query object to inject the OAuth2 session token (if configured)."""
     if request.app[CONFIG].cluster_auth_use_session_token:
         query.api = HTTPClientWithAccessToken(query.api, session["access_token"])
     return query
@@ -642,7 +642,7 @@ async def do_get_resource_list(
     is_all_namespaces: bool,
     params: dict,
 ):
-    """Query cluster resources and return a Table object or error"""
+    """Query cluster resources and return a Table object or error."""
     clazz = table = error = None
     try:
         clazz = await _cluster.resource_registry.get_class_by_plural_name(
@@ -1037,8 +1037,7 @@ async def get_resource_view(request, session):
 
 
 def pod_color(name):
-    """Return HTML color calculated from given pod name.
-    """
+    """Return HTML color calculated from given pod name."""
 
     if name is None:
         return "#ffa000"

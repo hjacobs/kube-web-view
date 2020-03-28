@@ -39,6 +39,7 @@ def highlight(value, linenos=False):
 
 def age_color(date_time, days=7, hue=0.39, value=0.21):
     """Return HTML color calculated by age of input time value.
+
     :param d: datetime value to base color calculation on
     :param days: upper limit for color calculation, in days
     :return: HTML color value string

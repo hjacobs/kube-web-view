@@ -1,7 +1,4 @@
----
 minimum_pre_commit_version: 1.21.0
-fail_fast: false
-default_stages: [commit, push]
 repos:
   # meta
 
@@ -16,9 +13,8 @@ repos:
       - id: kube-manifest-lint
 
   # formatters
-
   - repo: https://github.com/asottile/reorder_python_imports
-    rev: v1.9.0
+    rev: v2.1.0
     hooks:
       - id: reorder-python-imports
 
@@ -28,7 +24,7 @@ repos:
       - id: black
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v1.26.1
+    rev: v2.1.0
     hooks:
       - id: pyupgrade
         stages: [push]
@@ -42,12 +38,11 @@ repos:
         args: ["-x", "tests"]
         stages: [push]
 
-        #- repo: https://github.com/PyCQA/pydocstyle
-        #rev: 5.0.2
-        # hooks:
-        #- id: pydocstyle
-        #args: ["--ignore=D10,D21,D202"]
-
+  - repo: https://github.com/PyCQA/pydocstyle
+    rev: 5.0.2
+    hooks:
+      - id: pydocstyle
+        args: ["--ignore=D10,D21,D202,D401"]
 
   - repo: local
     hooks:
@@ -70,13 +65,13 @@ repos:
         stages: [push]
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.20.0
+    rev: v1.21.0
     hooks:
       - id: yamllint
         args: ["--strict", "-d", "{rules: {line-length: {max: 180}}}"]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.761
+    rev: v0.770
     hooks:
       - id: mypy
         exclude: "^examples/oauth2-log-jwt-sub/hooks.py|docs/conf.py|tests/e2e/$"
@@ -90,7 +85,7 @@ repos:
   # miscellaneous
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.4.0
+    rev: v2.5.0
     hooks:
       - id: check-added-large-files
       - id: check-docstring-first
@@ -103,11 +98,12 @@ repos:
       - id: check-builtin-literals
       - id: detect-private-key
       - id: mixed-line-ending
-        #- id: name-tests-test
-        #exclude: "^tests/e2e/utils.py"
+      - id: name-tests-test
+        args: ["--django"]
+        exclude: "^tests/e2e/utils.py"
 
   - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.4.4
+    rev: v1.5.1
     hooks:
       #      - id: rst-backticks
       - id: python-use-type-annotations
@@ -120,6 +116,6 @@ repos:
   # http://jorisroovers.com/gitlint/#using-gitlint-through-pre-commit
 
   - repo: https://github.com/jorisroovers/gitlint
-    rev:  v0.12.0
+    rev:  v0.13.1
     hooks:
       - id: gitlint
