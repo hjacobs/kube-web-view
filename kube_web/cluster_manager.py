@@ -1,12 +1,11 @@
 import re
-
-from .resource_registry import ResourceRegistry
-from .selector import selector_matches
 from pathlib import Path
 from typing import Dict
 from typing import List
 
 from .cluster_discovery import OAuth2BearerTokenAuth
+from .resource_registry import ResourceRegistry
+from .selector import selector_matches
 
 INVALID_CLUSTER_NAME_CHAR_PATTERN = re.compile("[^a-zA-Z0-9:_.-]")
 
