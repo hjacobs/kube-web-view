@@ -384,3 +384,19 @@ def test_filter_pods_with_custom_columns(session):
     for row in rows:
         cells = row.find("td")
         assert cells[-3].text.startswith("['hjacobs/")
+
+
+def test_list_pods_with_joined_nodes(session):
+    response = session.get(
+        '/clusters/local/namespaces/default/pods?join=nodes&customcols=NodeArch=node.metadata.labels."kubernetes.io/arch"'
+    )
+    response.raise_for_status()
+    check_links(response, session)
+    ths = response.html.find("main table th")
+    # note: pods have an extra "Links" column (--object-links)
+    assert ths[-3].text == "NodeArch"
+
+    rows = response.html.find("main table tbody tr")
+    for row in rows:
+        cells = row.find("td")
+        assert cells[-3].text == "amd64"
