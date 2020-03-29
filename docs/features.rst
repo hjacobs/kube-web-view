@@ -41,6 +41,14 @@ Columns can be customized via the ``labelcols`` and ``customcols`` query paramet
 
 The ``limit`` query parameter can optionally limit the number of shown resources.
 
+Joins
+-----
+
+Additional information can be "joined" to the resource list. The ``join`` query parameter allows the following two values:
+
+* When listing Pods or Nodes, ``join=metrics`` will join CPU/memory metrics to each Pod/Node.
+* When listing Pods, ``join=nodes`` will join the Node object to each Pod. The Node object can be accessed via ``node`` in the ``customcols`` JMESPath, e.g. ``?join=nodes&customcols=node.metadata.labels`` will add a column with all Node labels.
+
 Examples
 --------
 
