@@ -5,7 +5,6 @@ import colorsys
 import csv
 import logging
 import os
-import re
 import time
 import zlib
 from functools import partial
@@ -14,7 +13,6 @@ from pathlib import Path
 
 import aiohttp_jinja2
 import jinja2
-import jmespath
 import pykube.exceptions
 import requests.exceptions
 import yaml
@@ -35,7 +33,6 @@ from pykube.query import Query
 from yarl import URL
 
 from .cluster_manager import ClusterNotFound
-from .joins import join_metrics
 from .resource_registry import ResourceTypeNotFound
 from .selector import parse_selector
 from .selector import selector_matches
@@ -48,6 +45,7 @@ from .table import remove_columns
 from .table import sort_table
 from kube_web import __version__
 from kube_web import jinja2_filters
+from kube_web import joins
 from kube_web import kubernetes
 from kube_web import query_params as qp
 
@@ -97,10 +95,6 @@ SEARCH_OFFERED_RESOURCE_TYPES = [
 ]
 
 SEARCH_MATCH_CONTEXT_LENGTH = 20
-
-SECRET_CONTENT_HIDDEN = "**SECRET-CONTENT-HIDDEN-BY-KUBE-WEB-VIEW**"
-
-NON_WORD_CHARS = re.compile("[^0-9a-zA-Z]+")
 
 
 TABLE_CELL_FORMATTING = {
@@ -475,91 +469,6 @@ async def get_cluster_resource_types(request, session):
     }
 
 
-def generate_name_from_spec(spec: str) -> str:
-    words = NON_WORD_CHARS.split(spec)
-    name = " ".join([word.capitalize() for word in words if word])
-    return name
-
-
-async def join_custom_columns(
-    request,
-    session,
-    _cluster,
-    table,
-    namespace: str,
-    is_all_namespaces: bool,
-    custom_columns_param: str,
-    params: dict,
-):
-    if not table.rows:
-        # nothing to do
-        return
-
-    clazz = table.api_obj_class
-
-    custom_column_names = []
-    custom_columns = {}
-    for part in filter(None, custom_columns_param.split(";")):
-        name, _, spec = part.partition("=")
-        if not spec:
-            spec = name
-            name = generate_name_from_spec(spec)
-        custom_column_names.append(name)
-        custom_columns[name] = jmespath.compile(spec)
-
-    if not custom_columns:
-        # nothing to do
-        return
-
-    for name in custom_column_names:
-        table.columns.append({"name": name})
-
-    row_index_by_namespace_name = {}
-    for i, row in enumerate(table.rows):
-        row_index_by_namespace_name[
-            (
-                row["object"]["metadata"].get("namespace"),
-                row["object"]["metadata"]["name"],
-            )
-        ] = i
-
-    query = wrap_query(clazz.objects(_cluster.api), request, session)
-
-    if issubclass(clazz, NamespacedAPIObject):
-        if is_all_namespaces:
-            query = query.filter(namespace=pykube.all)
-        elif namespace:
-            query = query.filter(namespace=namespace)
-
-    if params.get(qp.SELECTOR):
-        query = query.filter(selector=params[qp.SELECTOR])
-
-    rows_joined = set()
-
-    try:
-        object_list = await kubernetes.get_list(query)
-    except Exception as e:
-        logger.warning(f"Failed to query {clazz.kind} in cluster {_cluster.name}: {e}")
-    else:
-        for obj in object_list:
-            key = (obj.namespace, obj.name)
-            row_index = row_index_by_namespace_name.get(key)
-            if row_index is not None:
-                for name in custom_column_names:
-                    expression = custom_columns[name]
-                    if clazz.kind == "Secret" and not request.app[CONFIG].show_secrets:
-                        value = SECRET_CONTENT_HIDDEN
-                    else:
-                        value = expression.search(obj.obj)
-                    table.rows[row_index]["cells"].append(value)
-                rows_joined.add(row_index)
-
-    # fill up cells where we have no values
-    for i, row in enumerate(table.rows):
-        if i not in rows_joined:
-            row["cells"].extend([None] * len(custom_column_names))
-
-
 async def do_get_resource_list(
     request,
     session,
@@ -608,7 +517,7 @@ async def do_get_resource_list(
 
         # note: we join before sorting, so sorting works on the joined columns, too
         if params.get(qp.JOIN) == "metrics" and _type in ("pods", "nodes"):
-            await join_metrics(
+            await joins.join_metrics(
                 partial(wrap_query, request=request, session=session),
                 _cluster,
                 table,
@@ -621,15 +530,15 @@ async def do_get_resource_list(
             qp.CUSTOM_COLUMNS
         ) or config.default_custom_columns.get(_type)
         if custom_columns:
-            await join_custom_columns(
-                request,
-                session,
+            await joins.join_custom_columns(
+                partial(wrap_query, request=request, session=session),
                 _cluster,
                 table,
                 namespace,
                 is_all_namespaces,
                 custom_columns,
                 params,
+                request.app[CONFIG],
             )
 
         filter_table_by_predicate(
@@ -853,7 +762,7 @@ async def get_resource_view(request, session):
     if resource.kind == "Secret" and not config.show_secrets:
         # mask out all secret values, but still show keys
         for key in resource.obj.get("data", {}).keys():
-            resource.obj["data"][key] = SECRET_CONTENT_HIDDEN
+            resource.obj["data"][key] = joins.SECRET_CONTENT_HIDDEN
         # the secret data is also leaked in annotations ("last-applied-configuration")
         # => hide annotations
         resource.metadata["annotations"] = {"annotations-hidden": "by-kube-web-view"}
