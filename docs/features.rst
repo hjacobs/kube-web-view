@@ -47,6 +47,7 @@ Examples
 * List all Nodes with their allocatable memory: ``/clusters/_all/nodes?customcols=Memory=status.allocatable.memory``
 * Find all Pods which are not running and have not finished: ``/clusters/_all/namespaces/_all/pods?filter=Status!%3DRunning%2CStatus!%3DCompleted``
 * Find all Pods using the privileged PodSecurityPolicy: ``/clusters/_all/namespaces/_all/pods?customcols=PSP=metadata.annotations.%22kubernetes.io/psp%22&filter=privileged``
+* List all Pods and show their node's zone (e.g. AWS Availability Zone): ``/clusters/_all/namespaces/_all/pods?join=nodes&customcols=AZ=node.metadata.labels."topology.kubernetes.io/zone"``
 * List all Ingresses with their custom Skipper filters: ``/clusters/_all/namespaces/_all/ingresses?customcols=Filter=metadata.annotations."zalando.org/skipper-filter"``
 
 Searching

@@ -6,6 +6,8 @@ from typing import Dict
 import jmespath
 import pykube
 from pykube.objects import NamespacedAPIObject
+from pykube.objects import Node
+from pykube.objects import Pod
 
 from kube_web import kubernetes
 from kube_web import query_params as qp
@@ -32,9 +34,9 @@ async def join_metrics(
     table.columns.append({"name": "CPU Usage"})
     table.columns.append({"name": "Memory Usage"})
 
-    if table.api_obj_class.kind == "Pod":
+    if table.api_obj_class.kind == Pod.kind:
         clazz = kubernetes.PodMetrics
-    elif table.api_obj_class.kind == "Node":
+    elif table.api_obj_class.kind == Node.kind:
         clazz = kubernetes.NodeMetrics
 
     row_index_by_namespace_name = {}
@@ -131,6 +133,20 @@ async def join_custom_columns(
             )
         ] = i
 
+    nodes = None
+    if params.get(qp.JOIN) == "nodes" and clazz.kind == Pod.kind:
+        node_query = wrap_query(Node.objects(_cluster.api))
+        try:
+            node_list = await kubernetes.get_list(node_query)
+        except Exception as e:
+            logger.warning(
+                f"Failed to query {Node.kind} in cluster {_cluster.name}: {e}"
+            )
+        else:
+            nodes = {}
+            for node in node_list:
+                nodes[node.name] = node
+
     query = wrap_query(clazz.objects(_cluster.api))
 
     if issubclass(clazz, NamespacedAPIObject):
@@ -158,7 +174,13 @@ async def join_custom_columns(
                     if clazz.kind == "Secret" and not config.show_secrets:
                         value = SECRET_CONTENT_HIDDEN
                     else:
-                        value = expression.search(obj.obj)
+                        if nodes:
+                            node = nodes.get(obj.obj["spec"].get("nodeName"))
+                            data = {"node": node and node.obj}
+                            data.update(obj.obj)
+                        else:
+                            data = obj.obj
+                        value = expression.search(data)
                     table.rows[row_index]["cells"].append(value)
                 rows_joined.add(row_index)
 
