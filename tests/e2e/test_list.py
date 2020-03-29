@@ -395,3 +395,8 @@ def test_list_pods_with_joined_nodes(session):
     ths = response.html.find("main table th")
     # note: pods have an extra "Links" column (--object-links)
     assert ths[-3].text == "NodeArch"
+
+    rows = response.html.find("main table tbody tr")
+    for row in rows:
+        cells = row.find("td")
+        assert cells[-3].text == "amd64"
