@@ -17,13 +17,18 @@ def sanitize_cluster_name(name: str):
 
 class Cluster:
     def __init__(
-        self, name: str, api, labels: dict, spec: dict, preferred_api_versions: dict
+        self,
+        name: str,
+        api,
+        labels: dict,
+        spec: dict,
+        resource_registry: ResourceRegistry,
     ):
         self.name = name
         self.api = api
         self.labels = labels or {}
         self.spec = spec or {}
-        self.resource_registry = ResourceRegistry(api, preferred_api_versions)
+        self.resource_registry = resource_registry
 
 
 class ClusterNotFound(Exception):
@@ -58,12 +63,21 @@ class ClusterManager:
                 # the cluster name might contain invalid characters,
                 # e.g. KubeConfig context names can contain slashes
                 sanitized_name = sanitize_cluster_name(cluster.name)
+                previous_cluster = self._clusters.get(sanitized_name)
+                if previous_cluster:
+                    # the Resource Registry (registered APIs, CRDs, ..) takes a long time to load,
+                    # we therefore want to keep the information even when reloading the cluster list
+                    resource_registry = previous_cluster.resource_registry
+                else:
+                    resource_registry = ResourceRegistry(
+                        cluster.api, self.preferred_api_versions
+                    )
                 _clusters[sanitized_name] = Cluster(
                     sanitized_name,
                     cluster.api,
                     cluster.labels,
                     cluster.spec,
-                    self.preferred_api_versions,
+                    resource_registry,
                 )
 
         self._clusters = _clusters
