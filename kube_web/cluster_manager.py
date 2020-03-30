@@ -63,10 +63,10 @@ class ClusterManager:
                 # the cluster name might contain invalid characters,
                 # e.g. KubeConfig context names can contain slashes
                 sanitized_name = sanitize_cluster_name(cluster.name)
-                if sanitized_name in self._clusters:
+                previous_cluster = self._clusters.get(sanitized_name)
+                if previous_cluster:
                     # the Resource Registry (registered APIs, CRDs, ..) takes a long time to load,
                     # we therefore want to keep the information even when reloading the cluster list
-                    previous_cluster = self._clusters[sanitized_name]
                     resource_registry = previous_cluster.resource_registry
                 else:
                     resource_registry = ResourceRegistry(
