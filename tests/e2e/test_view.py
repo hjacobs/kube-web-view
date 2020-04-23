@@ -70,6 +70,14 @@ def test_logs(session):
     assert "TEST-LOGS-USER-AGENT" in response.text
 
 
+def test_logs_from_init_container(session):
+    response = session.get(
+        "/clusters/local/namespaces/deployment-with-init-container/deployments/deployment-with-init-container/logs"
+    )
+    response.raise_for_status()
+    assert "MESSAGE FROM INIT CONTAINER!" in response.text
+
+
 def test_hide_secret_contents(session):
     response = session.get("/clusters/local/namespaces/default/secrets/test-secret")
     response.raise_for_status()

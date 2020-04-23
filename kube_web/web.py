@@ -923,25 +923,33 @@ async def get_resource_logs(request, session):
     if show_container_logs:
         for pod in pods:
             color = pod_color(pod.name)
-            for container in pod.obj["spec"]["containers"]:
-                container_log = await kubernetes.logs(
-                    pod,
-                    container=container["name"],
-                    timestamps=True,
-                    tail_lines=tail_lines,
-                )
-                for line in container_log.split("\n"):
-                    # this is a hacky way to determine whether it's a multi-line log message
-                    # (our current year of the timestamp starts with "20"..)
-                    if line.startswith("20") or not logs:
-                        logs.append((line, pod.name, color, container["name"]))
-                    else:
-                        logs[-1] = (
-                            logs[-1][0] + "\n" + line,
-                            pod.name,
-                            color,
-                            container["name"],
-                        )
+            containers = pod.obj["spec"]["containers"]
+
+            if "initContainers" in pod.obj["spec"]:
+                containers += pod.obj["spec"]["initContainers"]
+
+            for container in containers:
+                try:
+                    container_log = await kubernetes.logs(
+                        pod,
+                        container=container["name"],
+                        timestamps=True,
+                        tail_lines=tail_lines,
+                    )
+                    for line in container_log.split("\n"):
+                        # this is a hacky way to determine whether it's a multi-line log message
+                        # (our current year of the timestamp starts with "20"..)
+                        if line.startswith("20") or not logs:
+                            logs.append((line, pod.name, color, container["name"]))
+                        else:
+                            logs[-1] = (
+                                logs[-1][0] + "\n" + line,
+                                pod.name,
+                                color,
+                                container["name"],
+                            )
+                except requests.exceptions.HTTPError as e:
+                    logger.info(f"Container not Found: {e}")
 
     logs.sort()
 
