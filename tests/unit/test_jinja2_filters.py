@@ -1,7 +1,8 @@
 import datetime
 
-
-from kube_web.jinja2_filters import age_color, yaml, pluralize
+from kube_web.jinja2_filters import age_color
+from kube_web.jinja2_filters import pluralize
+from kube_web.jinja2_filters import yaml
 
 
 def test_yaml():

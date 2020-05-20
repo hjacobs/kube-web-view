@@ -70,6 +70,14 @@ def test_logs(session):
     assert "TEST-LOGS-USER-AGENT" in response.text
 
 
+def test_logs_from_init_container(session):
+    response = session.get(
+        "/clusters/local/namespaces/deployment-with-init-container/deployments/deployment-with-init-container/logs"
+    )
+    response.raise_for_status()
+    assert "MESSAGE FROM INIT CONTAINER!" in response.text
+
+
 def test_hide_secret_contents(session):
     response = session.get("/clusters/local/namespaces/default/secrets/test-secret")
     response.raise_for_status()
@@ -152,11 +160,11 @@ def test_object_links(session):
 
 
 def test_link_added_by_prerender_hook(session):
-    response = session.get("/clusters/local/namespaces/default/deployments/kube-web-view")
+    response = session.get(
+        "/clusters/local/namespaces/default/deployments/kube-web-view"
+    )
     response.raise_for_status()
     check_links(response, session)
 
     link = response.html.find("main h1 a.is-link", first=True)
-    assert link.attrs["href"].startswith(
-        "#this-is-a-custom-link"
-    )
+    assert link.attrs["href"].startswith("#this-is-a-custom-link")

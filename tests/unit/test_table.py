@@ -1,18 +1,16 @@
 import os
-import pytest
 import timeit
 
+import pytest
 from pykube import Pod
 from pykube.query import Table
 
-from kube_web.table import (
-    add_label_columns,
-    remove_columns,
-    filter_table_by_predicate,
-    filter_table,
-    sort_table,
-    merge_cluster_tables,
-)
+from kube_web.table import add_label_columns
+from kube_web.table import filter_table
+from kube_web.table import filter_table_by_predicate
+from kube_web.table import merge_cluster_tables
+from kube_web.table import remove_columns
+from kube_web.table import sort_table
 
 
 @pytest.fixture

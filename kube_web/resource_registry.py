@@ -1,7 +1,11 @@
 import asyncio
 import logging
-from pykube.objects import APIObject, NamespacedAPIObject
-from typing import List, Type
+from typing import List
+from typing import Type
+
+from pykube.objects import APIObject
+from pykube.objects import NamespacedAPIObject
+
 from kube_web import kubernetes
 
 logger = logging.getLogger(__name__)

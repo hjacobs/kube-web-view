@@ -211,4 +211,3 @@ An example Terraform deployment of the above is below:
   output "kube-web-view-secret" {
     description = "Kube Web View App Secret"
     value = aws_cognito_user_pool_client.kube-web-view.client_secret
-

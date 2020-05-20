@@ -1,10 +1,10 @@
 import colorsys
 import datetime
-import yaml as pyyaml
 
 import pygments
-from pygments.lexers import get_lexer_by_name
+import yaml as pyyaml
 from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_by_name
 
 
 def pluralize(singular):
@@ -39,6 +39,7 @@ def highlight(value, linenos=False):
 
 def age_color(date_time, days=7, hue=0.39, value=0.21):
     """Return HTML color calculated by age of input time value.
+
     :param d: datetime value to base color calculation on
     :param days: upper limit for color calculation, in days
     :return: HTML color value string

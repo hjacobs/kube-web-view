@@ -41,6 +41,23 @@ Columns can be customized via the ``labelcols`` and ``customcols`` query paramet
 
 The ``limit`` query parameter can optionally limit the number of shown resources.
 
+Joins
+-----
+
+Additional information can be "joined" to the resource list. The ``join`` query parameter allows the following two values:
+
+* When listing Pods or Nodes, ``join=metrics`` will join CPU/memory metrics to each Pod/Node.
+* When listing Pods, ``join=nodes`` will join the Node object to each Pod. The Node object can be accessed via ``node`` in the ``customcols`` JMESPath, e.g. ``?join=nodes&customcols=node.metadata.labels`` will add a column with all Node labels.
+
+Examples
+--------
+
+* List all Nodes with their allocatable memory: ``/clusters/_all/nodes?customcols=Memory=status.allocatable.memory``
+* Find all Pods which are not running and have not finished: ``/clusters/_all/namespaces/_all/pods?filter=Status!%3DRunning%2CStatus!%3DCompleted``
+* Find all Pods using the privileged PodSecurityPolicy: ``/clusters/_all/namespaces/_all/pods?customcols=PSP=metadata.annotations.%22kubernetes.io/psp%22&filter=privileged``
+* List all Pods and show their node's zone (e.g. AWS Availability Zone): ``/clusters/_all/namespaces/_all/pods?join=nodes&customcols=AZ=node.metadata.labels."topology.kubernetes.io/zone"``
+* List all Ingresses with their custom Skipper filters: ``/clusters/_all/namespaces/_all/ingresses?customcols=Filter=metadata.annotations."zalando.org/skipper-filter"``
+
 Searching
 =========
 

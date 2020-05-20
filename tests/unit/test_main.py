@@ -1,9 +1,9 @@
-from kube_web.main import parse_args, main
-from kube_web.cluster_discovery import KubeconfigDiscoverer
-
 from pathlib import Path
-
 from unittest.mock import MagicMock
+
+from kube_web.cluster_discovery import KubeconfigDiscoverer
+from kube_web.main import main
+from kube_web.main import parse_args
 
 
 def test_parse_clusters():

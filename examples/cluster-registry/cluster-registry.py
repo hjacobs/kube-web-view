@@ -4,7 +4,6 @@ Example implementation of REST endpoint for a Cluster Registry.
 
 To be used with --cluster-registry-url option
 """
-
 from aiohttp import web
 
 KUBERNETES_CLUSTERS = [

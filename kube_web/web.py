@@ -1,57 +1,53 @@
 import asyncio
-import aiohttp_jinja2
-import collections
-import jinja2
-import csv
-import zlib
-import colorsys
 import base64
-import jmespath
-import time
-import os
-import pykube
+import collections
+import colorsys
+import csv
 import logging
-import re
-import requests.exceptions
-import pykube.exceptions
-from yarl import URL
-from http import HTTPStatus
-import yaml
-
+import os
+import time
+import zlib
 from functools import partial
-from typing import Dict
+from http import HTTPStatus
+from pathlib import Path
 
-from pykube import ObjectDoesNotExist, HTTPClient
-from pykube.objects import NamespacedAPIObject, Namespace, Event, Pod
-from pykube.query import Query
-from aiohttp_session import get_session, setup as session_setup
-from aiohttp_session.cookie_storage import EncryptedCookieStorage
-from aiohttp_remotes import XForwardedRelaxed
+import aiohttp_jinja2
+import jinja2
+import pykube.exceptions
+import requests.exceptions
+import yaml
 from aioauth_client import OAuth2Client
+from aiohttp import web
+from aiohttp_remotes import XForwardedRelaxed
+from aiohttp_session import get_session
+from aiohttp_session import setup as session_setup
+from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from cryptography.fernet import Fernet
+from pykube import HTTPClient
+from pykube import ObjectDoesNotExist
+from pykube.objects import Event
+from pykube.objects import Namespace
+from pykube.objects import NamespacedAPIObject
+from pykube.objects import Pod
+from pykube.query import Query
+from yarl import URL
 
 from .cluster_manager import ClusterNotFound
 from .resource_registry import ResourceTypeNotFound
-from .selector import parse_selector, selector_matches
-
-from pathlib import Path
-
-from aiohttp import web
-
-from kube_web import query_params as qp
-
+from .selector import parse_selector
+from .selector import selector_matches
+from .table import add_label_columns
+from .table import filter_table
+from .table import filter_table_by_predicate
+from .table import guess_column_classes
+from .table import merge_cluster_tables
+from .table import remove_columns
+from .table import sort_table
 from kube_web import __version__
-from kube_web import kubernetes
 from kube_web import jinja2_filters
-from .table import (
-    add_label_columns,
-    filter_table_by_predicate,
-    filter_table,
-    remove_columns,
-    guess_column_classes,
-    sort_table,
-    merge_cluster_tables,
-)
+from kube_web import joins
+from kube_web import kubernetes
+from kube_web import query_params as qp
 
 # import tracemalloc
 # tracemalloc.start()
@@ -99,10 +95,6 @@ SEARCH_OFFERED_RESOURCE_TYPES = [
 ]
 
 SEARCH_MATCH_CONTEXT_LENGTH = 20
-
-SECRET_CONTENT_HIDDEN = "**SECRET-CONTENT-HIDDEN-BY-KUBE-WEB-VIEW**"
-
-NON_WORD_CHARS = re.compile("[^0-9a-zA-Z]+")
 
 
 TABLE_CELL_FORMATTING = {
@@ -188,7 +180,7 @@ class HTTPClientWithAccessToken(HTTPClient):
 
 
 def wrap_query(query: Query, request, session):
-    """Wrap a pykube Query object to inject the OAuth2 session token (if configured)"""
+    """Wrap a pykube Query object to inject the OAuth2 session token (if configured)."""
     if request.app[CONFIG].cluster_auth_use_session_token:
         query.api = HTTPClientWithAccessToken(query.api, session["access_token"])
     return query
@@ -477,164 +469,6 @@ async def get_cluster_resource_types(request, session):
     }
 
 
-def generate_name_from_spec(spec: str) -> str:
-    words = NON_WORD_CHARS.split(spec)
-    name = " ".join([word.capitalize() for word in words if word])
-    return name
-
-
-async def join_custom_columns(
-    request,
-    session,
-    _cluster,
-    table,
-    namespace: str,
-    is_all_namespaces: bool,
-    custom_columns_param: str,
-    params: dict,
-):
-    if not table.rows:
-        # nothing to do
-        return
-
-    clazz = table.api_obj_class
-
-    custom_column_names = []
-    custom_columns = {}
-    for part in filter(None, custom_columns_param.split(";")):
-        name, _, spec = part.partition("=")
-        if not spec:
-            spec = name
-            name = generate_name_from_spec(spec)
-        custom_column_names.append(name)
-        custom_columns[name] = jmespath.compile(spec)
-
-    if not custom_columns:
-        # nothing to do
-        return
-
-    for name in custom_column_names:
-        table.columns.append({"name": name})
-
-    row_index_by_namespace_name = {}
-    for i, row in enumerate(table.rows):
-        row_index_by_namespace_name[
-            (
-                row["object"]["metadata"].get("namespace"),
-                row["object"]["metadata"]["name"],
-            )
-        ] = i
-
-    query = wrap_query(clazz.objects(_cluster.api), request, session)
-
-    if issubclass(clazz, NamespacedAPIObject):
-        if is_all_namespaces:
-            query = query.filter(namespace=pykube.all)
-        elif namespace:
-            query = query.filter(namespace=namespace)
-
-    if params.get(qp.SELECTOR):
-        query = query.filter(selector=params[qp.SELECTOR])
-
-    rows_joined = set()
-
-    try:
-        object_list = await kubernetes.get_list(query)
-    except Exception as e:
-        logger.warning(f"Failed to query {clazz.kind} in cluster {_cluster.name}: {e}")
-    else:
-        for obj in object_list:
-            key = (obj.namespace, obj.name)
-            row_index = row_index_by_namespace_name.get(key)
-            if row_index is not None:
-                for name in custom_column_names:
-                    expression = custom_columns[name]
-                    if clazz.kind == "Secret" and not request.app[CONFIG].show_secrets:
-                        value = SECRET_CONTENT_HIDDEN
-                    else:
-                        value = expression.search(obj.obj)
-                    table.rows[row_index]["cells"].append(value)
-                rows_joined.add(row_index)
-
-    # fill up cells where we have no values
-    for i, row in enumerate(table.rows):
-        if i not in rows_joined:
-            row["cells"].extend([None] * len(custom_column_names))
-
-
-async def join_metrics(
-    request,
-    session,
-    _cluster,
-    table,
-    namespace: str,
-    is_all_namespaces: bool,
-    params: dict,
-):
-    if not table.rows:
-        # nothing to do
-        return
-
-    table.columns.append({"name": "CPU Usage"})
-    table.columns.append({"name": "Memory Usage"})
-
-    if table.api_obj_class.kind == "Pod":
-        clazz = kubernetes.PodMetrics
-    elif table.api_obj_class.kind == "Node":
-        clazz = kubernetes.NodeMetrics
-
-    row_index_by_namespace_name = {}
-    for i, row in enumerate(table.rows):
-        row_index_by_namespace_name[
-            (
-                row["object"]["metadata"].get("namespace"),
-                row["object"]["metadata"]["name"],
-            )
-        ] = i
-
-    query = wrap_query(clazz.objects(_cluster.api), request, session)
-
-    if issubclass(clazz, NamespacedAPIObject):
-        if is_all_namespaces:
-            query = query.filter(namespace=pykube.all)
-        elif namespace:
-            query = query.filter(namespace=namespace)
-
-    if params.get(qp.SELECTOR):
-        query = query.filter(selector=params[qp.SELECTOR])
-
-    rows_joined = set()
-
-    try:
-        metrics_list = await kubernetes.get_list(query)
-    except Exception as e:
-        logger.warning(f"Failed to query {clazz.kind} in cluster {_cluster.name}: {e}")
-    else:
-        for metrics in metrics_list:
-            key = (metrics.namespace, metrics.name)
-            row_index = row_index_by_namespace_name.get(key)
-            if row_index is not None:
-                usage: Dict[str, float] = collections.defaultdict(float)
-                if "containers" in metrics.obj:
-                    for container in metrics.obj["containers"]:
-                        for k, v in container.get("usage", {}).items():
-                            usage[k] += kubernetes.parse_resource(v)
-                else:
-                    for k, v in metrics.obj.get("usage", {}).items():
-                        usage[k] += kubernetes.parse_resource(v)
-
-                table.rows[row_index]["cells"].extend(
-                    [usage.get("cpu", 0), usage.get("memory", 0)]
-                )
-                rows_joined.add(row_index)
-
-    # fill up cells where we have no metrics
-    for i, row in enumerate(table.rows):
-        if i not in rows_joined:
-            # use zero instead of None to allow sorting
-            row["cells"].extend([0, 0])
-
-
 async def do_get_resource_list(
     request,
     session,
@@ -644,7 +478,7 @@ async def do_get_resource_list(
     is_all_namespaces: bool,
     params: dict,
 ):
-    """Query cluster resources and return a Table object or error"""
+    """Query cluster resources and return a Table object or error."""
     clazz = table = error = None
     try:
         clazz = await _cluster.resource_registry.get_class_by_plural_name(
@@ -683,23 +517,28 @@ async def do_get_resource_list(
 
         # note: we join before sorting, so sorting works on the joined columns, too
         if params.get(qp.JOIN) == "metrics" and _type in ("pods", "nodes"):
-            await join_metrics(
-                request, session, _cluster, table, namespace, is_all_namespaces, params
+            await joins.join_metrics(
+                partial(wrap_query, request=request, session=session),
+                _cluster,
+                table,
+                namespace,
+                is_all_namespaces,
+                params,
             )
 
         custom_columns = params.get(
             qp.CUSTOM_COLUMNS
         ) or config.default_custom_columns.get(_type)
         if custom_columns:
-            await join_custom_columns(
-                request,
-                session,
+            await joins.join_custom_columns(
+                partial(wrap_query, request=request, session=session),
                 _cluster,
                 table,
                 namespace,
                 is_all_namespaces,
                 custom_columns,
                 params,
+                request.app[CONFIG],
             )
 
         filter_table_by_predicate(
@@ -854,7 +693,7 @@ async def get_resource_list(request, session):
     tables = []
     tables_by_resource_type = {}
     errors_by_cluster = collections.defaultdict(list)
-    for clazz, table, error in await asyncio.gather(*tasks):
+    for _clazz, table, error in await asyncio.gather(*tasks):
         if error:
             if len(clusters) == 1:
                 # directly re-raise the exception as single cluster was given
@@ -923,7 +762,7 @@ async def get_resource_view(request, session):
     if resource.kind == "Secret" and not config.show_secrets:
         # mask out all secret values, but still show keys
         for key in resource.obj.get("data", {}).keys():
-            resource.obj["data"][key] = SECRET_CONTENT_HIDDEN
+            resource.obj["data"][key] = joins.SECRET_CONTENT_HIDDEN
         # the secret data is also leaked in annotations ("last-applied-configuration")
         # => hide annotations
         resource.metadata["annotations"] = {"annotations-hidden": "by-kube-web-view"}
@@ -1039,8 +878,7 @@ async def get_resource_view(request, session):
 
 
 def pod_color(name):
-    """Return HTML color calculated from given pod name.
-    """
+    """Return HTML color calculated from given pod name."""
 
     if name is None:
         return "#ffa000"
@@ -1107,6 +945,9 @@ async def get_resource_logs(request, session):
     all_containers = {"all": True}
 
     for pod in pods:
+        if "initContainers" in pod.obj["spec"]:
+            for container in pod.obj["spec"]["initContainers"]:
+                all_containers[container["name"]] = True
         for container in pod.obj["spec"]["containers"]:
             all_containers[container["name"]] = True
 
@@ -1121,7 +962,12 @@ async def get_resource_logs(request, session):
                     )
                 )
             else:
-                for container in pod.obj["spec"]["containers"]:
+                containers = pod.obj["spec"]["containers"]
+
+                if "initContainers" in pod.obj["spec"]:
+                    containers += pod.obj["spec"]["initContainers"]
+
+                for container in containers:
                     logs.extend(
                         await get_log_from_container(
                             color, pod, container["name"], True, tail_lines
@@ -1359,7 +1205,7 @@ async def get_search(request, session):
         for _cluster in request.app[CLUSTER_MANAGER].clusters:
             is_match = search_query_lower in _cluster.name.lower()
             if not is_match:
-                for key, val in _cluster.labels.items():
+                for val in _cluster.labels.values():
                     if search_query_lower in val.lower():
                         is_match = True
                         break
@@ -1394,7 +1240,7 @@ async def get_search(request, session):
                             clazz = await _cluster.resource_registry.get_class_by_plural_name(
                                 resource_type, False
                             )
-                    except:
+                    except Exception:
                         if i >= len(clusters) - 1:
                             raise
                     else:
@@ -1472,7 +1318,7 @@ async def auth(request, handler):
             original_url = base64.urlsafe_b64decode(request.query["state"]).decode(
                 "utf-8"
             )
-        except:
+        except Exception:
             original_url = "/"
         redirect_uri = str(request.url.with_path(OAUTH2_CALLBACK_PATH))
         access_token, data = await client.get_access_token(

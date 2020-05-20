@@ -69,3 +69,31 @@ spec:
       containers:
         - name: mycontainer
           image: nginx
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: deployment-with-init-container
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-with-init-container
+  namespace: deployment-with-init-container
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deployment-with-init-container
+  template:
+    metadata:
+      labels:
+        app: deployment-with-init-container
+    spec:
+      initContainers:
+        - name: busybox
+          image: busybox
+          command: ["sh", "-c", "echo 'MESSAGE FROM INIT CONTAINER!'"]
+      containers:
+        - name: mycontainer
+          image: nginx

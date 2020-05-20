@@ -11,7 +11,7 @@
 <tr>
     <td class="{{ get_cell_class("events", "Type", event.obj.type) }}">{{ event.obj.type }}</td>
     <td class="{{ get_cell_class("events", "Reason", event.obj.reason) }}">{{ event.obj.reason }}</td>
-    <td style="color:{{ age_color(event.obj.lastTimestamp, days=1) }}">{{ event.obj.lastTimestamp.replace('T', ' ').replace('Z', '') }}</td>
+    <td style="color:{{ age_color(event.obj.lastTimestamp, days=1) }}">{{ event.obj.lastTimestamp.replace('T', ' ').replace('Z', '') if event.obj.lastTimestamp else "Unknown" }}</td>
     <td>{{ event.obj.source.component }}</td>
     <td>{{ event.obj.message }}</td>
 </tr>

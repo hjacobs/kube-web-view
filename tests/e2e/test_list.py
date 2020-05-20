@@ -285,7 +285,7 @@ def test_list_resources_in_all_clusters(session):
 
 
 def test_list_pods_wrong_container_image(session):
-    for i in range(10):
+    for _ in range(10):
         response = session.get(
             "/clusters/local/namespaces/default/pods?selector=e2e=wrong-container-image"
         )
@@ -370,9 +370,7 @@ def test_hide_columns(session):
 
 
 def test_filter_pods_with_custom_columns(session):
-    """
-    Test that filtering on custom columns works
-    """
+    """Test that filtering on custom columns works."""
     response = session.get(
         "/clusters/local/namespaces/default/pods?customcols=Images=spec.containers[*].image&filter=hjacobs/"
     )
@@ -386,3 +384,19 @@ def test_filter_pods_with_custom_columns(session):
     for row in rows:
         cells = row.find("td")
         assert cells[-3].text.startswith("['hjacobs/")
+
+
+def test_list_pods_with_joined_nodes(session):
+    response = session.get(
+        '/clusters/local/namespaces/default/pods?join=nodes&customcols=NodeArch=node.metadata.labels."kubernetes.io/arch"'
+    )
+    response.raise_for_status()
+    check_links(response, session)
+    ths = response.html.find("main table th")
+    # note: pods have an extra "Links" column (--object-links)
+    assert ths[-3].text == "NodeArch"
+
+    rows = response.html.find("main table tbody tr")
+    for row in rows:
+        cells = row.find("td")
+        assert cells[-3].text == "amd64"

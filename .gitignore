@@ -6,3 +6,4 @@ kubectl
 docs/_build/
 .kube
 *.egg-info
+.mypy_cache/
