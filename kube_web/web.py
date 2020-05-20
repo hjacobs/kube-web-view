@@ -890,8 +890,8 @@ def pod_color(name):
 
 
 async def get_log_from_container(color, pod, container_name, timestamp, tail_lines):
-    """Return array of logs of single container
-    """
+    """Return array of logs of single container."""
+
     logs = []
     container_log = await kubernetes.logs(
         pod, container=container_name, timestamps=True, tail_lines=tail_lines,
