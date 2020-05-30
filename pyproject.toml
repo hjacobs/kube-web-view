@@ -27,8 +27,6 @@ aiohttp_remotes = "^0.1.2"
 jmespath = "^0.9.4"
 [tool.poetry.dev-dependencies]
 pytest = "^5.0"
-black = {version = "^19.10b0", allow-prereleases = true}
-flake8 = "^3.7"
 pytest-cov = "^2.7"
 Sphinx = "^2.1"
 sphinx-rtd-theme = "^0.4.3"
