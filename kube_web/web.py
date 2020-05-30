@@ -62,6 +62,7 @@ CONFIG = "config"
 THEME_SETTINGS = "theme_settings"
 
 ALL = "_all"
+ALL_CONTAINER_LOGS = ""
 
 ONE_WEEK = 7 * 24 * 60 * 60
 FIVE_MINUTES = 5 * 60
@@ -920,7 +921,7 @@ async def get_resource_logs(request, session):
     namespace = get_and_validate_namespace_parameter(request)
     plural = request.match_info["plural"]
     name = request.match_info["name"]
-    container_name = str(request.query.get("container") or "all")
+    container_name = request.query.get("container") or ALL_CONTAINER_LOGS
     tail_lines = int(request.rel_url.query.get("tail_lines") or 200)
     clazz = await cluster.resource_registry.get_class_by_plural_name(
         plural, namespaced=True
@@ -942,26 +943,27 @@ async def get_resource_logs(request, session):
         raise web.HTTPNotFound(text="Resource has no logs")
 
     logs = []
-    all_containers = {"all": True}
+    all_container_names = set([ALL_CONTAINER_LOGS])
 
     for pod in pods:
         if "initContainers" in pod.obj["spec"]:
             for container in pod.obj["spec"]["initContainers"]:
-                all_containers[container["name"]] = True
+                all_container_names.add(container["name"])
         for container in pod.obj["spec"]["containers"]:
-            all_containers[container["name"]] = True
+            all_container_names.add(container["name"])
 
     show_container_logs = request.app[CONFIG].show_container_logs
     if show_container_logs:
         for pod in pods:
             color = pod_color(pod.name)
-            if container_name != "all":
+            if container_name != ALL_CONTAINER_LOGS:
                 logs.extend(
                     await get_log_from_container(
                         color, pod, container_name, True, tail_lines
                     )
                 )
             else:
+                # show logs for all containers
                 containers = pod.obj["spec"]["containers"]
 
                 if "initContainers" in pod.obj["spec"]:
@@ -986,7 +988,7 @@ async def get_resource_logs(request, session):
         "logs": logs,
         "show_container_logs": show_container_logs,
         "container_name": container_name,
-        "all_containers": all_containers.keys(),
+        "all_container_names": all_container_names,
     }
 
 
