@@ -10,6 +10,9 @@ import zlib
 from functools import partial
 from http import HTTPStatus
 from pathlib import Path
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import aiohttp_jinja2
 import jinja2
@@ -878,7 +881,7 @@ async def get_resource_view(request, session):
     return context
 
 
-def pod_color(name):
+def pod_color(name: Optional[str]) -> str:
     """Return HTML color calculated from given pod name."""
 
     if name is None:
@@ -890,10 +893,12 @@ def pod_color(name):
     return "#%02x%02x%02x" % (int(r * 255), int(g * 255), int(b * 255))
 
 
-async def get_log_from_container(color, pod, container_name, timestamp, tail_lines):
+async def get_log_from_container(
+    color: str, pod: Pod, container_name: str, tail_lines: int
+):
     """Return array of logs of single container."""
 
-    logs = []
+    logs: List[Tuple[str, str, str, str]] = []
     container_log = await kubernetes.logs(
         pod, container=container_name, timestamps=True, tail_lines=tail_lines,
     )
@@ -958,9 +963,7 @@ async def get_resource_logs(request, session):
             color = pod_color(pod.name)
             if container_name != ALL_CONTAINER_LOGS:
                 logs.extend(
-                    await get_log_from_container(
-                        color, pod, container_name, True, tail_lines
-                    )
+                    await get_log_from_container(color, pod, container_name, tail_lines)
                 )
             else:
                 # show logs for all containers
@@ -972,7 +975,7 @@ async def get_resource_logs(request, session):
                 for container in containers:
                     logs.extend(
                         await get_log_from_container(
-                            color, pod, container["name"], True, tail_lines
+                            color, pod, container["name"], tail_lines
                         )
                     )
 
