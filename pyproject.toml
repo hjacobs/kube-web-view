@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kube-web-view"
-version = "20.4.0"
+version = "20.5.0"
 description = "Kubernetes Web View allows to list and view all Kubernetes resources (incl. CRDs) with permalink-friendly URLs in a plain-HTML frontend"
 authors = ["Henning Jacobs <henning@zalando.de>"]
 license = "GPL-3.0+"
