@@ -94,6 +94,9 @@ spec:
         - name: busybox
           image: busybox
           command: ["sh", "-c", "echo 'MESSAGE FROM INIT CONTAINER!'"]
+        - name: second-container
+          image: busybox
+          command: ["sh", "-c", "echo 'MESSAGE FROM SECOND INIT CONTAINER!'"]
       containers:
-        - name: mycontainer
+        - name: nginx
           image: nginx

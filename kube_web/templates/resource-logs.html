@@ -33,8 +33,22 @@
 {% else: %}
 
 <div class="section">
-    Showing last {{ tail_lines }} log lines per container for {{ pods|length }} pods.
+    Showing last {{ tail_lines }} log lines {% if all_containers|length > 2: %} of {{container_name}} container {% else: %} per container {% endif %}for {{ pods|length }} pods.
 </div>
+
+{% if all_container_names|length > 2: %}
+<div class="tabs is-small">
+    <ul>
+        {% for container_tab in all_container_names|sort: %}
+            {% if container_tab == container_name: %}
+                <li class="is-active"><a>{{ container_tab or "all" }}</a></li>
+            {% else: %}
+                <li ><a href="/clusters/{{ cluster }}/namespaces/{{ resource.metadata.namespace }}/{{ resource.endpoint }}/{{ resource.name }}/logs?container={{ container_tab }}">{{ container_tab or "all" }}</a></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
 
 <pre>
 {% for log in logs: %}<span style="color:{{ log[2] }}">{{ log[1] }}</span> <span class="has-text-grey">{{ log[3] }}</span> {{ log[0] }}{{ '\n' }}{% endfor %}

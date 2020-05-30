@@ -10,6 +10,9 @@ import zlib
 from functools import partial
 from http import HTTPStatus
 from pathlib import Path
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import aiohttp_jinja2
 import jinja2
@@ -62,6 +65,7 @@ CONFIG = "config"
 THEME_SETTINGS = "theme_settings"
 
 ALL = "_all"
+ALL_CONTAINER_LOGS = ""
 
 ONE_WEEK = 7 * 24 * 60 * 60
 FIVE_MINUTES = 5 * 60
@@ -877,7 +881,7 @@ async def get_resource_view(request, session):
     return context
 
 
-def pod_color(name):
+def pod_color(name: Optional[str]) -> str:
     """Return HTML color calculated from given pod name."""
 
     if name is None:
@@ -889,6 +893,31 @@ def pod_color(name):
     return "#%02x%02x%02x" % (int(r * 255), int(g * 255), int(b * 255))
 
 
+async def get_log_from_container(
+    color: str, pod: Pod, container_name: str, tail_lines: int
+):
+    """Return array of logs of single container."""
+
+    logs: List[Tuple[str, str, str, str]] = []
+    container_log = await kubernetes.logs(
+        pod, container=container_name, timestamps=True, tail_lines=tail_lines,
+    )
+    for line in container_log.split("\n"):
+        # this is a hacky way to determine whether it's a multi-line log message
+        # (our current year of the timestamp starts with "20"..)
+        if line.startswith("20") or not logs:
+            logs.append((line, pod.name, color, container_name))
+        else:
+            logs[-1] = (
+                logs[-1][0] + "\n" + line,
+                pod.name,
+                color,
+                container_name,
+            )
+
+    return logs
+
+
 @routes.get("/clusters/{cluster}/namespaces/{namespace}/{plural}/{name}/logs")
 @aiohttp_jinja2.template("resource-logs.html")
 @context()
@@ -897,6 +926,7 @@ async def get_resource_logs(request, session):
     namespace = get_and_validate_namespace_parameter(request)
     plural = request.match_info["plural"]
     name = request.match_info["name"]
+    container_name = request.query.get("container") or ALL_CONTAINER_LOGS
     tail_lines = int(request.rel_url.query.get("tail_lines") or 200)
     clazz = await cluster.resource_registry.get_class_by_plural_name(
         plural, namespaced=True
@@ -918,38 +948,36 @@ async def get_resource_logs(request, session):
         raise web.HTTPNotFound(text="Resource has no logs")
 
     logs = []
+    all_container_names = set([ALL_CONTAINER_LOGS])
+
+    for pod in pods:
+        if "initContainers" in pod.obj["spec"]:
+            for container in pod.obj["spec"]["initContainers"]:
+                all_container_names.add(container["name"])
+        for container in pod.obj["spec"]["containers"]:
+            all_container_names.add(container["name"])
 
     show_container_logs = request.app[CONFIG].show_container_logs
     if show_container_logs:
         for pod in pods:
             color = pod_color(pod.name)
-            containers = pod.obj["spec"]["containers"]
+            if container_name != ALL_CONTAINER_LOGS:
+                logs.extend(
+                    await get_log_from_container(color, pod, container_name, tail_lines)
+                )
+            else:
+                # show logs for all containers
+                containers = pod.obj["spec"]["containers"]
 
-            if "initContainers" in pod.obj["spec"]:
-                containers += pod.obj["spec"]["initContainers"]
+                if "initContainers" in pod.obj["spec"]:
+                    containers += pod.obj["spec"]["initContainers"]
 
-            for container in containers:
-                try:
-                    container_log = await kubernetes.logs(
-                        pod,
-                        container=container["name"],
-                        timestamps=True,
-                        tail_lines=tail_lines,
+                for container in containers:
+                    logs.extend(
+                        await get_log_from_container(
+                            color, pod, container["name"], tail_lines
+                        )
                     )
-                    for line in container_log.split("\n"):
-                        # this is a hacky way to determine whether it's a multi-line log message
-                        # (our current year of the timestamp starts with "20"..)
-                        if line.startswith("20") or not logs:
-                            logs.append((line, pod.name, color, container["name"]))
-                        else:
-                            logs[-1] = (
-                                logs[-1][0] + "\n" + line,
-                                pod.name,
-                                color,
-                                container["name"],
-                            )
-                except requests.exceptions.HTTPError as e:
-                    logger.info(f"Container not Found: {e}")
 
     logs.sort()
 
@@ -962,6 +990,8 @@ async def get_resource_logs(request, session):
         "pods": pods,
         "logs": logs,
         "show_container_logs": show_container_logs,
+        "container_name": container_name,
+        "all_container_names": all_container_names,
     }
 
 

@@ -78,6 +78,18 @@ def test_logs_from_init_container(session):
     assert "MESSAGE FROM INIT CONTAINER!" in response.text
 
 
+def test_logs_from_single_container(session):
+    response = session.get(
+        "/clusters/local/namespaces/deployment-with-init-container/deployments/deployment-with-init-container/logs",
+        params={"container": "second-container"},
+    )
+    response.raise_for_status()
+    main = response.html.find("main pre", first=True)
+    print(main.text)
+    assert "MESSAGE FROM INIT CONTAINER!" not in main.text
+    assert "MESSAGE FROM SECOND INIT CONTAINER!" in main.text
+
+
 def test_hide_secret_contents(session):
     response = session.get("/clusters/local/namespaces/default/secrets/test-secret")
     response.raise_for_status()
