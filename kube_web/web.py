@@ -776,10 +776,22 @@ async def get_resource_view(request, session):
 
     owners = []
     for ref in resource.metadata.get("ownerReferences", []):
-        owner_class = await cluster.resource_registry.get_class_by_api_version_kind(
-            ref["apiVersion"], ref["kind"], namespaced=bool(namespace)
-        )
-        owners.append({"name": ref["name"], "class": owner_class})
+        # namespaced object might have non-namespaced owner (e.g. "Node")
+        namespaced = bool(namespace)
+        for i in range(2):
+            try:
+                owner_class = await cluster.resource_registry.get_class_by_api_version_kind(
+                    ref["apiVersion"], ref["kind"], namespaced=namespaced
+                )
+                owners.append({"name": ref["name"], "class": owner_class})
+            except ResourceTypeNotFound:
+                if namespaced and i == 0:
+                    # retry to find non-namespaced resource type
+                    namespaced = False
+                else:
+                    raise
+            else:
+                break
 
     selector = field_selector = None
     if resource.kind == "Node":
