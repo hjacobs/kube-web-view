@@ -180,3 +180,27 @@ def test_link_added_by_prerender_hook(session):
 
     link = response.html.find("main h1 a.is-link", first=True)
     assert link.attrs["href"].startswith("#this-is-a-custom-link")
+
+
+def test_pod_with_node_owner(session):
+    response = session.get(
+        "/clusters/local/namespaces/kube-system/pods?selector=component=kube-apiserver"
+    )
+    response.raise_for_status()
+    pod_link = response.html.find("main table td a", first=True)
+    url = pod_link.attrs["href"]
+    assert url.startswith("/clusters/local/namespaces/kube-system/pods/kube-apiserver-")
+    response = session.get(url)
+    response.raise_for_status()
+    check_links(response, session)
+
+    links = response.html.find("main a")
+    found_link = None
+    for link in links:
+        if link.text.endswith(" (Node)"):
+            found_link = link
+            break
+    assert found_link is not None
+    assert found_link.attrs["href"].startswith(
+        "/clusters/local/nodes/kube-web-view-e2e-control-plane"
+    )

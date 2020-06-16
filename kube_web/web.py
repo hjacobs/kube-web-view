@@ -783,7 +783,13 @@ async def get_resource_view(request, session):
                 owner_class = await cluster.resource_registry.get_class_by_api_version_kind(
                     ref["apiVersion"], ref["kind"], namespaced=namespaced
                 )
-                owners.append({"name": ref["name"], "class": owner_class})
+                owners.append(
+                    {
+                        "name": ref["name"],
+                        "class": owner_class,
+                        "namespaced": namespaced,
+                    }
+                )
             except ResourceTypeNotFound:
                 if namespaced and i == 0:
                     # retry to find non-namespaced resource type
