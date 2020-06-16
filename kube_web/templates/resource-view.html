@@ -17,13 +17,13 @@
 <h1 class="title">{{ resource.name }}
     <span class="links">
         <a
-          {% if namespace: %}
-          href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ resource.endpoint }}/{{ resource.name }}?download=yaml"
-          {% else: %}
-          href="/clusters/{{ cluster }}/{{ resource.endpoint }}/{{ resource.name }}?download=yaml"
-          {% endif %}
-          title="Download resource object as YAML"
-          class="button is-{{ theme.button_class }}">
+            {% if namespace: %}
+            href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ resource.endpoint }}/{{ resource.name }}?download=yaml"
+            {% else: %}
+            href="/clusters/{{ cluster }}/{{ resource.endpoint }}/{{ resource.name }}?download=yaml"
+            {% endif %}
+            title="Download resource object as YAML"
+            class="button is-{{ theme.button_class }}">
             <span class="icon"><i class="fas fa-file-download"></i></span>
         </a>
         {% for link in links: %}
@@ -72,8 +72,11 @@
 <div class="section">
     Owner{{ 's' if owners|length > 1 }}:
     {% for owner in owners: %}
+    {% if owner.namespaced: %}
     <a href="/clusters/{{ cluster }}/namespaces/{{ namespace }}/{{ owner.class.endpoint }}/{{ owner.name }}">{{ owner.name }} ({{ owner.class.kind }})</a>
-
+    {% else: %}
+    <a href="/clusters/{{ cluster }}/{{ owner.class.endpoint }}/{{ owner.name }}">{{ owner.name }} ({{ owner.class.kind }})</a>
+    {% endif %}
     {% endfor %}
 </div>
 {% endif %}
