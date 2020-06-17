@@ -912,7 +912,11 @@ def pod_color(name: Optional[str]) -> str:
 
 
 async def get_log_from_container(
-    color: str, pod: Pod, container_name: str, tail_lines: int
+    color: str,
+    pod: Pod,
+    container_name: str,
+    tail_lines: int,
+    filter_text: Optional[str],
 ):
     """Return array of logs of single container."""
 
@@ -921,6 +925,9 @@ async def get_log_from_container(
         pod, container=container_name, timestamps=True, tail_lines=tail_lines,
     )
     for line in container_log.split("\n"):
+        # note that the filter is case-sensitive!
+        if filter_text and filter_text not in line:
+            continue
         # this is a hacky way to determine whether it's a multi-line log message
         # (our current year of the timestamp starts with "20"..)
         if line.startswith("20") or not logs:
@@ -946,6 +953,7 @@ async def get_resource_logs(request, session):
     name = request.match_info["name"]
     container_name = request.query.get("container") or ALL_CONTAINER_LOGS
     tail_lines = int(request.rel_url.query.get("tail_lines") or 200)
+    filter_text = request.query.get("filter")
     clazz = await cluster.resource_registry.get_class_by_plural_name(
         plural, namespaced=True
     )
@@ -981,7 +989,9 @@ async def get_resource_logs(request, session):
             color = pod_color(pod.name)
             if container_name != ALL_CONTAINER_LOGS:
                 logs.extend(
-                    await get_log_from_container(color, pod, container_name, tail_lines)
+                    await get_log_from_container(
+                        color, pod, container_name, tail_lines, filter_text
+                    )
                 )
             else:
                 # show logs for all containers
@@ -993,7 +1003,7 @@ async def get_resource_logs(request, session):
                 for container in containers:
                     logs.extend(
                         await get_log_from_container(
-                            color, pod, container["name"], tail_lines
+                            color, pod, container["name"], tail_lines, filter_text
                         )
                     )
 

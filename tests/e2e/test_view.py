@@ -85,7 +85,17 @@ def test_logs_from_single_container(session):
     )
     response.raise_for_status()
     main = response.html.find("main pre", first=True)
-    print(main.text)
+    assert "MESSAGE FROM INIT CONTAINER!" not in main.text
+    assert "MESSAGE FROM SECOND INIT CONTAINER!" in main.text
+
+
+def test_logs_filter(session):
+    response = session.get(
+        "/clusters/local/namespaces/deployment-with-init-container/deployments/deployment-with-init-container/logs",
+        params={"filter": "SECOND"},
+    )
+    response.raise_for_status()
+    main = response.html.find("main pre", first=True)
     assert "MESSAGE FROM INIT CONTAINER!" not in main.text
     assert "MESSAGE FROM SECOND INIT CONTAINER!" in main.text
 
