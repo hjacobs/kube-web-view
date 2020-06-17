@@ -48,7 +48,7 @@
         {% if container_tab == container_name: %}
         <li class="is-active"><a>{{ container_tab or "all" }}</a></li>
         {% else: %}
-        <li ><a href="/clusters/{{ cluster }}/namespaces/{{ resource.metadata.namespace }}/{{ resource.endpoint }}/{{ resource.name }}/logs?container={{ container_tab }};tail_lines={{ tail_lines }};filter={{ filter_text or "" }}">{{ container_tab or "all" }}</a></li>
+        <li ><a href="/clusters/{{ cluster }}/namespaces/{{ resource.metadata.namespace }}/{{ resource.endpoint }}/{{ resource.name }}/logs?{{ {"container": container_tab, "tail_lines": tail_lines, "filter": filter_text or ""}|urlencode }}">{{ container_tab or "all" }}</a></li>
         {% endif %}
         {% endfor %}
     </ul>
