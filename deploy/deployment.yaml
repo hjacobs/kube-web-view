@@ -18,7 +18,7 @@ spec:
       containers:
       - name: kube-web-view
         # see https://codeberg.org/hjacobs/kube-web-view/releases
-        image: hjacobs/kube-web-view:latest
+        image: hjacobs/kube-web-view:20.6.0
         args:
         - --port=8080
         # uncomment the following line to enable pod logs
