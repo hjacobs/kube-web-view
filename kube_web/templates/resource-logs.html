@@ -32,26 +32,32 @@
 
 {% else: %}
 
-<div class="section">
-    Showing last {{ tail_lines }} log lines {% if all_containers|length > 2: %} of {{container_name}} container {% else: %} per container {% endif %}for {{ pods|length }} pods.
-</div>
+<form method="get" action="#">
+    <div class="section">
+        Get last <input class="input" style="width:7rem;vertical-align:baseline" type="number" min="1" name="tail_lines" value="{{ tail_lines }}"> log lines {% if all_containers|length > 2: %} of {{container_name}} container {% else: %} per container {% endif %}for {{ pods|length }} pods
+        and filter by
+        <input class="input" style="width:10rem;vertical-align:baseline" name="filter" value="{{ filter_text or "" }}" placeholder="filter text">
+        <button type="submit" class="button is-primary">Refresh</button>
+    </div>
+</form>
 
 {% if all_container_names|length > 2: %}
 <div class="tabs is-small">
     <ul>
         {% for container_tab in all_container_names|sort: %}
-            {% if container_tab == container_name: %}
-                <li class="is-active"><a>{{ container_tab or "all" }}</a></li>
-            {% else: %}
-                <li ><a href="/clusters/{{ cluster }}/namespaces/{{ resource.metadata.namespace }}/{{ resource.endpoint }}/{{ resource.name }}/logs?container={{ container_tab }}">{{ container_tab or "all" }}</a></li>
-            {% endif %}
+        {% if container_tab == container_name: %}
+        <li class="is-active"><a>{{ container_tab or "all" }}</a></li>
+        {% else: %}
+        <li ><a href="/clusters/{{ cluster }}/namespaces/{{ resource.metadata.namespace }}/{{ resource.endpoint }}/{{ resource.name }}/logs?container={{ container_tab }};tail_lines={{ tail_lines }};filter={{ filter_text or "" }}">{{ container_tab or "all" }}</a></li>
+        {% endif %}
         {% endfor %}
     </ul>
 </div>
 {% endif %}
 
 <pre>
-{% for log in logs: %}<span style="color:{{ log[2] }}">{{ log[1] }}</span> <span class="has-text-grey">{{ log[3] }}</span> {{ log[0] }}{{ '\n' }}{% endfor %}
+{% for log in logs: %}<span style="color:{{ log[2] }}">{{ log[1] }}</span> {% if not container_name: %}<span class="has-text-grey">{{ log[3] }}</span> {% endif %}{{ log[0] }}{{ '\n' }}{% endfor %}
+{% if filter_text and not logs: %}<em>No matching logs found. Please note that the filter text is case sensitive!</em>{% endif %}
 </pre>
 
 {% endif %}

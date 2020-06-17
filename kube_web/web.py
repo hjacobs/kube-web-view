@@ -1015,6 +1015,7 @@ async def get_resource_logs(request, session):
         "plural": plural,
         "resource": resource,
         "tail_lines": tail_lines,
+        "filter_text": filter_text,
         "pods": pods,
         "logs": logs,
         "show_container_logs": show_container_logs,
