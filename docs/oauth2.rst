@@ -20,6 +20,9 @@ Kubernetes Web View support OAuth2 for protecting its web frontend. Use the foll
     Path to file containing the client secret. Use this instead of ``OAUTH2_CLIENT_SECRET`` to read the client secret dynamically from file.
 ``SESSION_SECRET_KEY``
     Secret to encrypt the session cookie. Must be 32 bytes base64-encoded. Use ``cryptography.fernet.Fernet.generate_key()`` to generate such a key.
+``OAUTH2_SCOPE``
+    Scope for the OAuth 2 Authorization eg:  'email openid profile' for open ID or Azure AD,  'https://www.googleapis.com/auth/userinfo.email'
+    Note: this field is mandatory for Azure Active Directory
 
 The OAuth2 login flow will (by default) just protect the web frontend, the configured credentials (in-cluster Service Account, Kubeconfig, or Cluster Registry) will be used to access the cluster(s).
 This behavior can be changed and the session's OAuth2 access token can be used for cluster authentication instead of using configured credentials.
