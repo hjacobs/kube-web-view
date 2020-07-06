@@ -1388,7 +1388,9 @@ async def auth(request, handler):
             params["state"] = base64.urlsafe_b64encode(
                 str(request.rel_url).encode("utf-8")
             )
-            params["scope"] = os.getenv("OAUTH2_SCOPE")
+            scope = os.getenv("OAUTH2_SCOPE")
+            if scope:
+                params["scope"]
             raise web.HTTPFound(location=client.get_authorize_url(**params))
     response = await handler(request)
     return response
