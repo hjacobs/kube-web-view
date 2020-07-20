@@ -54,6 +54,13 @@ https://github.com/hjacobs/kube-resource-report/, web
 
 Generates static HTML files for cost reporting.
 
+Kubevious
+=========
+
+https://kubevious.io/, web
+
+    "Application-centric Kubernetes viewer and validator. Correlates labels, metadata, and state. Renders configuration in a way easy to understand and debug. TimeMachine enables travel back in time to identify why things broke. Extensible. Lets users define their own validation rules in the UI."
+
 Kubricks
 ========
 
